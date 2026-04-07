@@ -99,7 +99,21 @@ async function handleEmailRegister(body, env, request) {
       `SELECT id FROM users WHERE email = ?`
     ).bind(email).first();
 
-    if (existing) return jsonError('Email already registered', 409);
+    if (existing) {
+      // If Google-only account, allow setting password
+      const full = await env.DB.prepare(
+        `SELECT id, password_hash FROM users WHERE email = ?`
+      ).bind(email).first();
+      if (full && !full.password_hash) {
+        const salt = generateSalt();
+        const hash = await hashPassword(password, salt);
+        await env.DB.prepare(
+          `UPDATE users SET password_hash = ?, password_salt = ?, name = ? WHERE id = ?`
+        ).bind(hash, salt, name, full.id).run();
+        return issueSession({ sub: full.id, email, name, avatar: null }, env, request);
+      }
+      return jsonError('Email already registered', 409);
+    }
   } catch (err) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
@@ -137,8 +151,11 @@ async function handleEmailLogin(body, env, request) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
 
-  if (!user || !user.password_hash) {
+  if (!user) {
     return jsonError('Invalid email or password', 401);
+  }
+  if (!user.password_hash) {
+    return jsonError('This account uses Google Sign-In. Please sign in with Google, or register with a password first.', 401);
   }
 
   const hash = await hashPassword(password, user.password_salt);
