@@ -10,5 +10,5 @@ APP_URL = "https://finance-expenses.pages.dev"
 [[d1_databases]]
 binding = "DB"
 database_name = "family-expenses"
-database_id = "YOUR_D1_DATABASE_ID_HERE"
+database_id = "cc4716b1-e80b-4239-9584-0a72c46cf376"
 migrations_dir = "migrations"
