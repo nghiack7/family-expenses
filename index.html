@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Expenses</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com";</script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Login page (shown when not authenticated) -->
+    <div id="login-page" class="login-page" style="display:none">
+      <div class="login-card">
+        <div class="login-icon">💰</div>
+        <h1>Family Expenses</h1>
+        <p>Track spending together, stay on budget as a family.</p>
+        <div class="google-btn-wrapper">
+          <div id="google-signin-btn"></div>
+        </div>
+        <div class="login-divider">Sign in with your Google account</div>
+        <p style="font-size:0.8125rem;color:var(--text-muted)">
+          Amounts displayed in Vietnamese Dong (VND)
+        </p>
+      </div>
+    </div>
+
+    <!-- Authenticated app shell -->
+    <div id="app-shell" style="display:none">
+      <!-- Top nav -->
+      <nav class="nav">
+        <div class="nav-brand">💰 <span>Family</span>Expenses</div>
+        <div class="nav-links">
+          <button class="nav-link" data-view="dashboard">Dashboard</button>
+          <button class="nav-link" data-view="add-expense">+ Add</button>
+          <button class="nav-link" data-view="history">History</button>
+          <button class="nav-link" data-view="family">Family</button>
+        </div>
+        <div class="nav-actions">
+          <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+          <div id="nav-user"></div>
+          <button class="btn btn-sm btn-secondary" id="logout-btn">Sign out</button>
+        </div>
+      </nav>
+
+      <!-- Main content area -->
+      <main class="main">
+        <!-- Dashboard view -->
+        <div id="view-dashboard" class="view">
+          <div class="month-nav">
+            <button class="btn btn-icon" id="prev-month">◀</button>
+            <span class="month-label" id="month-label">Loading...</span>
+            <button class="btn btn-icon" id="next-month">▶</button>
+          </div>
+
+          <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total this month</div>
+              <div class="stat-value" id="stat-total">—</div>
+              <div class="stat-sub" id="stat-count">0 expenses</div>
+              <div class="stat-change" id="stat-change"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Daily average</div>
+              <div class="stat-value" id="stat-avg">—</div>
+              <div class="stat-sub" id="stat-days">0 days tracked</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Biggest category</div>
+              <div class="stat-value" id="stat-top-cat">—</div>
+              <div class="stat-sub" id="stat-top-cat-pct"></div>
+            </div>
+          </div>
+
+          <!-- Daily sparkline -->
+          <div class="card" id="sparkline-card" style="display:none">
+            <div class="card-header">
+              <span class="card-title">Daily spending</span>
+            </div>
+            <div class="sparkline" id="sparkline"></div>
+          </div>
+
+          <!-- By category -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">By category</span>
+            </div>
+            <div class="category-bars" id="category-bars">
+              <div class="spinner"></div>
+            </div>
+          </div>
+
+          <!-- By person -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">By person</span>
+            </div>
+            <div class="person-chips" id="person-chips"></div>
+          </div>
+
+          <!-- Recent expenses -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent expenses</span>
+              <button class="btn btn-sm btn-secondary" data-view="history">See all</button>
+            </div>
+            <div class="expense-list" id="recent-expenses">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Expense view -->
+        <div id="view-add-expense" class="view">
+          <div class="section-title">Add Expense</div>
+          <div class="card">
+            <form id="add-expense-form">
+              <div class="form-group">
+                <label class="form-label" for="exp-amount">Amount (VND) *</label>
+                <input type="number" id="exp-amount" name="amount" min="1" step="1000"
+                  placeholder="e.g. 150000" required />
+                <div class="form-hint" id="exp-amount-preview"></div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="exp-desc">Description</label>
+                <input type="text" id="exp-desc" name="description"
+                  placeholder="e.g. Lunch at Pho 24" maxlength="200" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="exp-category">Category *</label>
+                  <select id="exp-category" name="category_id" required>
+                    <option value="">Select category...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="exp-date">Date *</label>
+                  <input type="date" id="exp-date" name="expense_date" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Paid by</label>
+                <input type="text" id="exp-paid-by" disabled />
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full" id="add-expense-btn">
+                Add Expense
+              </button>
+            </form>
+          </div>
+
+          <!-- Add custom category -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Custom categories</span>
+            </div>
+            <div class="input-row" style="margin-bottom:0.75rem">
+              <input type="text" id="new-cat-name" placeholder="Category name" maxlength="50" />
+              <input type="text" id="new-cat-icon" placeholder="🏷️" style="width:60px;text-align:center" maxlength="4" />
+              <button class="btn btn-secondary" id="add-cat-btn">Add</button>
+            </div>
+            <div id="custom-categories-list"></div>
+          </div>
+        </div>
+
+        <!-- History view -->
+        <div id="view-history" class="view">
+          <div class="section-title">Expense History</div>
+          <div class="filters">
+            <input type="date" id="filter-from" style="width:auto" />
+            <input type="date" id="filter-to" style="width:auto" />
+            <select id="filter-category">
+              <option value="">All categories</option>
+            </select>
+            <select id="filter-person">
+              <option value="">All members</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" id="filter-apply">Filter</button>
+            <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset">✕</button>
+          </div>
+          <div class="expense-list" id="history-list">
+            <div class="spinner"></div>
+          </div>
+          <div id="history-pagination" style="text-align:center;margin-top:1rem;display:none">
+            <button class="btn btn-secondary btn-sm" id="load-more-btn">Load more</button>
+          </div>
+        </div>
+
+        <!-- Family view -->
+        <div id="view-family" class="view">
+          <div class="section-title">Family Settings</div>
+
+          <!-- No family: setup prompt -->
+          <div id="no-family-setup" style="display:none">
+            <div class="setup-card">
+              <div style="font-size:2.5rem;margin-bottom:1rem">👨‍👩‍👧‍👦</div>
+              <h2>Create your family group</h2>
+              <p>Set up a family to track shared expenses together.</p>
+              <div class="input-row" style="max-width:360px;margin:0 auto 1rem">
+                <input type="text" id="new-family-name" placeholder="Family name, e.g. The Nguyens" maxlength="100" />
+                <button class="btn btn-primary" id="create-family-btn">Create</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Has family -->
+          <div id="has-family" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title" id="family-name-heading">—</span>
+                <span class="role-badge owner" id="my-role-badge">owner</span>
+              </div>
+
+              <div class="section-title" style="font-size:0.9rem;margin-bottom:0.75rem">Members</div>
+              <div class="member-list" id="member-list"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Invite by Gmail</span>
+              </div>
+              <div class="input-row">
+                <input type="email" id="invite-email" placeholder="friend@gmail.com" />
+                <button class="btn btn-primary" id="invite-btn">Invite</button>
+              </div>
+              <div id="pending-invites-section" style="margin-top:1rem;display:none">
+                <div style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;color:var(--text-muted)">Pending invites</div>
+                <div id="pending-invites-list"></div>
+              </div>
+            </div>
+
+            <div class="card" style="border-color:var(--danger);border-opacity:0.3">
+              <div class="card-title" style="color:var(--danger);margin-bottom:0.75rem">Danger zone</div>
+              <button class="btn btn-danger" id="leave-family-btn">Leave family</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Mobile bottom nav -->
+      <nav class="bottom-nav">
+        <button class="bottom-nav-item" data-view="dashboard">
+          <span class="bnav-icon">📊</span>
+          <span>Dashboard</span>
+        </button>
+        <button class="bottom-nav-item" data-view="add-expense">
+          <span class="bnav-icon">➕</span>
+          <span>Add</span>
+        </button>
+        <button class="bottom-nav-item" data-view="history">
+          <span class="bnav-icon">📋</span>
+          <span>History</span>
+        </button>
+        <button class="bottom-nav-item" data-view="family">
+          <span class="bnav-icon">👨‍👩‍👧</span>
+          <span>Family</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

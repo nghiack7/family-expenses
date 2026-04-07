@@ -1,0 +1,14 @@
+name = "family-expenses"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "."
+
+[vars]
+GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com"
+JWT_SECRET = "change-this-to-a-random-secret-string"
+APP_URL = "https://finance-expenses.pages.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "family-expenses"
+database_id = "YOUR_D1_DATABASE_ID_HERE"
+migrations_dir = "migrations"

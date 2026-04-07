@@ -1,0 +1,15 @@
+{
+  "name": "family-expenses",
+  "version": "1.0.0",
+  "description": "Family expense tracker with Google SSO, D1 database, deployed on Cloudflare Pages",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev . --d1 DB",
+    "deploy": "wrangler pages deploy .",
+    "db:migrate": "wrangler d1 migrations apply family-expenses",
+    "db:migrate:local": "wrangler d1 migrations apply family-expenses --local"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
