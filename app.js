@@ -134,6 +134,77 @@ async function handleGoogleCredential(response) {
 // Expose to global scope so GSI data-callback attribute can reach it
 if (typeof window !== 'undefined') window.handleGoogleCredential = handleGoogleCredential;
 
+// ── Email auth ─────────────────────────────────────────────────────────────
+function initAuthTabs() {
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+    });
+  });
+
+  document.getElementById('email-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('email-login-btn');
+    const errEl = document.getElementById('email-login-error');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    try {
+      const data = await api('/api/auth', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'login',
+          email: document.getElementById('login-email').value,
+          password: document.getElementById('login-password').value,
+        }),
+      });
+      state.user = data.user;
+      sessionStorage.setItem('user', JSON.stringify(data.user));
+      showApp();
+      toast('Welcome back, ' + state.user.name + '!', 'success');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+
+  document.getElementById('email-register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('email-register-btn');
+    const errEl = document.getElementById('email-register-error');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Creating account...';
+    try {
+      const data = await api('/api/auth', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'register',
+          name: document.getElementById('register-name').value,
+          email: document.getElementById('register-email').value,
+          password: document.getElementById('register-password').value,
+        }),
+      });
+      state.user = data.user;
+      sessionStorage.setItem('user', JSON.stringify(data.user));
+      showApp();
+      toast('Account created! Welcome, ' + state.user.name + '!', 'success');
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  });
+}
+
 async function logout() {
   try {
     await api('/api/auth', { method: 'DELETE' });
@@ -621,6 +692,8 @@ function initGoogleSignIn() {
 // ── Event listeners ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('hashchange', applyRoute);
+
+  initAuthTabs();
 
   document.querySelectorAll('[data-view]').forEach(btn => {
     btn.addEventListener('click', () => navigate(btn.dataset.view));

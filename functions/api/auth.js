@@ -1,5 +1,7 @@
 // POST /api/auth
-// Receives Google credential JWT, verifies it, creates/gets user, issues session cookie
+// Handles Google SSO, email/password registration, and email/password login
+
+const GOOGLE_CLIENT_ID = '96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -11,72 +13,17 @@ export async function onRequestPost(context) {
     return jsonError('Invalid request body', 400);
   }
 
-  const { credential } = body;
-  if (!credential) return jsonError('Missing credential', 400);
+  const action = body.action || 'google';
 
-  // Verify Google JWT
-  let googlePayload;
-  try {
-    googlePayload = await verifyGoogleJWT(credential, env.GOOGLE_CLIENT_ID);
-  } catch (err) {
-    return jsonError(`Invalid Google credential: ${err.message}`, 401);
+  if (action === 'register') {
+    return handleEmailRegister(body, env, request);
+  }
+  if (action === 'login') {
+    return handleEmailLogin(body, env, request);
   }
 
-  const { sub, email, name, picture } = googlePayload;
-
-  // Upsert user in D1
-  try {
-    await env.DB.prepare(
-      `INSERT INTO users (id, email, name, avatar) VALUES (?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET name=excluded.name, avatar=excluded.avatar`
-    ).bind(sub, email, name, picture || null).run();
-  } catch (err) {
-    return jsonError(`Database error: ${err.message}`, 500);
-  }
-
-  // Check if user has a pending invite and auto-accept it
-  try {
-    const pendingInvite = await env.DB.prepare(
-      `SELECT fi.*, f.id as fam_id FROM family_invites fi
-       JOIN families f ON f.id = fi.family_id
-       WHERE fi.email = ? AND fi.status = 'pending'
-       ORDER BY fi.created_at ASC LIMIT 1`
-    ).bind(email).first();
-
-    if (pendingInvite) {
-      await env.DB.prepare(
-        `INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`
-      ).bind(pendingInvite.family_id, sub).run();
-
-      await env.DB.prepare(
-        `UPDATE family_invites SET status = 'accepted' WHERE id = ?`
-      ).bind(pendingInvite.id).run();
-    }
-  } catch {
-    // Non-fatal: invite auto-accept failure shouldn't block login
-  }
-
-  // Issue session JWT (24h)
-  const sessionToken = await signJWT(
-    { sub, email, name, avatar: picture || null },
-    env.JWT_SECRET,
-    86400 // 24 hours
-  );
-
-  const isProduction = !request.url.includes('localhost') && !request.url.includes('127.0.0.1');
-  const cookieFlags = isProduction
-    ? 'HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400'
-    : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
-
-  return new Response(
-    JSON.stringify({ ok: true, user: { id: sub, email, name, avatar: picture || null } }),
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': `session=${sessionToken}; ${cookieFlags}`,
-      },
-    }
-  );
+  // Default: Google SSO
+  return handleGoogleSSO(body, env, request);
 }
 
 export async function onRequestDelete(context) {
@@ -89,7 +36,194 @@ export async function onRequestDelete(context) {
   });
 }
 
-// Verify Google's JWT using their public keys
+// ── Google SSO ────────────────────────────────────────────────────────────────
+
+async function handleGoogleSSO(body, env, request) {
+  const { credential } = body;
+  if (!credential) return jsonError('Missing credential', 400);
+
+  const clientId = env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID;
+
+  let googlePayload;
+  try {
+    googlePayload = await verifyGoogleJWT(credential, clientId);
+  } catch (err) {
+    return jsonError(`Invalid Google credential: ${err.message}`, 401);
+  }
+
+  const { sub, email, name, picture } = googlePayload;
+
+  // Upsert user — if email already exists (email/password account), link Google sub
+  try {
+    const existing = await env.DB.prepare(
+      `SELECT id FROM users WHERE email = ?`
+    ).bind(email).first();
+
+    if (existing) {
+      // Update the existing user's google_sub and avatar; keep their id
+      await env.DB.prepare(
+        `UPDATE users SET google_sub = ?, name = ?, avatar = ?, auth_provider = 'google'
+         WHERE email = ?`
+      ).bind(sub, name, picture || null, email).run();
+
+      const userId = existing.id;
+      return issueSession({ sub: userId, email, name, avatar: picture || null }, env, request);
+    }
+
+    // New user via Google: use sub as id
+    await env.DB.prepare(
+      `INSERT INTO users (id, email, name, avatar, auth_provider, google_sub)
+       VALUES (?, ?, ?, ?, 'google', ?)
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, avatar=excluded.avatar, google_sub=excluded.google_sub`
+    ).bind(sub, email, name, picture || null, sub).run();
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  // Check pending invite and auto-accept
+  await autoAcceptInvite(email, sub, env);
+
+  return issueSession({ sub, email, name, avatar: picture || null }, env, request);
+}
+
+// ── Email Registration ─────────────────────────────────────────────────────────
+
+async function handleEmailRegister(body, env, request) {
+  const { email, password, name } = body;
+  if (!email || !password || !name) return jsonError('Missing email, password, or name', 400);
+  if (password.length < 8) return jsonError('Password must be at least 8 characters', 400);
+
+  // Check if email already exists
+  try {
+    const existing = await env.DB.prepare(
+      `SELECT id FROM users WHERE email = ?`
+    ).bind(email).first();
+
+    if (existing) return jsonError('Email already registered', 409);
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  const salt = generateSalt();
+  const hash = await hashPassword(password, salt);
+  const userId = generateUUID();
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO users (id, email, name, avatar, auth_provider, password_hash, password_salt)
+       VALUES (?, ?, ?, NULL, 'email', ?, ?)`
+    ).bind(userId, email, name, hash, salt).run();
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  await autoAcceptInvite(email, userId, env);
+
+  return issueSession({ sub: userId, email, name, avatar: null }, env, request);
+}
+
+// ── Email Login ───────────────────────────────────────────────────────────────
+
+async function handleEmailLogin(body, env, request) {
+  const { email, password } = body;
+  if (!email || !password) return jsonError('Missing email or password', 400);
+
+  let user;
+  try {
+    user = await env.DB.prepare(
+      `SELECT id, email, name, avatar, password_hash, password_salt FROM users WHERE email = ?`
+    ).bind(email).first();
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  if (!user || !user.password_hash) {
+    return jsonError('Invalid email or password', 401);
+  }
+
+  const hash = await hashPassword(password, user.password_salt);
+  if (hash !== user.password_hash) {
+    return jsonError('Invalid email or password', 401);
+  }
+
+  return issueSession(
+    { sub: user.id, email: user.email, name: user.name, avatar: user.avatar },
+    env,
+    request
+  );
+}
+
+// ── Shared helpers ─────────────────────────────────────────────────────────────
+
+async function autoAcceptInvite(email, userId, env) {
+  try {
+    const pendingInvite = await env.DB.prepare(
+      `SELECT fi.*, f.id as fam_id FROM family_invites fi
+       JOIN families f ON f.id = fi.family_id
+       WHERE fi.email = ? AND fi.status = 'pending'
+       ORDER BY fi.created_at ASC LIMIT 1`
+    ).bind(email).first();
+
+    if (pendingInvite) {
+      await env.DB.prepare(
+        `INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`
+      ).bind(pendingInvite.family_id, userId).run();
+      await env.DB.prepare(
+        `UPDATE family_invites SET status = 'accepted' WHERE id = ?`
+      ).bind(pendingInvite.id).run();
+    }
+  } catch {
+    // Non-fatal
+  }
+}
+
+async function issueSession(user, env, request) {
+  const sessionToken = await signJWT(
+    { sub: user.sub, email: user.email, name: user.name, avatar: user.avatar },
+    env.JWT_SECRET,
+    86400
+  );
+
+  const isProduction = !request.url.includes('localhost') && !request.url.includes('127.0.0.1');
+  const cookieFlags = isProduction
+    ? 'HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400'
+    : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
+
+  return new Response(
+    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar } }),
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `session=${sessionToken}; ${cookieFlags}`,
+      },
+    }
+  );
+}
+
+function generateSalt() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateUUID() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
+async function hashPassword(password, salt) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(salt + password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── Google JWT verification ───────────────────────────────────────────────────
+
 async function verifyGoogleJWT(token, clientId) {
   const parts = token.split('.');
   if (parts.length !== 3) throw new Error('Malformed JWT');
@@ -98,7 +232,6 @@ async function verifyGoogleJWT(token, clientId) {
   const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')));
   const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
 
-  // Validate claims
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) throw new Error('Token expired');
   if (payload.aud !== clientId) throw new Error('Wrong audience');
@@ -106,7 +239,6 @@ async function verifyGoogleJWT(token, clientId) {
     throw new Error('Wrong issuer');
   }
 
-  // Fetch Google public keys
   const keysRes = await fetch('https://www.googleapis.com/oauth2/v3/certs');
   if (!keysRes.ok) throw new Error('Failed to fetch Google keys');
   const { keys } = await keysRes.json();
@@ -114,7 +246,6 @@ async function verifyGoogleJWT(token, clientId) {
   const jwk = keys.find(k => k.kid === header.kid);
   if (!jwk) throw new Error('Key not found');
 
-  // Import key and verify
   const key = await crypto.subtle.importKey(
     'jwk',
     jwk,

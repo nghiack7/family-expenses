@@ -16,11 +16,59 @@
         <div class="login-icon">💰</div>
         <h1>Family Expenses</h1>
         <p>Track spending together, stay on budget as a family.</p>
-        <div class="google-btn-wrapper">
-          <div id="google-signin-btn"></div>
+
+        <!-- Auth tabs -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="google">Google</button>
+          <button class="auth-tab" data-tab="email-login">Sign In</button>
+          <button class="auth-tab" data-tab="email-register">Register</button>
         </div>
-        <div class="login-divider">Sign in with your Google account</div>
-        <p style="font-size:0.8125rem;color:var(--text-muted)">
+
+        <!-- Google tab -->
+        <div class="auth-panel active" id="tab-google">
+          <div class="google-btn-wrapper">
+            <div id="google-signin-btn"></div>
+          </div>
+          <div class="login-divider">Sign in with your Google account</div>
+        </div>
+
+        <!-- Email login tab -->
+        <div class="auth-panel" id="tab-email-login">
+          <form id="email-login-form">
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email</label>
+              <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-password">Password</label>
+              <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+            <div id="email-login-error" class="form-error" style="display:none"></div>
+            <button type="submit" class="btn btn-primary btn-full" id="email-login-btn">Sign In</button>
+          </form>
+        </div>
+
+        <!-- Email register tab -->
+        <div class="auth-panel" id="tab-email-register">
+          <form id="email-register-form">
+            <div class="form-group">
+              <label class="form-label" for="register-name">Full name</label>
+              <input type="text" id="register-name" placeholder="Nguyen Van A" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-email">Email</label>
+              <input type="email" id="register-email" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-password">Password</label>
+              <input type="password" id="register-password" placeholder="At least 8 characters" required autocomplete="new-password" minlength="8" />
+            </div>
+            <div id="email-register-error" class="form-error" style="display:none"></div>
+            <button type="submit" class="btn btn-primary btn-full" id="email-register-btn">Create Account</button>
+          </form>
+        </div>
+
+        <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:1.5rem">
           Amounts displayed in Vietnamese Dong (VND)
         </p>
       </div>

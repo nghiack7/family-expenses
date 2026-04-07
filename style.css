@@ -674,6 +674,51 @@ input:focus, select:focus, textarea:focus {
 .invite-email { font-weight: 500; }
 .invite-status { font-size: 0.8rem; color: var(--warning); }
 
+/* ── Auth tabs ── */
+.auth-tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.auth-tab {
+  flex: 1;
+  background: none;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-sm) - 2px);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  min-height: 44px;
+}
+
+.auth-tab.active {
+  background: var(--bg2);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.auth-tab:hover:not(.active) { color: var(--text); }
+
+.auth-panel { display: none; }
+.auth-panel.active { display: block; }
+
+/* ── Form error ── */
+.form-error {
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--danger-dim);
+  border-radius: var(--radius-sm);
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .nav-links { display: none; }
@@ -681,7 +726,14 @@ input:focus, select:focus, textarea:focus {
   .stat-value { font-size: 1.375rem; }
   .filters { flex-direction: column; }
   .filters select { width: 100%; }
-  .main { padding: 1rem; }
+  .main { padding: 1rem; padding-bottom: 80px; }
+
+  .login-card { padding: 2rem 1.25rem; margin: 1rem; border-radius: var(--radius); }
+  .login-page { align-items: flex-start; padding-top: 2rem; }
+
+  input, select, textarea { min-height: 44px; }
+  .btn { min-height: 44px; }
+  .bottom-nav-item { min-height: 56px; }
 
   .bottom-nav {
     display: flex;
