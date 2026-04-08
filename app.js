@@ -147,71 +147,51 @@ if (typeof window !== 'undefined') window.handleGoogleCredential = handleGoogleC
 
 // ── Email auth ─────────────────────────────────────────────────────────────
 function initAuthTabs() {
-  document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-    });
+  let isRegisterMode = false;
+  const form = document.getElementById('email-auth-form');
+  const nameGroup = document.getElementById('auth-name-group');
+  const btn = document.getElementById('email-auth-btn');
+  const toggleBtn = document.getElementById('toggle-auth-mode');
+  const errEl = document.getElementById('email-auth-error');
+
+  toggleBtn.addEventListener('click', () => {
+    isRegisterMode = !isRegisterMode;
+    nameGroup.style.display = isRegisterMode ? '' : 'none';
+    btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
+    toggleBtn.textContent = isRegisterMode
+      ? 'Already have an account? Sign In'
+      : "Don't have an account? Register";
+    document.getElementById('auth-password').autocomplete = isRegisterMode ? 'new-password' : 'current-password';
+    errEl.style.display = 'none';
   });
 
-  document.getElementById('email-login-form').addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('email-login-btn');
-    const errEl = document.getElementById('email-login-error');
     errEl.style.display = 'none';
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const origText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Signing in...';
+    btn.textContent = isRegisterMode ? 'Creating account...' : 'Signing in...';
+
     try {
+      const body = isRegisterMode
+        ? { action: 'register', name: document.getElementById('auth-name').value, email, password }
+        : { action: 'login', email, password };
       const data = await api('/api/auth', {
         method: 'POST',
-        body: JSON.stringify({
-          action: 'login',
-          email: document.getElementById('login-email').value,
-          password: document.getElementById('login-password').value,
-        }),
+        body: JSON.stringify(body),
       });
       state.user = data.user;
       sessionStorage.setItem('user', JSON.stringify(data.user));
       showApp();
-      toast('Welcome back, ' + state.user.name + '!', 'success');
+      toast(isRegisterMode ? 'Account created! Welcome, ' + state.user.name + '!' : 'Welcome back, ' + state.user.name + '!', 'success');
     } catch (err) {
       errEl.textContent = err.message;
       errEl.style.display = 'block';
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Sign In';
-    }
-  });
-
-  document.getElementById('email-register-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('email-register-btn');
-    const errEl = document.getElementById('email-register-error');
-    errEl.style.display = 'none';
-    btn.disabled = true;
-    btn.textContent = 'Creating account...';
-    try {
-      const data = await api('/api/auth', {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'register',
-          name: document.getElementById('register-name').value,
-          email: document.getElementById('register-email').value,
-          password: document.getElementById('register-password').value,
-        }),
-      });
-      state.user = data.user;
-      sessionStorage.setItem('user', JSON.stringify(data.user));
-      showApp();
-      toast('Account created! Welcome, ' + state.user.name + '!', 'success');
-    } catch (err) {
-      errEl.textContent = err.message;
-      errEl.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Create Account';
+      btn.textContent = origText;
     }
   });
 }
@@ -236,7 +216,9 @@ function initTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.innerHTML = theme === 'dark'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   localStorage.setItem('theme', theme);
 }
 
@@ -798,20 +780,30 @@ function initProfileUI() {
   const pwForm = document.getElementById('password-form-content');
 
   if (pwCard) {
-    pwCard.style.display = 'block';
     const hasPassword = state.user.has_password;
-    if (hasPassword) {
-      // Has password — show change form
+    const isGoogleUser = state.user.auth_provider === 'google';
+
+    if (isGoogleUser && hasPassword) {
+      // Google user already set password — no more changes allowed
+      pwCard.style.display = 'block';
+      pwForm.style.display = 'none';
+      googleNotice.style.display = 'block';
+      googleNotice.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.9375rem">Password has been set. You can now sign in with email & password too.</div>';
+    } else if (isGoogleUser && !hasPassword) {
+      // Google user — first time setting password
+      pwCard.style.display = 'block';
       pwForm.style.display = 'block';
       googleNotice.style.display = 'none';
-    } else {
-      // No password yet (Google-only) — show set password form
-      pwForm.style.display = 'block';
-      googleNotice.style.display = 'none';
-      // Hide "current password" field since they don't have one
       document.getElementById('current-password').parentElement.style.display = 'none';
       document.getElementById('change-password-btn').textContent = 'Set Password';
       document.querySelector('#password-card .card-title').textContent = 'Set Password';
+    } else if (hasPassword) {
+      // Email-registered user — allow password change
+      pwCard.style.display = 'block';
+      pwForm.style.display = 'block';
+      googleNotice.style.display = 'none';
+    } else {
+      pwCard.style.display = 'none';
     }
   }
 }
@@ -825,7 +817,8 @@ async function handleChangePassword() {
 
   errEl.style.display = 'none';
 
-  if (!currentPw) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
+  const hasPassword = state.user.has_password;
+  if (hasPassword && !currentPw) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
   if (newPw.length < 8) { errEl.textContent = 'New password must be at least 8 characters'; errEl.style.display = 'block'; return; }
   if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
 
@@ -840,7 +833,10 @@ async function handleChangePassword() {
     document.getElementById('current-password').value = '';
     document.getElementById('new-password').value = '';
     document.getElementById('confirm-password').value = '';
-    toast('Password changed successfully!', 'success');
+    state.user.has_password = true;
+    sessionStorage.setItem('user', JSON.stringify(state.user));
+    initProfileUI();
+    toast('Password set successfully!', 'success');
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -904,14 +900,23 @@ function handleSaveAISettings() {
   if (!settings.apiKey) { toast('API key is required', 'error'); return; }
   saveAISettings(settings);
   toast('AI settings saved!', 'success');
-  // Show the insights card on dashboard
-  const card = document.getElementById('ai-insights-card');
-  if (card) card.style.display = 'block';
+  // Show the AI FAB
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = 'flex';
 }
 
 function checkAIConfigured() {
-  const card = document.getElementById('ai-insights-card');
-  if (card) card.style.display = 'block';
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = 'flex';
+}
+
+function openAIModal() {
+  document.getElementById('ai-modal-overlay').classList.add('open');
+  document.getElementById('ai-question').focus();
+}
+
+function closeAIModal() {
+  document.getElementById('ai-modal-overlay').classList.remove('open');
 }
 
 async function runAIAnalysis(customQuestion) {
@@ -1335,6 +1340,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // AI settings & analysis
   initAISettingsUI();
   document.getElementById('save-ai-settings-btn').addEventListener('click', handleSaveAISettings);
+  document.getElementById('ai-fab').addEventListener('click', openAIModal);
+  document.getElementById('ai-modal-close').addEventListener('click', closeAIModal);
+  document.getElementById('ai-modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeAIModal();
+  });
   document.getElementById('ai-analyze-btn').addEventListener('click', () => runAIAnalysis());
   document.getElementById('ai-analyze-btn2').addEventListener('click', () => {
     const q = document.getElementById('ai-question').value.trim();

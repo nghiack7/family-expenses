@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#1E3A8A" />
+  <meta name="theme-color" content="#6366F1" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Family Expenses</title>
   <link rel="stylesheet" href="style.css" />
@@ -15,63 +15,40 @@
     <!-- Login page (shown when not authenticated) -->
     <div id="login-page" class="login-page" style="display:none">
       <div class="login-card">
-        <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <h1>Family Expenses</h1>
-        <p>Track spending together, stay on budget as a family.</p>
+        <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg></div>
+        <h1>Chi tieu gia dinh</h1>
+        <p>Quan ly chi tieu, biet tien di dau moi ngay.</p>
 
-        <!-- Auth tabs -->
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="google">Google</button>
-          <button class="auth-tab" data-tab="email-login">Sign In</button>
-          <button class="auth-tab" data-tab="email-register">Register</button>
+        <!-- Google sign-in -->
+        <div class="google-btn-wrapper">
+          <div id="google-signin-btn"></div>
         </div>
 
-        <!-- Google tab -->
-        <div class="auth-panel active" id="tab-google">
-          <div class="google-btn-wrapper">
-            <div id="google-signin-btn"></div>
+        <div class="login-divider"><span>or continue with email</span></div>
+
+        <!-- Single email form (login + register) -->
+        <form id="email-auth-form">
+          <div class="form-group" id="auth-name-group" style="display:none">
+            <label class="form-label" for="auth-name">Full name</label>
+            <input type="text" id="auth-name" placeholder="Nguyen Van A" autocomplete="name" />
           </div>
-          <div class="login-divider">Sign in with your Google account</div>
+          <div class="form-group">
+            <label class="form-label" for="auth-email">Email</label>
+            <input type="email" id="auth-email" placeholder="you@example.com" required autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" placeholder="At least 8 characters" required autocomplete="current-password" minlength="8" />
+          </div>
+          <div id="email-auth-error" class="form-error" style="display:none"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="email-auth-btn">Sign In</button>
+        </form>
+        <div style="text-align:center;margin-top:0.75rem">
+          <button type="button" class="btn-link" id="toggle-auth-mode">Don't have an account? Register</button>
         </div>
 
-        <!-- Email login tab -->
-        <div class="auth-panel" id="tab-email-login">
-          <form id="email-login-form">
-            <div class="form-group">
-              <label class="form-label" for="login-email">Email</label>
-              <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="login-password">Password</label>
-              <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password" />
-            </div>
-            <div id="email-login-error" class="form-error" style="display:none"></div>
-            <button type="submit" class="btn btn-primary btn-full" id="email-login-btn">Sign In</button>
-          </form>
-        </div>
-
-        <!-- Email register tab -->
-        <div class="auth-panel" id="tab-email-register">
-          <form id="email-register-form">
-            <div class="form-group">
-              <label class="form-label" for="register-name">Full name</label>
-              <input type="text" id="register-name" placeholder="Nguyen Van A" required autocomplete="name" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="register-email">Email</label>
-              <input type="email" id="register-email" placeholder="you@example.com" required autocomplete="email" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="register-password">Password</label>
-              <input type="password" id="register-password" placeholder="At least 8 characters" required autocomplete="new-password" minlength="8" />
-            </div>
-            <div id="email-register-error" class="form-error" style="display:none"></div>
-            <button type="submit" class="btn btn-primary btn-full" id="email-register-btn">Create Account</button>
-          </form>
-        </div>
-
-        <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:1.5rem">
-          Currency can be configured in Family Settings
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:1.25rem">
+          Tien te co the cai dat trong Family Settings
         </p>
       </div>
     </div>
@@ -88,7 +65,7 @@
           <button class="nav-link" data-view="family">Family</button>
         </div>
         <div class="nav-actions">
-          <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+          <button class="theme-toggle" id="theme-toggle" title="Toggle theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
           <div id="nav-user"></div>
           <button class="btn btn-sm btn-secondary" id="logout-btn">Sign out</button>
         </div>
@@ -99,9 +76,9 @@
         <!-- Dashboard view -->
         <div id="view-dashboard" class="view">
           <div class="month-nav">
-            <button class="btn btn-icon" id="prev-month">◀</button>
+            <button class="btn btn-icon" id="prev-month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m15 18-6-6 6-6"/></svg></button>
             <span class="month-label" id="month-label">Loading...</span>
-            <button class="btn btn-icon" id="next-month">▶</button>
+            <button class="btn btn-icon" id="next-month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
 
           <div class="stats-grid" id="stats-grid">
@@ -149,24 +126,7 @@
             <div class="person-chips" id="person-chips"></div>
           </div>
 
-          <!-- AI Financial Insights -->
-          <div class="card" id="ai-insights-card">
-            <div class="card-header">
-              <span class="card-title">AI Financial Insights</span>
-              <button class="btn btn-sm btn-secondary" id="ai-analyze-btn">Analyze</button>
-            </div>
-            <div class="form-group" style="margin-bottom:0.75rem">
-              <div class="input-row">
-                <input type="text" id="ai-question" placeholder="Ask anything, e.g. 'With 30M income, am I spending too much?'" />
-                <button class="btn btn-primary" id="ai-analyze-btn2">Ask AI</button>
-              </div>
-            </div>
-            <div id="ai-insights-content">
-              <div class="ai-empty-hint" style="text-align:center;padding:0.75rem;color:var(--text-muted);font-size:0.875rem">
-                Ask a question or click <strong>Analyze</strong> for a general spending review
-              </div>
-            </div>
-          </div>
+          <!-- AI insights rendered in modal -->
 
           <!-- Recent expenses -->
           <div class="card">
@@ -259,7 +219,7 @@
               <option value="">All members</option>
             </select>
             <button class="btn btn-secondary btn-sm" id="filter-apply">Filter</button>
-            <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset">✕</button>
+            <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
           </div>
           <div class="expense-list" id="history-list">
             <div class="spinner"></div>
@@ -325,7 +285,7 @@
           <!-- No family: setup prompt -->
           <div id="no-family-setup" style="display:none">
             <div class="setup-card">
-              <div style="font-size:2.5rem;margin-bottom:1rem">👨‍👩‍👧‍👦</div>
+              <div style="margin-bottom:1rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--primary)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
               <h2>Create your family group</h2>
               <p>Set up a family to track shared expenses together.</p>
               <div class="input-row" style="max-width:360px;margin:0 auto 1rem">
@@ -409,22 +369,58 @@
       <!-- Mobile bottom nav -->
       <nav class="bottom-nav">
         <button class="bottom-nav-item" data-view="dashboard">
-          <span class="bnav-icon">📊</span>
+          <span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
           <span>Dashboard</span>
         </button>
         <button class="bottom-nav-item" data-view="add-expense">
-          <span class="bnav-icon">➕</span>
+          <span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg></span>
           <span>Add</span>
         </button>
         <button class="bottom-nav-item" data-view="history">
-          <span class="bnav-icon">📋</span>
+          <span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg></span>
           <span>History</span>
         </button>
         <button class="bottom-nav-item" data-view="family">
-          <span class="bnav-icon">👨‍👩‍👧</span>
+          <span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <span>Family</span>
         </button>
       </nav>
+    </div>
+  </div>
+
+  <!-- AI Chat FAB -->
+  <button class="ai-fab" id="ai-fab" title="Ask AI about your finances" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.5V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.5c2.9-1.2 5-4.1 5-7.5a8 8 0 0 0-8-8z"/><path d="M9 22h6"/><path d="M10 2v1"/><path d="M14 2v1"/></svg>
+  </button>
+
+  <!-- AI Chat Modal -->
+  <div class="ai-modal-overlay" id="ai-modal-overlay">
+    <div class="ai-modal">
+      <div class="ai-modal-header">
+        <div class="ai-modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.5V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.5c2.9-1.2 5-4.1 5-7.5a8 8 0 0 0-8-8z"/><path d="M9 22h6"/></svg>
+        </div>
+        <div>
+          <div class="ai-modal-header-title">AI Financial Advisor</div>
+          <div class="ai-modal-header-sub">Powered by your configured AI provider</div>
+        </div>
+        <button class="ai-modal-close" id="ai-modal-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="ai-modal-body" id="ai-insights-content">
+        <div class="ai-empty-hint" style="text-align:center;padding:2rem 0.75rem;color:var(--text-muted);font-size:0.875rem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40" style="color:var(--primary);margin-bottom:0.75rem;opacity:0.5"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.5V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.5c2.9-1.2 5-4.1 5-7.5a8 8 0 0 0-8-8z"/><path d="M9 22h6"/></svg>
+          <div>Ask a question or click <strong>Analyze</strong> for a spending review</div>
+        </div>
+      </div>
+      <div class="ai-modal-footer">
+        <div class="input-row">
+          <input type="text" id="ai-question" placeholder="e.g. 'With 30M income, am I spending too much?'" />
+          <button class="btn btn-primary" id="ai-analyze-btn2">Ask</button>
+          <button class="btn btn-secondary" id="ai-analyze-btn" title="General analysis">Analyze</button>
+        </div>
+      </div>
     </div>
   </div>
 

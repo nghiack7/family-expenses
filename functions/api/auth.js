@@ -65,8 +65,13 @@ export async function onRequestPut(context) {
     ).bind(userId).first();
     if (!user) return jsonError('User not found', 404);
 
+    if (user.password_hash && user.auth_provider === 'google') {
+      // Google user already set password once — no further changes allowed
+      return jsonError('Password has already been set and cannot be changed', 403);
+    }
+
     if (user.password_hash) {
-      // Has existing password — verify current before changing
+      // Email-registered user — verify current password before changing
       if (!current_password) return jsonError('Current password is required', 400);
       const currentHash = await hashPassword(current_password, user.password_salt);
       if (currentHash !== user.password_hash) {
