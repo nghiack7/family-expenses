@@ -294,42 +294,31 @@ export async function onRequestPut(context) {
   return jsonError('Unknown action', 400);
 }
 
-// ── Email via Resend ──────────────────────────────────────────────────────
+// ── Email via EmailJS ─────────────────────────────────────────────────────
 
 async function sendInviteEmail(env, { to, inviterName, familyName, appUrl }) {
-  const apiKey = env.RESEND_API_KEY;
-  if (!apiKey) return false;
+  const publicKey = env.EMAILJS_PUBLIC_KEY;
+  const privateKey = env.EMAILJS_PRIVATE_KEY;
+  const serviceId = env.EMAILJS_SERVICE_ID;
+  const templateId = env.EMAILJS_TEMPLATE_ID;
 
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:2rem">
-      <h2 style="color:#1a1a1a;margin-bottom:0.5rem">You're invited! 🎉</h2>
-      <p style="color:#444;line-height:1.6">
-        <strong>${escHtml(inviterName)}</strong> has invited you to join
-        <strong>${escHtml(familyName)}</strong> on Family Expenses — a simple tool
-        to track shared spending together.
-      </p>
-      <a href="${appUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:0.75rem 1.5rem;border-radius:8px;text-decoration:none;font-weight:600;margin:1.5rem 0">
-        Join now
-      </a>
-      <p style="color:#888;font-size:0.875rem;line-height:1.5">
-        Sign in with <strong>${escHtml(to)}</strong> and you'll automatically join the family.
-        No extra steps needed.
-      </p>
-      <hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0" />
-      <p style="color:#aaa;font-size:0.75rem">Family Expenses — Track spending together</p>
-    </div>`;
+  if (!publicKey || !serviceId || !templateId) return false;
 
-  const res = await fetch('https://api.resend.com/emails', {
+  const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Family Expenses <onboarding@resend.dev>',
-      to: [to],
-      subject: `${inviterName} invited you to ${familyName} on Family Expenses`,
-      html,
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: publicKey,
+      accessToken: privateKey,
+      template_params: {
+        to_email: to,
+        inviter_name: inviterName,
+        family_name: familyName,
+        app_url: appUrl,
+        message: `${inviterName} has invited you to join "${familyName}" on Family Expenses. Sign in with ${to} at ${appUrl} and you'll automatically join the family.`,
+      },
     }),
   });
   return res.ok;
