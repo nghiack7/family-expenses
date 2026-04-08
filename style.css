@@ -1382,6 +1382,46 @@ input::placeholder, textarea::placeholder {
   border-radius: var(--radius-sm);
 }
 
+/* ═══════════════════════════════════════════
+   AMOUNT SHORTCUTS
+   ═══════════════════════════════════════════ */
+.amount-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.amt-btn {
+  background: var(--bg3);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  min-height: 36px;
+  font-family: inherit;
+}
+
+.amt-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.amt-btn:active {
+  transform: scale(0.95);
+}
+
+.amt-btn[data-append] {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 #currency-setting {
   border-color: var(--border);
 }

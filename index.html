@@ -189,6 +189,16 @@
                 <label class="form-label" for="exp-amount">Amount (VND) *</label>
                 <input type="number" id="exp-amount" name="amount" min="1" step="1"
                   placeholder="e.g. 150000" required />
+                <div class="amount-shortcuts">
+                  <button type="button" class="amt-btn" data-append="000">+000</button>
+                  <button type="button" class="amt-btn" data-set="10000">10K</button>
+                  <button type="button" class="amt-btn" data-set="20000">20K</button>
+                  <button type="button" class="amt-btn" data-set="50000">50K</button>
+                  <button type="button" class="amt-btn" data-set="100000">100K</button>
+                  <button type="button" class="amt-btn" data-set="200000">200K</button>
+                  <button type="button" class="amt-btn" data-set="500000">500K</button>
+                  <button type="button" class="amt-btn" data-set="1000000">1M</button>
+                </div>
                 <div class="form-hint" id="exp-amount-preview"></div>
               </div>
 

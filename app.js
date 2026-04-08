@@ -1218,6 +1218,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exp-amount-preview').textContent = val > 0 ? formatMoney(val) : '';
   });
 
+  // Amount shortcut buttons
+  document.querySelectorAll('.amt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const amtInput = document.getElementById('exp-amount');
+      const appendVal = btn.dataset.append;
+      const setVal = btn.dataset.set;
+      if (appendVal) {
+        amtInput.value = (amtInput.value || '') + appendVal;
+      } else if (setVal) {
+        amtInput.value = setVal;
+      }
+      amtInput.focus();
+      amtInput.dispatchEvent(new Event('input'));
+    });
+  });
+
   // Add custom category
   document.getElementById('add-cat-btn').addEventListener('click', async () => {
     const name = document.getElementById('new-cat-name').value.trim();
