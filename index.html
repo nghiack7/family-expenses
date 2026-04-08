@@ -149,6 +149,19 @@
             <div class="person-chips" id="person-chips"></div>
           </div>
 
+          <!-- AI Financial Insights -->
+          <div class="card" id="ai-insights-card" style="display:none">
+            <div class="card-header">
+              <span class="card-title">AI Financial Insights</span>
+              <button class="btn btn-sm btn-secondary" id="ai-analyze-btn">Analyze</button>
+            </div>
+            <div id="ai-insights-content">
+              <div class="ai-empty-hint" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem">
+                Click <strong>Analyze</strong> to get AI-powered insights about your spending
+              </div>
+            </div>
+          </div>
+
           <!-- Recent expenses -->
           <div class="card">
             <div class="card-header">
@@ -284,6 +297,41 @@
             </div>
 
             <div class="card" id="currency-setting" style="display:none"></div>
+
+            <!-- AI Settings -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">AI Analysis Settings</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ai-provider">Provider</label>
+                <select id="ai-provider">
+                  <option value="gemini">Google Gemini (Free)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ai-model">Model</label>
+                <select id="ai-model"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="ai-api-key">API Key</label>
+                <input type="password" id="ai-api-key" placeholder="Paste your API key here" autocomplete="off" />
+                <div class="form-hint">Stored locally on your device only. Never sent to our server for storage.</div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="ai-income">Monthly Income (optional)</label>
+                  <input type="number" id="ai-income" placeholder="e.g. 30000000" min="0" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="ai-savings">Current Savings (optional)</label>
+                  <input type="number" id="ai-savings" placeholder="e.g. 100000000" min="0" />
+                </div>
+              </div>
+              <button class="btn btn-primary btn-full" id="save-ai-settings-btn">Save AI Settings</button>
+            </div>
 
             <div class="card" style="border-color:var(--danger);border-opacity:0.3">
               <div class="card-title" style="color:var(--danger);margin-bottom:0.75rem">Danger zone</div>

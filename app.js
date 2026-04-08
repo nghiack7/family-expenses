@@ -712,6 +712,240 @@ async function changeCurrency() {
   }
 }
 
+// ── AI Analysis ───────────────────────────────────────────────────────────
+const AI_MODELS = {
+  gemini: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'],
+  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1-nano'],
+  anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
+};
+
+function getAISettings() {
+  try {
+    return JSON.parse(localStorage.getItem('ai_settings') || '{}');
+  } catch { return {}; }
+}
+
+function saveAISettings(settings) {
+  localStorage.setItem('ai_settings', JSON.stringify(settings));
+}
+
+function initAISettingsUI() {
+  const providerSel = document.getElementById('ai-provider');
+  const modelSel = document.getElementById('ai-model');
+  if (!providerSel || !modelSel) return;
+
+  function populateModels() {
+    const provider = providerSel.value;
+    const models = AI_MODELS[provider] || [];
+    const saved = getAISettings();
+    modelSel.innerHTML = models.map(m =>
+      `<option value="${m}" ${m === saved.model ? 'selected' : ''}>${m}</option>`
+    ).join('');
+  }
+
+  providerSel.addEventListener('change', populateModels);
+
+  // Restore saved settings
+  const saved = getAISettings();
+  if (saved.provider) providerSel.value = saved.provider;
+  populateModels();
+  if (saved.model) modelSel.value = saved.model;
+  if (saved.apiKey) document.getElementById('ai-api-key').value = saved.apiKey;
+  if (saved.income) document.getElementById('ai-income').value = saved.income;
+  if (saved.savings) document.getElementById('ai-savings').value = saved.savings;
+}
+
+function handleSaveAISettings() {
+  const settings = {
+    provider: document.getElementById('ai-provider').value,
+    model: document.getElementById('ai-model').value,
+    apiKey: document.getElementById('ai-api-key').value.trim(),
+    income: document.getElementById('ai-income').value || '',
+    savings: document.getElementById('ai-savings').value || '',
+  };
+  if (!settings.apiKey) { toast('API key is required', 'error'); return; }
+  saveAISettings(settings);
+  toast('AI settings saved!', 'success');
+  // Show the insights card on dashboard
+  const card = document.getElementById('ai-insights-card');
+  if (card) card.style.display = 'block';
+}
+
+function checkAIConfigured() {
+  const s = getAISettings();
+  const card = document.getElementById('ai-insights-card');
+  if (card) card.style.display = (s.apiKey && s.provider && s.model) ? 'block' : 'none';
+}
+
+async function runAIAnalysis() {
+  const settings = getAISettings();
+  if (!settings.apiKey || !settings.provider || !settings.model) {
+    toast('Configure AI settings in Family tab first', 'error');
+    navigate('family');
+    return;
+  }
+
+  if (!state.stats || state.stats.count === 0) {
+    toast('No expense data to analyze', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('ai-analyze-btn');
+  const content = document.getElementById('ai-insights-content');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  content.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const ml = state.currentMonth
+      ? monthLabel(state.currentMonth.year, state.currentMonth.month)
+      : 'this month';
+
+    const res = await api('/api/ai-analyze', {
+      method: 'POST',
+      body: JSON.stringify({
+        provider: settings.provider,
+        model: settings.model,
+        apiKey: settings.apiKey,
+        stats: state.stats,
+        monthLabel: ml,
+        currency: state.currency,
+        income: settings.income || null,
+        savings: settings.savings || null,
+      }),
+    });
+
+    renderAIInsights(res.analysis);
+  } catch (err) {
+    content.innerHTML = `<div class="form-error">${escHtml(err.message)}</div>`;
+    toast('AI analysis failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Analyze';
+  }
+}
+
+function renderAIInsights(analysis) {
+  const content = document.getElementById('ai-insights-content');
+
+  // Score badge color
+  const score = analysis.score || 0;
+  let scoreColor = 'var(--danger)';
+  let scoreLabel = 'Needs Attention';
+  if (score >= 7) { scoreColor = 'var(--success)'; scoreLabel = 'Healthy'; }
+  else if (score >= 4) { scoreColor = 'var(--warning)'; scoreLabel = 'Fair'; }
+
+  const insightsHtml = (analysis.insights || []).map(i =>
+    `<li>${escHtml(i)}</li>`
+  ).join('');
+
+  const warningsHtml = (analysis.warnings || []).map(w =>
+    `<div class="ai-warning">${escHtml(w)}</div>`
+  ).join('');
+
+  const tipsHtml = (analysis.tips || []).map(t =>
+    `<li>${escHtml(t)}</li>`
+  ).join('');
+
+  content.innerHTML = `
+    <div class="ai-score-row">
+      <div class="ai-score-badge" style="background:${scoreColor}">
+        <span class="ai-score-num">${score}</span><span class="ai-score-max">/10</span>
+      </div>
+      <div class="ai-score-info">
+        <div class="ai-score-label" style="color:${scoreColor}">${scoreLabel}</div>
+        <div class="ai-summary">${escHtml(analysis.summary || '')}</div>
+      </div>
+    </div>
+    ${warningsHtml ? `<div class="ai-warnings">${warningsHtml}</div>` : ''}
+    <div class="ai-section">
+      <div class="ai-section-title">Key Insights</div>
+      <ul class="ai-list">${insightsHtml}</ul>
+    </div>
+    <div class="ai-chart-container">
+      <canvas id="ai-chart" width="280" height="280"></canvas>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title">Tips</div>
+      <ul class="ai-list ai-tips">${tipsHtml}</ul>
+    </div>
+    ${analysis.trend ? `<div class="ai-trend">${escHtml(analysis.trend.description || '')}</div>` : ''}
+  `;
+
+  // Render doughnut chart
+  if (analysis.chart && analysis.chart.labels && analysis.chart.values) {
+    drawDoughnutChart('ai-chart', analysis.chart);
+  }
+}
+
+function drawDoughnutChart(canvasId, chartData) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const size = 280;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  ctx.scale(dpr, dpr);
+
+  const { labels, values, colors } = chartData;
+  const total = values.reduce((a, b) => a + b, 0);
+  if (total === 0) return;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = 120;
+  const innerR = 70;
+  let startAngle = -Math.PI / 2;
+
+  const defaultColors = ['#3B82F6', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+
+  values.forEach((val, i) => {
+    const sliceAngle = (val / total) * Math.PI * 2;
+    const color = (colors && colors[i]) || defaultColors[i % defaultColors.length];
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, startAngle, startAngle + sliceAngle);
+    ctx.arc(cx, cy, innerR, startAngle + sliceAngle, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Label
+    const midAngle = startAngle + sliceAngle / 2;
+    const labelR = outerR - 25;
+    const pct = ((val / total) * 100).toFixed(0);
+    if (pct >= 5) {
+      const lx = cx + Math.cos(midAngle) * labelR;
+      const ly = cy + Math.sin(midAngle) * labelR;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${11 * 1}px 'Nunito Sans', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${pct}%`, lx, ly);
+    }
+
+    startAngle += sliceAngle;
+  });
+
+  // Legend below (rendered as HTML after canvas)
+  const legendEl = document.createElement('div');
+  legendEl.className = 'ai-chart-legend';
+  legendEl.innerHTML = labels.map((label, i) => {
+    const color = (colors && colors[i]) || defaultColors[i % defaultColors.length];
+    const pct = ((values[i] / total) * 100).toFixed(1);
+    return `<div class="ai-legend-item">
+      <span class="ai-legend-dot" style="background:${color}"></span>
+      <span class="ai-legend-label">${escHtml(label)}</span>
+      <span class="ai-legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  canvas.parentElement.appendChild(legendEl);
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   initTheme();
@@ -935,6 +1169,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('new-family-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('create-family-btn').click();
   });
+
+  // AI settings & analysis
+  initAISettingsUI();
+  document.getElementById('save-ai-settings-btn').addEventListener('click', handleSaveAISettings);
+  document.getElementById('ai-analyze-btn').addEventListener('click', runAIAnalysis);
+  checkAIConfigured();
 
   init();
 });
