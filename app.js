@@ -1275,12 +1275,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('invite-email').value.trim();
     if (!email) { toast('Email required', 'error'); return; }
     try {
-      await api('/api/family', {
+      const inviteRes = await api('/api/family', {
         method: 'PUT',
         body: JSON.stringify({ action: 'invite', email }),
       });
       document.getElementById('invite-email').value = '';
-      toast('Invite sent! They\'ll receive an email and join automatically on sign-in.', 'success');
+      if (inviteRes.email_sent) {
+        toast('Invite email sent! They\'ll join automatically on sign-in.', 'success');
+      } else {
+        toast(`Invited! Email couldn't be sent — share this link: ${inviteRes.app_url}`, 'info');
+      }
       await loadFamily();
     } catch (err) {
       toast('Failed: ' + err.message, 'error');

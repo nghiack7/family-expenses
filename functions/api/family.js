@@ -181,14 +181,17 @@ export async function onRequestPut(context) {
 
     // Send invite email via Resend (best-effort, don't fail the invite if email fails)
     const appUrl = new URL(request.url).origin;
-    await sendInviteEmail(env, {
-      to: email,
-      inviterName: user.name,
-      familyName: family?.name || 'a family',
-      appUrl,
-    }).catch(() => {});
+    let emailSent = false;
+    try {
+      emailSent = await sendInviteEmail(env, {
+        to: email,
+        inviterName: user.name,
+        familyName: family?.name || 'a family',
+        appUrl,
+      });
+    } catch { /* non-fatal */ }
 
-    return jsonResp({ ok: true, invite_id: inviteId });
+    return jsonResp({ ok: true, invite_id: inviteId, email_sent: emailSent, app_url: appUrl });
   }
 
   if (action === 'leave') {
@@ -295,7 +298,7 @@ export async function onRequestPut(context) {
 
 async function sendInviteEmail(env, { to, inviterName, familyName, appUrl }) {
   const apiKey = env.RESEND_API_KEY;
-  if (!apiKey) return; // Skip if not configured
+  if (!apiKey) return false;
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:2rem">
@@ -316,7 +319,7 @@ async function sendInviteEmail(env, { to, inviterName, familyName, appUrl }) {
       <p style="color:#aaa;font-size:0.75rem">Family Expenses — Track spending together</p>
     </div>`;
 
-  await fetch('https://api.resend.com/emails', {
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -329,6 +332,7 @@ async function sendInviteEmail(env, { to, inviterName, familyName, appUrl }) {
       html,
     }),
   });
+  return res.ok;
 }
 
 function escHtml(s) {
