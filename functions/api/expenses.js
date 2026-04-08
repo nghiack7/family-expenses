@@ -125,6 +125,56 @@ export async function onRequestPost(context) {
   return jsonResp({ ok: true, id }, 201);
 }
 
+// PUT /api/expenses
+export async function onRequestPut(context) {
+  const { request, env, data } = context;
+  const user = data.user;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError('Invalid JSON', 400);
+  }
+
+  const { id, amount, description, category_id, expense_date } = body;
+
+  if (!id) return jsonError('id required', 400);
+  if (!amount || isNaN(amount) || amount <= 0) return jsonError('Valid amount required', 400);
+  if (!category_id) return jsonError('category_id required', 400);
+  if (!expense_date || !/^\d{4}-\d{2}-\d{2}$/.test(expense_date)) {
+    return jsonError('expense_date required (YYYY-MM-DD)', 400);
+  }
+
+  const membership = await env.DB.prepare(
+    `SELECT family_id, role FROM family_members WHERE user_id = ? LIMIT 1`
+  ).bind(user.sub).first();
+
+  if (!membership) return jsonError('Not in a family', 404);
+
+  const expense = await env.DB.prepare(
+    `SELECT user_id FROM expenses WHERE id = ? AND family_id = ?`
+  ).bind(id, membership.family_id).first();
+
+  if (!expense) return jsonError('Expense not found', 404);
+  if (expense.user_id !== user.sub && membership.role !== 'owner') {
+    return jsonError('Not authorized to edit this expense', 403);
+  }
+
+  // Verify category belongs to family
+  const category = await env.DB.prepare(
+    `SELECT id FROM categories WHERE id = ? AND family_id = ?`
+  ).bind(category_id, membership.family_id).first();
+
+  if (!category) return jsonError('Invalid category', 400);
+
+  await env.DB.prepare(
+    `UPDATE expenses SET amount = ?, description = ?, category_id = ?, expense_date = ? WHERE id = ?`
+  ).bind(amount, description || null, category_id, expense_date, id).run();
+
+  return jsonResp({ ok: true });
+}
+
 // DELETE /api/expenses?id=xxx
 export async function onRequestDelete(context) {
   const { request, env, data } = context;

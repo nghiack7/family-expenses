@@ -82,6 +82,8 @@ const translations = {
     add_first_expense: 'Thêm khoản chi đầu tiên!',
     delete_expense_confirm: 'Xóa khoản chi tiêu này?',
     expense_deleted: 'Đã xóa chi tiêu',
+    edit_expense: 'Sửa chi tiêu',
+    expense_updated: 'Đã cập nhật chi tiêu!',
 
     // Family
     family_settings: 'Cài đặt gia đình',
@@ -250,6 +252,8 @@ const translations = {
     add_first_expense: 'Add your first expense!',
     delete_expense_confirm: 'Delete this expense?',
     expense_deleted: 'Expense deleted',
+    edit_expense: 'Edit Expense',
+    expense_updated: 'Expense updated!',
     family_settings: 'Family Settings',
     your_profile: 'Your Profile',
     display_name: 'Display Name',
@@ -770,11 +774,29 @@ function renderExpenseList(container, expenses) {
       <div class="expense-right">
         <div class="expense-amount">${formatMoney(e.amount)}</div>
         <div class="expense-date">${formatDate(e.expense_date)}</div>
-        <button class="expense-delete" data-id="${escHtml(e.id)}" title="Delete">🗑</button>
+        <div class="expense-actions">
+          <button class="expense-edit" data-id="${escHtml(e.id)}" data-amount="${e.amount}" data-description="${escHtml(e.description || '')}" data-category="${escHtml(e.category_id)}" data-date="${escHtml(e.expense_date)}" title="${t('edit')}">✏️</button>
+          <button class="expense-delete" data-id="${escHtml(e.id)}" title="${t('delete')}">🗑</button>
+        </div>
       </div>
     </div>`
   ).join('');
 
+  // Edit buttons
+  container.querySelectorAll('.expense-edit').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      openEditExpenseModal({
+        id: btn.dataset.id,
+        amount: btn.dataset.amount,
+        description: btn.dataset.description,
+        category_id: btn.dataset.category,
+        expense_date: btn.dataset.date,
+      });
+    });
+  });
+
+  // Delete buttons
   container.querySelectorAll('.expense-delete').forEach(btn => {
     btn.addEventListener('click', async (ev) => {
       ev.stopPropagation();
@@ -783,17 +805,108 @@ function renderExpenseList(container, expenses) {
         await api(`/api/expenses?id=${encodeURIComponent(btn.dataset.id)}`, { method: 'DELETE' });
         btn.closest('.expense-item').remove();
         toast(t('expense_deleted'), 'success');
-        // Refresh stats silently in the background
-        if (state.currentMonth) {
-          const monthParam = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}`;
-          api(`/api/stats?month=${monthParam}`)
-            .then(s => { state.stats = s; renderStats(s); })
-            .catch(() => {});
-        }
+        refreshStatsBackground();
       } catch (err) {
         toast(t('delete_failed', err.message), 'error');
       }
     });
+  });
+}
+
+function refreshStatsBackground() {
+  if (state.currentMonth) {
+    const monthParam = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}`;
+    api(`/api/stats?month=${monthParam}`)
+      .then(s => { state.stats = s; renderStats(s); })
+      .catch(() => {});
+  }
+}
+
+// ── Edit Expense Modal ────────────────────────────────────────────────────
+function openEditExpenseModal(expense) {
+  // Ensure categories are loaded
+  if (state.categories.length === 0) {
+    loadCategories().then(() => openEditExpenseModal(expense));
+    return;
+  }
+
+  // Remove existing modal if any
+  const existing = document.getElementById('edit-expense-overlay');
+  if (existing) existing.remove();
+
+  const categoryOptions = state.categories.map(c =>
+    `<option value="${escHtml(c.id)}" ${c.id === expense.category_id ? 'selected' : ''}>${escHtml(c.icon || '📦')} ${escHtml(c.name)}</option>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'edit-expense-overlay';
+  overlay.className = 'ai-modal-overlay open';
+  overlay.innerHTML = `
+    <div class="ai-modal" style="max-width:420px">
+      <div class="ai-modal-header">
+        <div><div class="ai-modal-header-title">${t('edit_expense')}</div></div>
+        <button class="ai-modal-close" id="edit-expense-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="ai-modal-body" style="padding:1rem">
+        <form id="edit-expense-form">
+          <div class="form-group">
+            <label class="form-label">${t('amount_label', state.currency)}</label>
+            <input type="number" id="edit-exp-amount" min="1" step="1" value="${expense.amount}" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${t('description')}</label>
+            <input type="text" id="edit-exp-desc" value="${escHtml(expense.description)}" maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">${t('category')}</label>
+            <select id="edit-exp-category" required>${categoryOptions}</select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">${t('date')}</label>
+            <input type="date" id="edit-exp-date" value="${expense.expense_date}" required />
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="edit-expense-btn">${t('save')}</button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('edit-expense-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  document.getElementById('edit-expense-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('edit-expense-btn');
+    btn.disabled = true;
+    btn.textContent = t('saving');
+
+    try {
+      await api('/api/expenses', {
+        method: 'PUT',
+        body: JSON.stringify({
+          id: expense.id,
+          amount: parseFloat(document.getElementById('edit-exp-amount').value),
+          description: document.getElementById('edit-exp-desc').value.trim(),
+          category_id: document.getElementById('edit-exp-category').value,
+          expense_date: document.getElementById('edit-exp-date').value,
+        }),
+      });
+      toast(t('expense_updated'), 'success');
+      overlay.remove();
+      // Refresh current view
+      const hash = window.location.hash.replace('#', '') || 'dashboard';
+      if (hash === 'dashboard') loadDashboard();
+      else if (hash === 'history') loadHistory(true);
+    } catch (err) {
+      toast(t('failed', err.message), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('save');
+    }
   });
 }
 
