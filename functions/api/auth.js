@@ -246,8 +246,8 @@ async function verifyGoogleJWT(token, clientId) {
   if (parts.length !== 3) throw new Error('Malformed JWT');
 
   const [headerB64, payloadB64, sigB64] = parts;
-  const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')));
-  const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+  const header = JSON.parse(new TextDecoder().decode(base64UrlDecode(headerB64)));
+  const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(payloadB64)));
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) throw new Error('Token expired');
@@ -279,13 +279,18 @@ async function verifyGoogleJWT(token, clientId) {
   return payload;
 }
 
+function base64UrlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
 async function signJWT(payload, secret, expiresIn) {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 
   const now = Math.floor(Date.now() / 1000);
-  const fullPayload = btoa(JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const fullPayload = base64UrlEncode(JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }));
 
   const key = await crypto.subtle.importKey(
     'raw',
@@ -301,8 +306,9 @@ async function signJWT(payload, secret, expiresIn) {
     new TextEncoder().encode(`${header}.${fullPayload}`)
   );
 
-  const sig = btoa(String.fromCharCode(...new Uint8Array(sigBytes)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  let binary = '';
+  for (const b of new Uint8Array(sigBytes)) binary += String.fromCharCode(b);
+  const sig = btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
   return `${header}.${fullPayload}.${sig}`;
 }

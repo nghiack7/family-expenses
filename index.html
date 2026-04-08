@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1E3A8A" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Family Expenses</title>
   <link rel="stylesheet" href="style.css" />
   <script>window.GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com";</script>
@@ -13,7 +15,7 @@
     <!-- Login page (shown when not authenticated) -->
     <div id="login-page" class="login-page" style="display:none">
       <div class="login-card">
-        <div class="login-icon">💰</div>
+        <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
         <h1>Family Expenses</h1>
         <p>Track spending together, stay on budget as a family.</p>
 
@@ -69,7 +71,7 @@
         </div>
 
         <p style="font-size:0.8125rem;color:var(--text-muted);margin-top:1.5rem">
-          Amounts displayed in Vietnamese Dong (VND)
+          Currency can be configured in Family Settings
         </p>
       </div>
     </div>
@@ -78,7 +80,7 @@
     <div id="app-shell" style="display:none">
       <!-- Top nav -->
       <nav class="nav">
-        <div class="nav-brand">💰 <span>Family</span>Expenses</div>
+        <div class="nav-brand"><div class="nav-brand-icon">FE</div><span>Family</span>Expenses</div>
         <div class="nav-links">
           <button class="nav-link" data-view="dashboard">Dashboard</button>
           <button class="nav-link" data-view="add-expense">+ Add</button>
@@ -166,7 +168,7 @@
             <form id="add-expense-form">
               <div class="form-group">
                 <label class="form-label" for="exp-amount">Amount (VND) *</label>
-                <input type="number" id="exp-amount" name="amount" min="1" step="1000"
+                <input type="number" id="exp-amount" name="amount" min="1" step="1"
                   placeholder="e.g. 150000" required />
                 <div class="form-hint" id="exp-amount-preview"></div>
               </div>
@@ -280,6 +282,8 @@
                 <div id="pending-invites-list"></div>
               </div>
             </div>
+
+            <div class="card" id="currency-setting" style="display:none"></div>
 
             <div class="card" style="border-color:var(--danger);border-opacity:0.3">
               <div class="card-title" style="color:var(--danger);margin-bottom:0.75rem">Danger zone</div>

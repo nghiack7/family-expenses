@@ -56,7 +56,7 @@ async function verifyJWT(token, secret) {
   const valid = await crypto.subtle.verify('HMAC', key, sigBytes, data);
   if (!valid) throw new Error('Invalid signature');
 
-  const decoded = JSON.parse(new TextDecoder().decode(base64UrlDecode(payload)));
+  const decoded = JSON.parse(new TextDecoder('utf-8').decode(base64UrlDecode(payload)));
 
   if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
     throw new Error('Token expired');

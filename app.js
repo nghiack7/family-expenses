@@ -12,11 +12,22 @@ const state = {
   stats: null,        // last fetched stats
   historyOffset: 0,
   historyTotal: 0,
+  currency: 'VND',   // family currency
 };
 
-// ── VND formatter ──────────────────────────────────────────────────────────
-const vndFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-const formatVND = (n) => vndFormatter.format(Math.round(n));
+// ── Currency formatter ────────────────────────────────────────────────────
+let currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+function updateCurrencyFormatter(currency) {
+  state.currency = currency;
+  try {
+    currencyFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency });
+  } catch {
+    currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  }
+}
+
+const formatMoney = (n) => currencyFormatter.format(Math.round(n));
 
 // ── API helpers ────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
@@ -272,7 +283,7 @@ async function loadDashboard() {
 }
 
 function renderStats(s) {
-  document.getElementById('stat-total').textContent = formatVND(s.total);
+  document.getElementById('stat-total').textContent = formatMoney(s.total);
   document.getElementById('stat-count').textContent = `${s.count} expense${s.count !== 1 ? 's' : ''}`;
 
   const changeEl = document.getElementById('stat-change');
@@ -295,7 +306,7 @@ function renderStats(s) {
   // Daily average across days that had spending
   const daysWithSpend = s.daily ? s.daily.length : 0;
   const avg = daysWithSpend > 0 ? s.total / daysWithSpend : 0;
-  document.getElementById('stat-avg').textContent = formatVND(avg);
+  document.getElementById('stat-avg').textContent = formatMoney(avg);
   document.getElementById('stat-days').textContent = `${daysWithSpend} day${daysWithSpend !== 1 ? 's' : ''} with spending`;
 
   // Top category
@@ -303,7 +314,7 @@ function renderStats(s) {
   if (topCat) {
     document.getElementById('stat-top-cat').textContent = `${topCat.icon} ${topCat.name}`;
     const pct = s.total > 0 ? (topCat.total / s.total * 100).toFixed(0) : 0;
-    document.getElementById('stat-top-cat-pct').textContent = `${formatVND(topCat.total)} (${pct}%)`;
+    document.getElementById('stat-top-cat-pct').textContent = `${formatMoney(topCat.total)} (${pct}%)`;
   } else {
     document.getElementById('stat-top-cat').textContent = '—';
     document.getElementById('stat-top-cat-pct').textContent = 'No expenses yet';
@@ -325,7 +336,7 @@ function renderStats(s) {
             <div class="cat-name">${escHtml(cat.name)}</div>
             <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>
           </div>
-          <div class="cat-amount">${formatVND(cat.total)}</div>
+          <div class="cat-amount">${formatMoney(cat.total)}</div>
         </div>`;
     }).join('');
   }
@@ -337,7 +348,7 @@ function renderStats(s) {
       const avatarHtml = p.avatar
         ? `<img class="chip-avatar" src="${escHtml(p.avatar)}" alt="${escHtml(p.name)}" />`
         : `<div class="avatar-placeholder" style="width:22px;height:22px;font-size:0.75rem">${escHtml(p.name[0])}</div>`;
-      return `<div class="person-chip">${avatarHtml}<span class="chip-name">${escHtml(p.name)}</span><span class="chip-amount">${formatVND(p.total)}</span></div>`;
+      return `<div class="person-chip">${avatarHtml}<span class="chip-name">${escHtml(p.name)}</span><span class="chip-amount">${formatMoney(p.total)}</span></div>`;
     }).join('');
   } else {
     chipsEl.innerHTML = '<span style="color:var(--text-muted);font-size:0.875rem">No members yet</span>';
@@ -350,7 +361,7 @@ function renderStats(s) {
     const maxDay = Math.max(...s.daily.map(d => d.total));
     sparkEl.innerHTML = s.daily.map(d => {
       const h = maxDay > 0 ? Math.max(4, (d.total / maxDay * 48)) : 4;
-      return `<div class="spark-bar" style="height:${h}px" title="${formatDate(d.expense_date)}: ${formatVND(d.total)}"></div>`;
+      return `<div class="spark-bar" style="height:${h}px" title="${formatDate(d.expense_date)}: ${formatMoney(d.total)}"></div>`;
     }).join('');
   }
 }
@@ -379,7 +390,7 @@ function renderExpenseList(container, expenses) {
         </div>
       </div>
       <div class="expense-right">
-        <div class="expense-amount">${formatVND(e.amount)}</div>
+        <div class="expense-amount">${formatMoney(e.amount)}</div>
         <div class="expense-date">${formatDate(e.expense_date)}</div>
         <button class="expense-delete" data-id="${escHtml(e.id)}" title="Delete">🗑</button>
       </div>
@@ -416,6 +427,10 @@ async function prepareAddExpense() {
   if (state.user) {
     document.getElementById('exp-paid-by').value = state.user.name;
   }
+
+  // Update amount label with current currency
+  const amountLabel = document.querySelector('label[for="exp-amount"]');
+  if (amountLabel) amountLabel.textContent = `Amount (${state.currency}) *`;
 
   await loadCategories();
   populateCategorySelects();
@@ -568,6 +583,10 @@ async function loadFamily() {
     noFam.style.display = 'none';
     hasFam.style.display = 'block';
 
+    // Apply family currency
+    updateCurrencyFormatter(state.family.currency || 'VND');
+    renderCurrencyUI();
+
     document.getElementById('family-name-heading').textContent = state.family.name;
 
     const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role || 'member';
@@ -630,6 +649,69 @@ async function loadFamily() {
   }
 }
 
+// ── Currency Setting ──────────────────────────────────────────────────
+const COMMON_CURRENCIES = ['VND', 'USD', 'EUR', 'JPY', 'KRW', 'THB', 'SGD', 'AUD', 'GBP', 'CNY'];
+
+function renderCurrencyUI() {
+  const container = document.getElementById('currency-setting');
+  if (!container) return;
+  if (!state.family) { container.style.display = 'none'; return; }
+
+  const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role;
+  const isOwner = myRole === 'owner';
+  const currency = state.family.currency || 'VND';
+
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="card-header">
+      <span class="card-title">Currency</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <select id="currency-select" ${isOwner ? '' : 'disabled'} style="flex:1;min-width:120px">
+        ${COMMON_CURRENCIES.map(c => `<option value="${c}" ${c === currency ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+      ${isOwner ? '<button class="btn btn-primary" id="save-currency-btn">Save</button>' : '<span style="color:var(--text-muted);font-size:0.85rem">Only the owner can change currency</span>'}
+    </div>`;
+
+  if (isOwner) {
+    document.getElementById('save-currency-btn').addEventListener('click', changeCurrency);
+  }
+}
+
+async function changeCurrency() {
+  const newCurrency = document.getElementById('currency-select').value;
+  const oldCurrency = state.family.currency || 'VND';
+  if (newCurrency === oldCurrency) { toast('Currency unchanged', 'info'); return; }
+
+  const confirmed = confirm(
+    `Change currency from ${oldCurrency} to ${newCurrency}?\n\n` +
+    `WARNING: All existing expense amounts will be converted using the current exchange rate. This cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  const btn = document.getElementById('save-currency-btn');
+  btn.disabled = true;
+  btn.textContent = 'Converting...';
+
+  try {
+    const result = await api('/api/family', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'set_currency', currency: newCurrency }),
+    });
+    state.family.currency = newCurrency;
+    updateCurrencyFormatter(newCurrency);
+    toast(`Currency changed to ${newCurrency} (rate: ${result.rate.toFixed(6)})`, 'success');
+    renderCurrencyUI();
+    // Refresh dashboard to show new amounts
+    if (state.currentMonth) loadDashboard();
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   initTheme();
@@ -648,7 +730,11 @@ async function init() {
   if (state.user) {
     // Validate session is still alive by hitting a protected endpoint
     try {
-      await api('/api/family');
+      const famData = await api('/api/family');
+      if (famData.family) {
+        state.family = famData.family;
+        updateCurrencyFormatter(famData.family.currency || 'VND');
+      }
       showApp();
     } catch (err) {
       // Session expired or invalid
@@ -753,10 +839,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Live VND preview while typing amount
+  // Live currency preview while typing amount
   document.getElementById('exp-amount').addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
-    document.getElementById('exp-amount-preview').textContent = val > 0 ? formatVND(val) : '';
+    document.getElementById('exp-amount-preview').textContent = val > 0 ? formatMoney(val) : '';
   });
 
   // Add custom category
@@ -805,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ action: 'invite', email }),
       });
       document.getElementById('invite-email').value = '';
-      toast('Invite created! They will join automatically on sign-in.', 'success');
+      toast('Invite sent! They\'ll receive an email and join automatically on sign-in.', 'success');
       await loadFamily();
     } catch (err) {
       toast('Failed: ' + err.message, 'error');
