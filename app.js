@@ -799,13 +799,19 @@ function initProfileUI() {
 
   if (pwCard) {
     pwCard.style.display = 'block';
-    const isGoogleOnly = state.user.auth_provider === 'google' && !state.user.has_password;
-    if (isGoogleOnly) {
-      pwForm.style.display = 'none';
-      googleNotice.style.display = 'block';
-    } else {
+    const hasPassword = state.user.has_password;
+    if (hasPassword) {
+      // Has password — show change form
       pwForm.style.display = 'block';
       googleNotice.style.display = 'none';
+    } else {
+      // No password yet (Google-only) — show set password form
+      pwForm.style.display = 'block';
+      googleNotice.style.display = 'none';
+      // Hide "current password" field since they don't have one
+      document.getElementById('current-password').parentElement.style.display = 'none';
+      document.getElementById('change-password-btn').textContent = 'Set Password';
+      document.querySelector('#password-card .card-title').textContent = 'Set Password';
     }
   }
 }
@@ -904,9 +910,8 @@ function handleSaveAISettings() {
 }
 
 function checkAIConfigured() {
-  const s = getAISettings();
   const card = document.getElementById('ai-insights-card');
-  if (card) card.style.display = (s.apiKey && s.provider && s.model) ? 'block' : 'none';
+  if (card) card.style.display = 'block';
 }
 
 async function runAIAnalysis(customQuestion) {

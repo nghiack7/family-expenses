@@ -65,16 +65,15 @@ export async function onRequestPut(context) {
     ).bind(userId).first();
     if (!user) return jsonError('User not found', 404);
 
-    if (!user.password_hash) {
-      return jsonError('This account uses Google Sign-In. Password change is not available.', 400);
+    if (user.password_hash) {
+      // Has existing password — verify current before changing
+      if (!current_password) return jsonError('Current password is required', 400);
+      const currentHash = await hashPassword(current_password, user.password_salt);
+      if (currentHash !== user.password_hash) {
+        return jsonError('Current password is incorrect', 401);
+      }
     }
-
-    // Verify current password
-    if (!current_password) return jsonError('Current password is required', 400);
-    const currentHash = await hashPassword(current_password, user.password_salt);
-    if (currentHash !== user.password_hash) {
-      return jsonError('Current password is incorrect', 401);
-    }
+    // If no password_hash, this is a Google-only user setting password for the first time — allowed
 
     const newSalt = generateSalt();
     const newHash = await hashPassword(new_password, newSalt);
