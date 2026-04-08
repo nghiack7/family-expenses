@@ -1051,7 +1051,7 @@ function renderCurrencyUI() {
       <select id="currency-select" ${isOwner ? '' : 'disabled'} style="flex:1;min-width:120px">
         ${COMMON_CURRENCIES.map(c => `<option value="${c}" ${c === currency ? 'selected' : ''}>${c}</option>`).join('')}
       </select>
-      ${isOwner ? '<button class="btn btn-primary" id="save-currency-btn">Save</button>' : '<span style="color:var(--text-muted);font-size:0.85rem">${t('only_owner_currency')}</span>'}
+      ${isOwner ? `<button class="btn btn-primary" id="save-currency-btn">${t('save')}</button>` : `<span style="color:var(--text-muted);font-size:0.85rem">${t('only_owner_currency')}</span>`}
     </div>`;
 
   if (isOwner) {
