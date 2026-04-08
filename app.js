@@ -154,9 +154,17 @@ function initAuthTabs() {
   const toggleBtn = document.getElementById('toggle-auth-mode');
   const errEl = document.getElementById('email-auth-error');
 
+  const usernameGroup = document.getElementById('auth-username-group');
+  const emailLabel = document.getElementById('auth-email-label');
+  const emailInput = document.getElementById('auth-email');
+
   toggleBtn.addEventListener('click', () => {
     isRegisterMode = !isRegisterMode;
     nameGroup.style.display = isRegisterMode ? '' : 'none';
+    usernameGroup.style.display = isRegisterMode ? '' : 'none';
+    emailLabel.textContent = isRegisterMode ? 'Email' : 'Email or Username';
+    emailInput.type = isRegisterMode ? 'email' : 'text';
+    emailInput.placeholder = isRegisterMode ? 'you@example.com' : 'you@example.com or username';
     btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
     toggleBtn.textContent = isRegisterMode
       ? 'Already have an account? Sign In'
@@ -164,6 +172,11 @@ function initAuthTabs() {
     document.getElementById('auth-password').autocomplete = isRegisterMode ? 'new-password' : 'current-password';
     errEl.style.display = 'none';
   });
+
+  // Set login mode defaults
+  emailLabel.textContent = 'Email or Username';
+  emailInput.type = 'text';
+  emailInput.placeholder = 'you@example.com or username';
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -176,7 +189,7 @@ function initAuthTabs() {
 
     try {
       const body = isRegisterMode
-        ? { action: 'register', name: document.getElementById('auth-name').value, email, password }
+        ? { action: 'register', name: document.getElementById('auth-name').value, email, password, username: document.getElementById('auth-username').value }
         : { action: 'login', email, password };
       const data = await api('/api/auth', {
         method: 'POST',
@@ -712,6 +725,39 @@ function initProfileUI() {
   nameInput.value = state.user.name || '';
   emailInput.value = state.user.email || '';
 
+  // Username
+  const usernameInput = document.getElementById('profile-username');
+  const saveUsernameBtn = document.getElementById('save-username-btn');
+  const usernameHint = document.getElementById('username-hint');
+  if (usernameInput) {
+    usernameInput.value = state.user.username || '';
+    saveUsernameBtn.onclick = async () => {
+      const val = usernameInput.value.trim();
+      if (val && (val.length < 3 || val.length > 30 || !/^[a-zA-Z0-9_]+$/.test(val))) {
+        toast('Username must be 3-30 chars, letters/numbers/underscores only', 'error');
+        return;
+      }
+      saveUsernameBtn.disabled = true;
+      saveUsernameBtn.textContent = 'Saving...';
+      try {
+        await api('/api/auth', {
+          method: 'PUT',
+          body: JSON.stringify({ action: 'update_username', username: val }),
+        });
+        state.user.username = val || null;
+        sessionStorage.setItem('user', JSON.stringify(state.user));
+        usernameHint.textContent = val ? 'Username saved!' : 'Username cleared';
+        usernameHint.style.color = 'var(--success)';
+        toast(val ? 'Username saved!' : 'Username cleared', 'success');
+      } catch (err) {
+        toast('Failed: ' + err.message, 'error');
+      } finally {
+        saveUsernameBtn.disabled = false;
+        saveUsernameBtn.textContent = 'Save';
+      }
+    };
+  }
+
   // Check if name was already edited (stored in user state from session)
   const nameEdited = state.user.name_edited;
   if (nameEdited) {
@@ -783,27 +829,22 @@ function initProfileUI() {
     const hasPassword = state.user.has_password;
     const isGoogleUser = state.user.auth_provider === 'google';
 
-    if (isGoogleUser && hasPassword) {
-      // Google user already set password — no more changes allowed
-      pwCard.style.display = 'block';
-      pwForm.style.display = 'none';
-      googleNotice.style.display = 'block';
-      googleNotice.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.9375rem">Password has been set. You can now sign in with email & password too.</div>';
-    } else if (isGoogleUser && !hasPassword) {
-      // Google user — first time setting password
+    if (!hasPassword) {
+      // No password yet (Google-only user) — show set password form
       pwCard.style.display = 'block';
       pwForm.style.display = 'block';
       googleNotice.style.display = 'none';
       document.getElementById('current-password').parentElement.style.display = 'none';
       document.getElementById('change-password-btn').textContent = 'Set Password';
       document.querySelector('#password-card .card-title').textContent = 'Set Password';
-    } else if (hasPassword) {
-      // Email-registered user — allow password change
+    } else {
+      // Has password — allow change
       pwCard.style.display = 'block';
       pwForm.style.display = 'block';
       googleNotice.style.display = 'none';
-    } else {
-      pwCard.style.display = 'none';
+      document.getElementById('current-password').parentElement.style.display = '';
+      document.getElementById('change-password-btn').textContent = 'Change Password';
+      document.querySelector('#password-card .card-title').textContent = 'Change Password';
     }
   }
 }

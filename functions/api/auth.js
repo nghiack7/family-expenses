@@ -21,7 +21,6 @@ export async function onRequestPost(context) {
   if (action === 'login') {
     return handleEmailLogin(body, env, request);
   }
-
   // Default: Google SSO
   return handleGoogleSSO(body, env, request);
 }
@@ -53,6 +52,23 @@ export async function onRequestPut(context) {
     return issueSession({ sub: full.id, email: full.email, name: full.name, avatar: full.avatar }, env, request);
   }
 
+  // ── Update username ──
+  if (action === 'update_username') {
+    const username = (body.username || '').trim().toLowerCase();
+    if (!username) {
+      await env.DB.prepare('UPDATE users SET username = NULL WHERE id = ?').bind(userId).run();
+      return new Response(JSON.stringify({ ok: true, username: null }), { headers: { 'Content-Type': 'application/json' } });
+    }
+    if (username.length < 3 || username.length > 30) return jsonError('Username must be 3-30 characters', 400);
+    if (!/^[a-z0-9_]+$/.test(username)) return jsonError('Username can only contain letters, numbers, and underscores', 400);
+
+    const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ? AND id != ?').bind(username, userId).first();
+    if (existing) return jsonError('Username already taken', 409);
+
+    await env.DB.prepare('UPDATE users SET username = ? WHERE id = ?').bind(username, userId).run();
+    return new Response(JSON.stringify({ ok: true, username }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
   // ── Change password ──
   if (action === 'change_password') {
     const { current_password, new_password } = body;
@@ -65,13 +81,8 @@ export async function onRequestPut(context) {
     ).bind(userId).first();
     if (!user) return jsonError('User not found', 404);
 
-    if (user.password_hash && user.auth_provider === 'google') {
-      // Google user already set password once — no further changes allowed
-      return jsonError('Password has already been set and cannot be changed', 403);
-    }
-
     if (user.password_hash) {
-      // Email-registered user — verify current password before changing
+      // Has existing password — verify current password before changing
       if (!current_password) return jsonError('Current password is required', 400);
       const currentHash = await hashPassword(current_password, user.password_salt);
       if (currentHash !== user.password_hash) {
@@ -157,9 +168,18 @@ async function handleGoogleSSO(body, env, request) {
 // ── Email Registration ─────────────────────────────────────────────────────────
 
 async function handleEmailRegister(body, env, request) {
-  const { email, password, name } = body;
+  const { email, password, name, username } = body;
   if (!email || !password || !name) return jsonError('Missing email, password, or name', 400);
   if (password.length < 8) return jsonError('Password must be at least 8 characters', 400);
+
+  // Validate username if provided
+  const cleanUsername = username ? username.trim().toLowerCase() : null;
+  if (cleanUsername) {
+    if (cleanUsername.length < 3 || cleanUsername.length > 30) return jsonError('Username must be 3-30 characters', 400);
+    if (!/^[a-z0-9_]+$/.test(cleanUsername)) return jsonError('Username can only contain letters, numbers, and underscores', 400);
+    const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(cleanUsername).first();
+    if (existing) return jsonError('Username already taken', 409);
+  }
 
   // Check if email already exists
   try {
@@ -192,9 +212,9 @@ async function handleEmailRegister(body, env, request) {
 
   try {
     await env.DB.prepare(
-      `INSERT INTO users (id, email, name, avatar, auth_provider, password_hash, password_salt)
-       VALUES (?, ?, ?, NULL, 'email', ?, ?)`
-    ).bind(userId, email, name, hash, salt).run();
+      `INSERT INTO users (id, email, name, avatar, auth_provider, password_hash, password_salt, username)
+       VALUES (?, ?, ?, NULL, 'email', ?, ?, ?)`
+    ).bind(userId, email, name, hash, salt, cleanUsername).run();
   } catch (err) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
@@ -208,19 +228,27 @@ async function handleEmailRegister(body, env, request) {
 
 async function handleEmailLogin(body, env, request) {
   const { email, password } = body;
-  if (!email || !password) return jsonError('Missing email or password', 400);
+  if (!email || !password) return jsonError('Missing email/username or password', 400);
+
+  // Login by email or username
+  const identifier = email.trim().toLowerCase();
+  const isEmail = identifier.includes('@');
 
   let user;
   try {
-    user = await env.DB.prepare(
-      `SELECT id, email, name, avatar, password_hash, password_salt FROM users WHERE email = ?`
-    ).bind(email).first();
+    user = isEmail
+      ? await env.DB.prepare(
+          `SELECT id, email, name, avatar, password_hash, password_salt FROM users WHERE email = ?`
+        ).bind(identifier).first()
+      : await env.DB.prepare(
+          `SELECT id, email, name, avatar, password_hash, password_salt FROM users WHERE username = ?`
+        ).bind(identifier).first();
   } catch (err) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
 
   if (!user) {
-    return jsonError('Invalid email or password', 401);
+    return jsonError('Invalid email/username or password', 401);
   }
   if (!user.password_hash) {
     return jsonError('This account uses Google Sign-In. Please sign in with Google, or register with a password first.', 401);
@@ -267,12 +295,14 @@ async function issueSession(user, env, request) {
   let nameEdited = 0;
   let authProvider = user.auth_provider || 'google';
   let hasPassword = false;
+  let username = null;
   try {
-    const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash FROM users WHERE id = ?').bind(user.sub).first();
+    const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash, username FROM users WHERE id = ?').bind(user.sub).first();
     if (row) {
       nameEdited = row.name_edited || 0;
       authProvider = row.auth_provider || 'google';
       hasPassword = !!row.password_hash;
+      username = row.username || null;
     }
   } catch { /* non-fatal */ }
 
@@ -288,7 +318,7 @@ async function issueSession(user, env, request) {
     : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
 
   return new Response(
-    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, name_edited: nameEdited, auth_provider: authProvider, has_password: hasPassword } }),
+    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, username, name_edited: nameEdited, auth_provider: authProvider, has_password: hasPassword } }),
     {
       headers: {
         'Content-Type': 'application/json',

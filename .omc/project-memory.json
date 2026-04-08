@@ -1,0 +1,164 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775645404586,
+  "projectRoot": "/Users/nguyennghia/go/src/github.com/personal/family-expenses",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "wrangler pages dev . --d1 DB",
+      "deploy": "wrangler pages deploy .",
+      "db:migrate": "wrangler d1 migrations apply family-expenses",
+      "db:migrate:local": "wrangler d1 migrations apply family-expenses --local"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "functions": {
+      "path": "functions",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775645404431,
+      "keyFiles": []
+    },
+    "migrations": {
+      "path": "migrations",
+      "purpose": "Database migrations",
+      "fileCount": 4,
+      "lastAccessed": 1775645404433,
+      "keyFiles": [
+        "0001_init.sql",
+        "0002_email_auth.sql",
+        "0003_currency.sql",
+        "0004_profile_edit.sql"
+      ]
+    },
+    "functions/api": {
+      "path": "functions/api",
+      "purpose": "API routes",
+      "fileCount": 7,
+      "lastAccessed": 1775645404441,
+      "keyFiles": [
+        "_middleware.js",
+        "ai-analyze.js",
+        "auth.js"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "app.js",
+      "accessCount": 35,
+      "lastAccessed": 1775653251272,
+      "type": "file"
+    },
+    {
+      "path": "index.html",
+      "accessCount": 31,
+      "lastAccessed": 1775653192440,
+      "type": "file"
+    },
+    {
+      "path": "style.css",
+      "accessCount": 26,
+      "lastAccessed": 1775647108669,
+      "type": "directory"
+    },
+    {
+      "path": "functions/api/auth.js",
+      "accessCount": 16,
+      "lastAccessed": 1775653259448,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 4,
+      "lastAccessed": 1775653041211,
+      "type": "directory"
+    },
+    {
+      "path": "functions/api/_middleware.js",
+      "accessCount": 2,
+      "lastAccessed": 1775648017347,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0001_init.sql",
+      "accessCount": 2,
+      "lastAccessed": 1775653041153,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0002_email_auth.sql",
+      "accessCount": 2,
+      "lastAccessed": 1775653047585,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0004_profile_edit.sql",
+      "accessCount": 2,
+      "lastAccessed": 1775653047619,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1775645496890,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1775645528108,
+      "type": "file"
+    },
+    {
+      "path": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "accessCount": 1,
+      "lastAccessed": 1775646538208,
+      "type": "file"
+    },
+    {
+      "path": "functions/api/family.js",
+      "accessCount": 1,
+      "lastAccessed": 1775648017748,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0005_username.sql",
+      "accessCount": 1,
+      "lastAccessed": 1775653059889,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
