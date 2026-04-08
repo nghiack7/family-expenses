@@ -647,6 +647,9 @@ async function loadFamily() {
   } catch (err) {
     toast('Failed to load family: ' + err.message, 'error');
   }
+
+  // Always init profile UI (works without family too)
+  initProfileUI();
 }
 
 // ── Currency Setting ──────────────────────────────────────────────────
@@ -709,6 +712,135 @@ async function changeCurrency() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Save';
+  }
+}
+
+// ── Profile (Name edit + Password) ────────────────────────────────────────
+function initProfileUI() {
+  if (!state.user) return;
+  const nameInput = document.getElementById('profile-name');
+  const emailInput = document.getElementById('profile-email');
+  const editBtn = document.getElementById('edit-name-btn');
+  const saveBtn = document.getElementById('save-name-btn');
+  const cancelBtn = document.getElementById('cancel-name-btn');
+  const hint = document.getElementById('name-edit-hint');
+
+  if (!nameInput) return;
+
+  nameInput.value = state.user.name || '';
+  emailInput.value = state.user.email || '';
+
+  // Check if name was already edited (stored in user state from session)
+  const nameEdited = state.user.name_edited;
+  if (nameEdited) {
+    editBtn.style.display = 'none';
+    hint.textContent = 'Name has already been changed (one-time edit used)';
+    hint.style.color = 'var(--text-muted)';
+  } else {
+    editBtn.style.display = '';
+  }
+
+  let originalName = nameInput.value;
+
+  editBtn.onclick = () => {
+    nameInput.disabled = false;
+    nameInput.focus();
+    editBtn.style.display = 'none';
+    saveBtn.style.display = '';
+    cancelBtn.style.display = '';
+    originalName = nameInput.value;
+  };
+
+  cancelBtn.onclick = () => {
+    nameInput.value = originalName;
+    nameInput.disabled = true;
+    editBtn.style.display = '';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+  };
+
+  saveBtn.onclick = async () => {
+    const newName = nameInput.value.trim();
+    if (!newName) { toast('Name cannot be empty', 'error'); return; }
+    if (newName === originalName) { cancelBtn.click(); return; }
+
+    if (!confirm('You can only change your name once. Are you sure?')) return;
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    try {
+      const data = await api('/api/auth', {
+        method: 'PUT',
+        body: JSON.stringify({ action: 'update_name', name: newName }),
+      });
+      state.user.name = newName;
+      state.user.name_edited = 1;
+      sessionStorage.setItem('user', JSON.stringify(state.user));
+      renderNavUser();
+      nameInput.disabled = true;
+      saveBtn.style.display = 'none';
+      cancelBtn.style.display = 'none';
+      editBtn.style.display = 'none';
+      hint.textContent = 'Name updated successfully! (one-time edit used)';
+      hint.style.color = 'var(--success)';
+      toast('Name updated!', 'success');
+    } catch (err) {
+      toast('Failed: ' + err.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+  };
+
+  // Password section
+  const pwCard = document.getElementById('password-card');
+  const googleNotice = document.getElementById('google-auth-notice');
+  const pwForm = document.getElementById('password-form-content');
+
+  if (pwCard) {
+    pwCard.style.display = 'block';
+    const isGoogleOnly = state.user.auth_provider === 'google' && !state.user.has_password;
+    if (isGoogleOnly) {
+      pwForm.style.display = 'none';
+      googleNotice.style.display = 'block';
+    } else {
+      pwForm.style.display = 'block';
+      googleNotice.style.display = 'none';
+    }
+  }
+}
+
+async function handleChangePassword() {
+  const currentPw = document.getElementById('current-password').value;
+  const newPw = document.getElementById('new-password').value;
+  const confirmPw = document.getElementById('confirm-password').value;
+  const errEl = document.getElementById('password-error');
+  const btn = document.getElementById('change-password-btn');
+
+  errEl.style.display = 'none';
+
+  if (!currentPw) { errEl.textContent = 'Current password is required'; errEl.style.display = 'block'; return; }
+  if (newPw.length < 8) { errEl.textContent = 'New password must be at least 8 characters'; errEl.style.display = 'block'; return; }
+  if (newPw !== confirmPw) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Changing...';
+
+  try {
+    await api('/api/auth', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'change_password', current_password: currentPw, new_password: newPw }),
+    });
+    document.getElementById('current-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    toast('Password changed successfully!', 'success');
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Change Password';
   }
 }
 
@@ -777,7 +909,7 @@ function checkAIConfigured() {
   if (card) card.style.display = (s.apiKey && s.provider && s.model) ? 'block' : 'none';
 }
 
-async function runAIAnalysis() {
+async function runAIAnalysis(customQuestion) {
   const settings = getAISettings();
   if (!settings.apiKey || !settings.provider || !settings.model) {
     toast('Configure AI settings in Family tab first', 'error');
@@ -791,9 +923,9 @@ async function runAIAnalysis() {
   }
 
   const btn = document.getElementById('ai-analyze-btn');
+  const btn2 = document.getElementById('ai-analyze-btn2');
   const content = document.getElementById('ai-insights-content');
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
+  [btn, btn2].forEach(b => { if (b) { b.disabled = true; b.textContent = 'Analyzing...'; } });
   content.innerHTML = '<div class="spinner"></div>';
 
   try {
@@ -812,6 +944,7 @@ async function runAIAnalysis() {
         currency: state.currency,
         income: settings.income || null,
         savings: settings.savings || null,
+        question: customQuestion || null,
       }),
     });
 
@@ -820,8 +953,9 @@ async function runAIAnalysis() {
     content.innerHTML = `<div class="form-error">${escHtml(err.message)}</div>`;
     toast('AI analysis failed: ' + err.message, 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Analyze';
+    [btn, btn2].forEach(b => { if (b) { b.disabled = false; } });
+    if (btn) btn.textContent = 'Analyze';
+    if (btn2) btn2.textContent = 'Ask AI';
   }
 }
 
@@ -1170,10 +1304,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('create-family-btn').click();
   });
 
+  // Profile & password
+  document.getElementById('change-password-btn').addEventListener('click', handleChangePassword);
+
   // AI settings & analysis
   initAISettingsUI();
   document.getElementById('save-ai-settings-btn').addEventListener('click', handleSaveAISettings);
-  document.getElementById('ai-analyze-btn').addEventListener('click', runAIAnalysis);
+  document.getElementById('ai-analyze-btn').addEventListener('click', () => runAIAnalysis());
+  document.getElementById('ai-analyze-btn2').addEventListener('click', () => {
+    const q = document.getElementById('ai-question').value.trim();
+    runAIAnalysis(q || null);
+  });
+  document.getElementById('ai-question').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('ai-analyze-btn2').click();
+  });
   checkAIConfigured();
 
   init();

@@ -46,7 +46,7 @@ const PROVIDERS = {
 };
 
 function buildAnalysisPrompt(data) {
-  const { stats, monthLabel, currency, income, savings } = data;
+  const { stats, monthLabel, currency, income, savings, question } = data;
 
   const catBreakdown = (stats.by_category || [])
     .filter((c) => c.total > 0)
@@ -72,7 +72,7 @@ ${catBreakdown || '  No data'}
 ### By Person:
 ${personBreakdown || '  No data'}
 
-## Instructions
+${question ? `## User's Question\n${question}\n\nPlease address this specific question in your analysis.\n\n` : ''}## Instructions
 Respond ONLY with valid JSON (no markdown, no code fences). Use this exact structure:
 
 {
@@ -99,7 +99,7 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
-    const { provider, model, apiKey, stats, monthLabel, currency, income, savings } = body;
+    const { provider, model, apiKey, stats, monthLabel, currency, income, savings, question } = body;
 
     if (!provider || !model || !apiKey) {
       return Response.json({ error: 'Missing provider, model, or apiKey' }, { status: 400 });
@@ -110,7 +110,7 @@ export async function onRequestPost(context) {
       return Response.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
     }
 
-    const prompt = buildAnalysisPrompt({ stats, monthLabel, currency, income, savings });
+    const prompt = buildAnalysisPrompt({ stats, monthLabel, currency, income, savings, question });
     const url = providerConfig.buildUrl(model, apiKey);
     const reqBody = providerConfig.buildBody(prompt, model);
     const headers = {

@@ -26,6 +26,70 @@ export async function onRequestPost(context) {
   return handleGoogleSSO(body, env, request);
 }
 
+export async function onRequestPut(context) {
+  const { request, env } = context;
+  const userId = context.data?.user?.sub;
+  if (!userId) return jsonError('Not authenticated', 401);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonError('Invalid body', 400); }
+
+  const action = body.action;
+
+  // ── Update display name (one-time) ──
+  if (action === 'update_name') {
+    const newName = (body.name || '').trim();
+    if (!newName || newName.length < 1 || newName.length > 100) {
+      return jsonError('Name must be 1-100 characters', 400);
+    }
+    const user = await env.DB.prepare('SELECT name_edited FROM users WHERE id = ?').bind(userId).first();
+    if (!user) return jsonError('User not found', 404);
+    if (user.name_edited) return jsonError('Name can only be changed once', 403);
+
+    await env.DB.prepare('UPDATE users SET name = ?, name_edited = 1 WHERE id = ?').bind(newName, userId).run();
+
+    // Re-issue session with updated name
+    const full = await env.DB.prepare('SELECT id, email, name, avatar FROM users WHERE id = ?').bind(userId).first();
+    return issueSession({ sub: full.id, email: full.email, name: full.name, avatar: full.avatar }, env, request);
+  }
+
+  // ── Change password ──
+  if (action === 'change_password') {
+    const { current_password, new_password } = body;
+    if (!new_password || new_password.length < 8) {
+      return jsonError('New password must be at least 8 characters', 400);
+    }
+
+    const user = await env.DB.prepare(
+      'SELECT id, password_hash, password_salt, auth_provider FROM users WHERE id = ?'
+    ).bind(userId).first();
+    if (!user) return jsonError('User not found', 404);
+
+    if (!user.password_hash) {
+      return jsonError('This account uses Google Sign-In. Password change is not available.', 400);
+    }
+
+    // Verify current password
+    if (!current_password) return jsonError('Current password is required', 400);
+    const currentHash = await hashPassword(current_password, user.password_salt);
+    if (currentHash !== user.password_hash) {
+      return jsonError('Current password is incorrect', 401);
+    }
+
+    const newSalt = generateSalt();
+    const newHash = await hashPassword(new_password, newSalt);
+    await env.DB.prepare(
+      'UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?'
+    ).bind(newHash, newSalt, userId).run();
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return jsonError('Unknown action', 400);
+}
+
 export async function onRequestDelete(context) {
   // Logout: clear cookie
   return new Response(JSON.stringify({ ok: true }), {
@@ -195,6 +259,19 @@ async function autoAcceptInvite(email, userId, env) {
 }
 
 async function issueSession(user, env, request) {
+  // Fetch extra profile fields for the client
+  let nameEdited = 0;
+  let authProvider = user.auth_provider || 'google';
+  let hasPassword = false;
+  try {
+    const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash FROM users WHERE id = ?').bind(user.sub).first();
+    if (row) {
+      nameEdited = row.name_edited || 0;
+      authProvider = row.auth_provider || 'google';
+      hasPassword = !!row.password_hash;
+    }
+  } catch { /* non-fatal */ }
+
   const sessionToken = await signJWT(
     { sub: user.sub, email: user.email, name: user.name, avatar: user.avatar },
     env.JWT_SECRET,
@@ -207,7 +284,7 @@ async function issueSession(user, env, request) {
     : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
 
   return new Response(
-    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar } }),
+    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, name_edited: nameEdited, auth_provider: authProvider, has_password: hasPassword } }),
     {
       headers: {
         'Content-Type': 'application/json',

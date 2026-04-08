@@ -155,9 +155,15 @@
               <span class="card-title">AI Financial Insights</span>
               <button class="btn btn-sm btn-secondary" id="ai-analyze-btn">Analyze</button>
             </div>
+            <div class="form-group" style="margin-bottom:0.75rem">
+              <div class="input-row">
+                <input type="text" id="ai-question" placeholder="Ask anything, e.g. 'With 30M income, am I spending too much?'" />
+                <button class="btn btn-primary" id="ai-analyze-btn2">Ask AI</button>
+              </div>
+            </div>
             <div id="ai-insights-content">
-              <div class="ai-empty-hint" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem">
-                Click <strong>Analyze</strong> to get AI-powered insights about your spending
+              <div class="ai-empty-hint" style="text-align:center;padding:0.75rem;color:var(--text-muted);font-size:0.875rem">
+                Ask a question or click <strong>Analyze</strong> for a general spending review
               </div>
             </div>
           </div>
@@ -256,6 +262,55 @@
         <!-- Family view -->
         <div id="view-family" class="view">
           <div class="section-title">Family Settings</div>
+
+          <!-- Profile section (always visible) -->
+          <div class="card" id="profile-card">
+            <div class="card-header">
+              <span class="card-title">Your Profile</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Display Name</label>
+              <div class="input-row" id="profile-name-row">
+                <input type="text" id="profile-name" maxlength="100" disabled />
+                <button class="btn btn-secondary" id="edit-name-btn" style="display:none">Edit</button>
+                <button class="btn btn-primary" id="save-name-btn" style="display:none">Save</button>
+                <button class="btn btn-secondary" id="cancel-name-btn" style="display:none">Cancel</button>
+              </div>
+              <div class="form-hint" id="name-edit-hint"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="text" id="profile-email" disabled />
+            </div>
+          </div>
+
+          <!-- Change password (email auth only) -->
+          <div class="card" id="password-card" style="display:none">
+            <div class="card-header">
+              <span class="card-title">Change Password</span>
+            </div>
+            <div id="password-form-content">
+              <div class="form-group">
+                <label class="form-label" for="current-password">Current Password</label>
+                <input type="password" id="current-password" placeholder="Enter current password" autocomplete="current-password" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="new-password">New Password</label>
+                <input type="password" id="new-password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="confirm-password">Confirm New Password</label>
+                <input type="password" id="confirm-password" placeholder="Repeat new password" autocomplete="new-password" />
+              </div>
+              <div id="password-error" class="form-error" style="display:none"></div>
+              <button class="btn btn-primary btn-full" id="change-password-btn">Change Password</button>
+            </div>
+            <div id="google-auth-notice" style="display:none">
+              <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.9375rem">
+                Signed in with Google. Password management is not available.
+              </div>
+            </div>
+          </div>
 
           <!-- No family: setup prompt -->
           <div id="no-family-setup" style="display:none">

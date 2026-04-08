@@ -1,0 +1,44 @@
+{
+  "title": "Auth completion + AI question input",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Edit username (one-time only)",
+      "description": "User can update their display name once after registration. After editing, the name field becomes read-only.",
+      "acceptanceCriteria": [
+        "Family settings shows current username with an Edit button",
+        "Clicking Edit allows typing a new name and saving via PUT /api/auth",
+        "After saving, the Edit button disappears and name is read-only (name_edited=1 in DB)",
+        "Backend rejects name change if name_edited is already 1",
+        "Nav avatar/name updates immediately after save"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-002",
+      "title": "Change password",
+      "description": "Users with email auth can change their password. Google-only users see a disabled state.",
+      "acceptanceCriteria": [
+        "Family settings shows Change Password section for email auth users",
+        "Form has current password, new password (min 8 chars), confirm fields",
+        "Backend PUT /api/auth validates current password before updating",
+        "Google-only users see 'Signed in with Google' instead of password form",
+        "Success toast shown after password change"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "AI custom question input",
+      "description": "Users can type a custom question/prompt for AI analysis instead of only using the default analysis.",
+      "acceptanceCriteria": [
+        "Dashboard AI card has a text input for custom questions",
+        "User can type e.g. 'With 30M income, how is my financial health?'",
+        "Custom question is appended to the AI prompt sent to /api/ai-analyze",
+        "Default Analyze button still works without custom question",
+        "AI response renders the same insights card with chart"
+      ],
+      "passes": false
+    }
+  ]
+}

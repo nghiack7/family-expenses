@@ -7,8 +7,8 @@ export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
 
-  // Allow public paths through without auth
-  if (PUBLIC_PATHS.some(p => url.pathname.startsWith(p))) {
+  // Allow public paths through without auth (POST/DELETE only for /api/auth)
+  if (PUBLIC_PATHS.some(p => url.pathname.startsWith(p)) && request.method !== 'PUT') {
     return next();
   }
 
