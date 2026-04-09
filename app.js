@@ -736,15 +736,21 @@ function renderStats(s) {
     chipsEl.innerHTML = '<span style="color:var(--text-muted);font-size:0.875rem">' + t('no_members_yet') + '</span>';
   }
 
-  // Daily sparkline
+  // Daily bar chart
   if (s.daily && s.daily.length > 0) {
-    document.getElementById('sparkline-card').style.display = 'block';
-    const sparkEl = document.getElementById('sparkline');
-    const maxDay = Math.max(...s.daily.map(d => d.total));
-    sparkEl.innerHTML = s.daily.map(d => {
-      const h = maxDay > 0 ? Math.max(4, (d.total / maxDay * 48)) : 4;
-      return `<div class="spark-bar" style="height:${h}px" title="${formatDate(d.expense_date)}: ${formatMoney(d.total)}"></div>`;
-    }).join('');
+    document.getElementById('daily-chart-card').style.display = 'block';
+    drawDailyBarChart('daily-chart', s.daily);
+  }
+
+  // Category donut chart
+  if (categoriesWithSpend.length > 0) {
+    document.getElementById('category-donut-card').style.display = 'block';
+    const chartColors = ['#6366F1', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#14B8A6'];
+    drawDoughnutChart('category-donut', {
+      labels: categoriesWithSpend.map(c => `${c.icon || '📦'} ${c.name}`),
+      values: categoriesWithSpend.map(c => c.total),
+      colors: categoriesWithSpend.map((_, i) => chartColors[i % chartColors.length]),
+    });
   }
 }
 
@@ -1556,12 +1562,99 @@ function renderAIInsights(analysis) {
   }
 }
 
+function drawDailyBarChart(canvasId, dailyData) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  const container = canvas.parentElement;
+  const width = container.clientWidth;
+  const height = 200;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.scale(dpr, dpr);
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#94A3B8' : '#64748B';
+  const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(100,116,139,0.08)';
+
+  const maxVal = Math.max(...dailyData.map(d => d.total), 1);
+  const padLeft = 10;
+  const padRight = 10;
+  const padTop = 10;
+  const padBottom = 28;
+  const chartW = width - padLeft - padRight;
+  const chartH = height - padTop - padBottom;
+  const barGap = Math.max(1, Math.floor(chartW / dailyData.length * 0.2));
+  const barW = Math.max(3, (chartW - barGap * dailyData.length) / dailyData.length);
+
+  // Grid lines
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = padTop + (chartH / 3) * i;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(width - padRight, y);
+    ctx.stroke();
+  }
+
+  // Gradient for bars
+  const gradient = ctx.createLinearGradient(0, padTop, 0, padTop + chartH);
+  gradient.addColorStop(0, '#6366F1');
+  gradient.addColorStop(1, '#818CF8');
+
+  // Bars
+  dailyData.forEach((d, i) => {
+    const barH = maxVal > 0 ? (d.total / maxVal) * chartH : 0;
+    const x = padLeft + i * (barW + barGap) + barGap / 2;
+    const y = padTop + chartH - barH;
+
+    // Bar with rounded top
+    const radius = Math.min(barW / 2, 4);
+    ctx.fillStyle = d.total > 0 ? gradient : 'transparent';
+    ctx.beginPath();
+    ctx.moveTo(x, y + radius);
+    ctx.arcTo(x, y, x + barW, y, radius);
+    ctx.arcTo(x + barW, y, x + barW, y + barH, radius);
+    ctx.lineTo(x + barW, padTop + chartH);
+    ctx.lineTo(x, padTop + chartH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Date label (show every few days to avoid overlap)
+    const showLabel = dailyData.length <= 15 || i % Math.ceil(dailyData.length / 10) === 0 || i === dailyData.length - 1;
+    if (showLabel && d.expense_date) {
+      const day = d.expense_date.split('-')[2];
+      ctx.fillStyle = textColor;
+      ctx.font = '10px "Nunito Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(day, x + barW / 2, padTop + chartH + 6);
+    }
+  });
+
+  // Hover tooltip
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const idx = Math.floor((mx - padLeft) / (barW + barGap));
+    if (idx >= 0 && idx < dailyData.length) {
+      const d = dailyData[idx];
+      canvas.title = `${formatDate(d.expense_date)}: ${formatMoney(d.total)}`;
+    }
+  };
+}
+
 function drawDoughnutChart(canvasId, chartData) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = 280;
+  const size = Math.min(canvas.width || 220, canvas.parentElement.clientWidth, 280);
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   canvas.style.width = size + 'px';
@@ -1574,11 +1667,18 @@ function drawDoughnutChart(canvasId, chartData) {
 
   const cx = size / 2;
   const cy = size / 2;
-  const outerR = 120;
-  const innerR = 70;
+  const outerR = size * 0.43;
+  const innerR = size * 0.25;
   let startAngle = -Math.PI / 2;
 
-  const defaultColors = ['#3B82F6', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+  const defaultColors = ['#6366F1', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+
+  // Draw total in center
+  ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? '#E2E8F0' : '#1E293B';
+  ctx.font = `bold ${Math.round(size * 0.07)}px 'Nunito Sans', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(formatMoney(total), cx, cy);
 
   values.forEach((val, i) => {
     const sliceAngle = (val / total) * Math.PI * 2;
@@ -1591,15 +1691,15 @@ function drawDoughnutChart(canvasId, chartData) {
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Label
+    // Percentage label on slice
     const midAngle = startAngle + sliceAngle / 2;
-    const labelR = outerR - 25;
+    const labelR = outerR - (outerR - innerR) * 0.45;
     const pct = ((val / total) * 100).toFixed(0);
     if (pct >= 5) {
       const lx = cx + Math.cos(midAngle) * labelR;
       const ly = cy + Math.sin(midAngle) * labelR;
       ctx.fillStyle = '#fff';
-      ctx.font = `bold ${11 * 1}px 'Nunito Sans', sans-serif`;
+      ctx.font = `bold ${Math.round(size * 0.04)}px 'Nunito Sans', sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`${pct}%`, lx, ly);
@@ -1608,9 +1708,15 @@ function drawDoughnutChart(canvasId, chartData) {
     startAngle += sliceAngle;
   });
 
-  // Legend below (rendered as HTML after canvas)
-  const legendEl = document.createElement('div');
-  legendEl.className = 'ai-chart-legend';
+  // Legend — use existing sibling element or create one
+  const legendId = canvasId + '-legend';
+  let legendEl = document.getElementById(legendId);
+  if (!legendEl) {
+    legendEl = document.createElement('div');
+    legendEl.id = legendId;
+    legendEl.className = 'ai-chart-legend';
+    canvas.parentElement.appendChild(legendEl);
+  }
   legendEl.innerHTML = labels.map((label, i) => {
     const color = (colors && colors[i]) || defaultColors[i % defaultColors.length];
     const pct = ((values[i] / total) * 100).toFixed(1);
@@ -1620,8 +1726,6 @@ function drawDoughnutChart(canvasId, chartData) {
       <span class="ai-legend-pct">${pct}%</span>
     </div>`;
   }).join('');
-
-  canvas.parentElement.appendChild(legendEl);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────

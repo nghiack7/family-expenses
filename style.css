@@ -801,6 +801,32 @@ input::placeholder, textarea::placeholder {
 /* ===============================================
    DAILY SPARKLINE
    =============================================== */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.chart-container canvas {
+  display: block;
+  width: 100%;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.chart-card-half {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .sparkline {
   display: flex;
   align-items: flex-end;

@@ -105,21 +105,34 @@
             </div>
           </div>
 
-          <!-- Daily sparkline -->
-          <div class="card" id="sparkline-card" style="display:none">
+          <!-- Daily bar chart -->
+          <div class="card" id="daily-chart-card" style="display:none">
             <div class="card-header">
               <span class="card-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
             </div>
-            <div class="sparkline" id="sparkline"></div>
+            <div class="chart-container">
+              <canvas id="daily-chart"></canvas>
+            </div>
           </div>
 
-          <!-- By category -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+          <!-- Charts row: category donut + category bars -->
+          <div class="charts-row">
+            <div class="card chart-card-half" id="category-donut-card" style="display:none">
+              <div class="card-header">
+                <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+              </div>
+              <div class="chart-container" style="display:flex;flex-direction:column;align-items:center">
+                <canvas id="category-donut" width="220" height="220"></canvas>
+                <div id="category-donut-legend" class="ai-chart-legend" style="margin-top:0.75rem"></div>
+              </div>
             </div>
-            <div class="category-bars" id="category-bars">
-              <div class="spinner"></div>
+            <div class="card chart-card-half">
+              <div class="card-header">
+                <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+              </div>
+              <div class="category-bars" id="category-bars">
+                <div class="spinner"></div>
+              </div>
             </div>
           </div>
 
