@@ -1746,7 +1746,7 @@ function drawDoughnutChart(canvasId, chartData) {
 const CATEGORY_KEYWORDS = {
   food: ['ăn', 'an', 'cơm', 'com', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'cafe', 'cà phê', 'ca phe', 'trà', 'tra', 'bia', 'nhậu', 'nhau', 'lunch', 'dinner', 'breakfast', 'food', 'drink', 'coffee', 'rau', 'thịt', 'thit', 'trái cây', 'trai cay', 'chợ', 'cho', 'siêu thị', 'sieu thi'],
   transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'đổ xăng', 'do xang', 'gửi xe', 'gui xe', 'parking', 'gas', 'fuel', 'bus', 'vé', 've'],
-  shopping: ['mua', 'shopping', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'dép', 'dep', 'đồ', 'do', 'clothes', 'shoes'],
+  shopping: ['mua', 'shopping', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'dép', 'dep', 'clothes', 'shoes', 'máy giặt', 'may giat', 'tủ lạnh', 'tu lanh', 'máy', 'may', 'điện thoại', 'dien thoai', 'laptop', 'iphone', 'samsung'],
   health: ['thuốc', 'thuoc', 'bệnh viện', 'benh vien', 'khám', 'kham', 'doctor', 'medicine', 'hospital', 'pharmacy'],
   education: ['học', 'hoc', 'sách', 'sach', 'khóa', 'khoa', 'course', 'book', 'school', 'tuition'],
   entertainment: ['phim', 'game', 'chơi', 'choi', 'karaoke', 'movie', 'cinema', 'giải trí', 'giai tri'],
@@ -1755,15 +1755,36 @@ const CATEGORY_KEYWORDS = {
 };
 
 function parseVoiceExpense(text) {
-  const lower = text.toLowerCase().trim();
+  let lower = text.toLowerCase().trim();
 
-  // Extract amount — patterns: "50k", "50 nghìn", "50 ngàn", "1 triệu", "1tr", "200000"
+  // Normalize: convert written numbers to digits
+  const wordToNum = {
+    'không': '0', 'một': '1', 'hai': '2', 'ba': '3', 'bốn': '4', 'bón': '4',
+    'năm': '5', 'nam': '5', 'sáu': '6', 'sau': '6', 'bảy': '7', 'bay': '7',
+    'tám': '8', 'tam': '8', 'chín': '9', 'chin': '9',
+    'mười': '10', 'muoi': '10', 'mươi': '10', 'muoi': '10',
+  };
+
+  // Handle "mười X" → 1X, "X mươi" → X0
+  lower = lower.replace(/(?:mười|muời|muoi)\s*(một|hai|ba|bốn|bón|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin)/gi, (_, d) => '1' + wordToNum[d.toLowerCase()]);
+  lower = lower.replace(/(một|hai|ba|bốn|bón|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin)\s*(?:mươi|muoi)/gi, (_, d) => wordToNum[d.toLowerCase()] + '0');
+
+  // Simple word → digit: "mười" → "10", "một" → "1" etc (only before triệu/nghìn/k)
+  for (const [word, digit] of Object.entries(wordToNum)) {
+    const re = new RegExp(`\\b${word}\\s*(?=triệu|trieu|tr\\b|nghìn|nghin|ngàn|ngan|k\\b)`, 'gi');
+    lower = lower.replace(re, digit + ' ');
+  }
+
+  // Normalize "10.000.000" or "10,000,000" → "10000000"
+  lower = lower.replace(/(\d{1,3}(?:[.,]\d{3})+)/g, (match) => match.replace(/[.,]/g, ''));
+
+  // Extract amount
   let amount = null;
   let amountMatch = null;
 
   const patterns = [
     // "1 triệu 5" or "1 triệu rưỡi"
-    { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(?:rưỡi|ruoi)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + 500000 },
+    { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(?:rưỡi|ruoi|ruỡi)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + 500000 },
     { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(\d+)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + parseFloat(m[2]) * (m[2].length <= 3 ? 1000 : 1) },
     // "1 triệu", "1tr"
     { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 },
@@ -1773,6 +1794,7 @@ function parseVoiceExpense(text) {
     { re: /(\d+(?:[.,]\d+)?)\s*(?:nghìn|nghin|ngàn|ngan)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000 },
     // "200000" (bare number >= 1000)
     { re: /(\d{4,})/i, fn: m => parseInt(m[1], 10) },
+    // Small number that might be spoken as just "10" meaning 10 triệu context-dependent — skip, too ambiguous
   ];
 
   for (const { re, fn } of patterns) {
@@ -1851,7 +1873,7 @@ function processVoiceResult(text, statusEl) {
   document.getElementById('exp-date').value = todayISO();
 
   if (parsed.amount) {
-    statusEl.textContent = t('voice_filled');
+    statusEl.textContent = `${t('voice_filled')} → ${formatMoney(parsed.amount)}`;
     statusEl.classList.add('voice-success');
     toast(t('voice_filled'), 'success');
   } else {
