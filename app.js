@@ -1834,6 +1834,33 @@ function findCategoryByKeyword(catKey) {
   return null;
 }
 
+function processVoiceResult(text, statusEl) {
+  const parsed = parseVoiceExpense(text);
+
+  if (parsed.amount) {
+    document.getElementById('exp-amount').value = parsed.amount;
+    document.getElementById('exp-amount').dispatchEvent(new Event('input'));
+  }
+  if (parsed.description) {
+    document.getElementById('exp-desc').value = parsed.description;
+  }
+  if (parsed.categoryKey) {
+    const catId = findCategoryByKeyword(parsed.categoryKey);
+    if (catId) document.getElementById('exp-category').value = catId;
+  }
+  document.getElementById('exp-date').value = todayISO();
+
+  if (parsed.amount) {
+    statusEl.textContent = t('voice_filled');
+    statusEl.classList.add('voice-success');
+    toast(t('voice_filled'), 'success');
+  } else {
+    statusEl.textContent = t('voice_no_match');
+    statusEl.classList.add('voice-error');
+  }
+  setTimeout(() => { statusEl.classList.remove('voice-success', 'voice-error'); }, 3000);
+}
+
 function initVoiceInput() {
   const voiceBtn = document.getElementById('voice-btn');
   const statusEl = document.getElementById('voice-status');
@@ -1858,9 +1885,12 @@ function initVoiceInput() {
 
     recognition = new SpeechRecognition();
     recognition.lang = 'vi-VN';
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
+
+    let hasResult = false;
+    let stopTimeout = null;
 
     isListening = true;
     voiceBtn.classList.add('listening');
@@ -1868,51 +1898,57 @@ function initVoiceInput() {
     statusEl.textContent = t('voice_listening');
     transcriptEl.style.display = 'none';
 
+    // Auto-stop after 10 seconds if no final result
+    const maxTimeout = setTimeout(() => {
+      if (isListening) recognition.stop();
+    }, 10000);
+
     recognition.onresult = (event) => {
-      const result = event.results[event.results.length - 1];
-      const text = result[0].transcript;
-      transcriptEl.style.display = 'block';
-      transcriptEl.textContent = `"${text}"`;
+      // Reset idle timer on every result
+      if (stopTimeout) clearTimeout(stopTimeout);
 
-      if (result.isFinal) {
-        statusEl.textContent = t('voice_processing');
-        const parsed = parseVoiceExpense(text);
-
-        // Fill form
-        if (parsed.amount) {
-          document.getElementById('exp-amount').value = parsed.amount;
-          document.getElementById('exp-amount').dispatchEvent(new Event('input'));
-        }
-        if (parsed.description) {
-          document.getElementById('exp-desc').value = parsed.description;
-        }
-        if (parsed.categoryKey) {
-          const catId = findCategoryByKeyword(parsed.categoryKey);
-          if (catId) document.getElementById('exp-category').value = catId;
-        }
-        document.getElementById('exp-date').value = todayISO();
-
-        if (parsed.amount) {
-          statusEl.textContent = t('voice_filled');
-          statusEl.classList.add('voice-success');
-          toast(t('voice_filled'), 'success');
+      let finalText = '';
+      let interimText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal) {
+          finalText += r[0].transcript;
         } else {
-          statusEl.textContent = t('voice_no_match');
-          statusEl.classList.add('voice-error');
+          interimText += r[0].transcript;
         }
-        setTimeout(() => { statusEl.classList.remove('voice-success', 'voice-error'); }, 3000);
+      }
+
+      const displayText = finalText || interimText;
+      transcriptEl.style.display = 'block';
+      transcriptEl.textContent = `"${displayText}"`;
+
+      if (finalText) {
+        hasResult = true;
+        // Wait 1.5s after final result in case user continues speaking
+        stopTimeout = setTimeout(() => {
+          recognition.stop();
+          processVoiceResult(finalText, statusEl);
+        }, 1500);
       }
     };
 
     recognition.onerror = (event) => {
-      statusEl.textContent = t('voice_no_match');
+      clearTimeout(maxTimeout);
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        statusEl.textContent = t('voice_no_match');
+      } else {
+        statusEl.textContent = t('voice_no_match');
+      }
       statusEl.classList.add('voice-error');
       setTimeout(() => { statusEl.classList.remove('voice-error'); }, 3000);
     };
 
     recognition.onend = () => {
+      clearTimeout(maxTimeout);
       isListening = false;
       voiceBtn.classList.remove('listening');
+      // If ended without processing a result (e.g. user pressed stop)
+      if (hasResult && !stopTimeout) return;
     };
 
     recognition.start();
