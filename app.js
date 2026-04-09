@@ -1879,6 +1879,7 @@ function initVoiceInput() {
 
   voiceBtn.addEventListener('click', () => {
     if (isListening) {
+      isListening = false;
       recognition.stop();
       return;
     }
@@ -1933,22 +1934,39 @@ function initVoiceInput() {
     };
 
     recognition.onerror = (event) => {
-      clearTimeout(maxTimeout);
+      // Ignore no-speech and aborted — just restart to keep listening
       if (event.error === 'no-speech' || event.error === 'aborted') {
-        statusEl.textContent = t('voice_no_match');
-      } else {
-        statusEl.textContent = t('voice_no_match');
+        // Don't show error, will auto-restart in onend
+        return;
       }
+      clearTimeout(maxTimeout);
+      statusEl.textContent = t('voice_no_match');
       statusEl.classList.add('voice-error');
       setTimeout(() => { statusEl.classList.remove('voice-error'); }, 3000);
     };
 
     recognition.onend = () => {
+      // If we got a result and it's being processed, just clean up
+      if (hasResult) {
+        clearTimeout(maxTimeout);
+        isListening = false;
+        voiceBtn.classList.remove('listening');
+        return;
+      }
+      // If still within timeout and no result yet, restart recognition
+      if (isListening) {
+        try {
+          recognition.start();
+        } catch {
+          // Browser may reject rapid restarts
+          clearTimeout(maxTimeout);
+          isListening = false;
+          voiceBtn.classList.remove('listening');
+        }
+        return;
+      }
       clearTimeout(maxTimeout);
-      isListening = false;
       voiceBtn.classList.remove('listening');
-      // If ended without processing a result (e.g. user pressed stop)
-      if (hasResult && !stopTimeout) return;
     };
 
     recognition.start();
