@@ -174,8 +174,8 @@
             <form id="add-expense-form">
               <div class="form-group">
                 <label class="form-label" for="exp-amount" data-i18n="amount_label">Số tiền (VND) *</label>
-                <input type="number" id="exp-amount" name="amount" min="1" step="1"
-                  placeholder="e.g. 150000" required />
+                <input type="text" id="exp-amount" name="amount" inputmode="numeric"
+                  placeholder="vd: 150,000" required autocomplete="off" />
                 <div class="amount-shortcuts">
                   <button type="button" class="amt-btn" data-append="000">+000</button>
                   <button type="button" class="amt-btn" data-set="10000">10K</button>

@@ -428,6 +428,28 @@ function updateCurrencyFormatter(currency) {
 
 const formatMoney = (n) => currencyFormatter.format(Math.round(n));
 
+// Format number input with thousand separators
+function formatAmountInput(input) {
+  const raw = input.value.replace(/[^\d]/g, '');
+  const num = parseInt(raw, 10);
+  if (!raw || isNaN(num)) {
+    input.value = '';
+    return;
+  }
+  const cursorEnd = input.selectionStart === input.value.length;
+  input.value = num.toLocaleString('vi-VN');
+  if (cursorEnd) input.setSelectionRange(input.value.length, input.value.length);
+}
+
+function getAmountInputValue(input) {
+  return parseInt(input.value.replace(/[^\d]/g, ''), 10) || 0;
+}
+
+function setAmountInputValue(input, num) {
+  input.value = Math.round(num).toLocaleString('vi-VN');
+  input.dispatchEvent(new Event('input'));
+}
+
 function formatMoneyReadable(n) {
   n = Math.round(n);
   const isVND = state.currency === 'VND';
@@ -1882,8 +1904,7 @@ function processVoiceResult(text, statusEl) {
   const parsed = parseVoiceExpense(text);
 
   if (parsed.amount) {
-    document.getElementById('exp-amount').value = parsed.amount;
-    document.getElementById('exp-amount').dispatchEvent(new Event('input'));
+    setAmountInputValue(document.getElementById('exp-amount'), parsed.amount);
   }
   if (parsed.description) {
     document.getElementById('exp-desc').value = parsed.description;
@@ -1943,10 +1964,10 @@ function initVoiceInput() {
     statusEl.textContent = t('voice_listening');
     transcriptEl.style.display = 'none';
 
-    // Auto-stop after 10 seconds if no final result
+    // Auto-stop after 5 seconds if no final result
     const maxTimeout = setTimeout(() => {
       if (isListening) recognition.stop();
-    }, 10000);
+    }, 5000);
 
     recognition.onresult = (event) => {
       // Reset idle timer on every result
@@ -2127,7 +2148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     btn.textContent = t('adding');
 
-    const amount = parseFloat(document.getElementById('exp-amount').value);
+    const amount = getAmountInputValue(document.getElementById('exp-amount'));
     const description = document.getElementById('exp-desc').value.trim();
     const category_id = document.getElementById('exp-category').value;
     const expense_date = document.getElementById('exp-date').value;
@@ -2150,9 +2171,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Live currency preview while typing amount
+  // Live formatting + currency preview while typing amount
   document.getElementById('exp-amount').addEventListener('input', (e) => {
-    const val = parseFloat(e.target.value);
+    formatAmountInput(e.target);
+    const val = getAmountInputValue(e.target);
     document.getElementById('exp-amount-preview').textContent = val > 0 ? formatMoneyReadable(val) : '';
   });
 
@@ -2163,12 +2185,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const appendVal = btn.dataset.append;
       const setVal = btn.dataset.set;
       if (appendVal) {
-        amtInput.value = (amtInput.value || '') + appendVal;
+        const current = getAmountInputValue(amtInput) || 0;
+        const raw = current.toString() + appendVal;
+        setAmountInputValue(amtInput, parseInt(raw, 10));
       } else if (setVal) {
-        amtInput.value = setVal;
+        setAmountInputValue(amtInput, parseInt(setVal, 10));
       }
       amtInput.focus();
-      amtInput.dispatchEvent(new Event('input'));
     });
   });
 
