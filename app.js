@@ -428,6 +428,28 @@ function updateCurrencyFormatter(currency) {
 
 const formatMoney = (n) => currencyFormatter.format(Math.round(n));
 
+function formatMoneyReadable(n) {
+  n = Math.round(n);
+  const isVND = state.currency === 'VND';
+  const formatted = formatMoney(n);
+  if (!isVND) return formatted;
+
+  const abs = Math.abs(n);
+  if (abs >= 1000000000) {
+    const val = n / 1000000000;
+    return `${formatted}  (${Number.isInteger(val) ? val : val.toFixed(1)} tỷ)`;
+  }
+  if (abs >= 1000000) {
+    const val = n / 1000000;
+    return `${formatted}  (${Number.isInteger(val) ? val : val.toFixed(1)} triệu)`;
+  }
+  if (abs >= 1000) {
+    const val = n / 1000;
+    return `${formatted}  (${Number.isInteger(val) ? val : val.toFixed(1)} nghìn)`;
+  }
+  return formatted;
+}
+
 // ── API helpers ────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
   const res = await fetch(path, {
@@ -2131,7 +2153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Live currency preview while typing amount
   document.getElementById('exp-amount').addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
-    document.getElementById('exp-amount-preview').textContent = val > 0 ? formatMoney(val) : '';
+    document.getElementById('exp-amount-preview').textContent = val > 0 ? formatMoneyReadable(val) : '';
   });
 
   // Amount shortcut buttons
