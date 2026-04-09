@@ -165,6 +165,13 @@ const translations = {
     ai_needs_attention: 'Cần chú ý',
     key_insights: 'Nhận xét chính',
     tips: 'Gợi ý',
+    voice_input: 'Nhập bằng giọng nói',
+    voice_listening: 'Đang nghe...',
+    voice_processing: 'Đang xử lý...',
+    voice_not_supported: 'Trình duyệt không hỗ trợ nhận diện giọng nói',
+    voice_no_match: 'Không nhận ra. Thử nói: "đi uống cafe hết 50k"',
+    voice_filled: 'Đã điền! Kiểm tra và bấm Thêm chi tiêu.',
+    voice_example: 'vd: "đi uống cafe hết 50 nghìn"',
 
     // Common
     save: 'Lưu',
@@ -331,6 +338,13 @@ const translations = {
     ai_needs_attention: 'Needs Attention',
     key_insights: 'Key Insights',
     tips: 'Tips',
+    voice_input: 'Voice input',
+    voice_listening: 'Listening...',
+    voice_processing: 'Processing...',
+    voice_not_supported: 'Browser does not support speech recognition',
+    voice_no_match: 'Could not understand. Try: "coffee 50k"',
+    voice_filled: 'Filled! Review and tap Add Expense.',
+    voice_example: 'e.g. "lunch at Pho 24, 50k"',
     save: 'Save',
     edit: 'Edit',
     cancel: 'Cancel',
@@ -1728,6 +1742,183 @@ function drawDoughnutChart(canvasId, chartData) {
   }).join('');
 }
 
+// ── Voice Input ───────────────────────────────────────────────────────────
+const CATEGORY_KEYWORDS = {
+  food: ['ăn', 'an', 'cơm', 'com', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'cafe', 'cà phê', 'ca phe', 'trà', 'tra', 'bia', 'nhậu', 'nhau', 'lunch', 'dinner', 'breakfast', 'food', 'drink', 'coffee', 'rau', 'thịt', 'thit', 'trái cây', 'trai cay', 'chợ', 'cho', 'siêu thị', 'sieu thi'],
+  transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'đổ xăng', 'do xang', 'gửi xe', 'gui xe', 'parking', 'gas', 'fuel', 'bus', 'vé', 've'],
+  shopping: ['mua', 'shopping', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'dép', 'dep', 'đồ', 'do', 'clothes', 'shoes'],
+  health: ['thuốc', 'thuoc', 'bệnh viện', 'benh vien', 'khám', 'kham', 'doctor', 'medicine', 'hospital', 'pharmacy'],
+  education: ['học', 'hoc', 'sách', 'sach', 'khóa', 'khoa', 'course', 'book', 'school', 'tuition'],
+  entertainment: ['phim', 'game', 'chơi', 'choi', 'karaoke', 'movie', 'cinema', 'giải trí', 'giai tri'],
+  bills: ['điện', 'dien', 'nước', 'nuoc', 'wifi', 'internet', 'bill', 'tiền nhà', 'tien nha', 'thuê', 'thue', 'rent'],
+  other: [],
+};
+
+function parseVoiceExpense(text) {
+  const lower = text.toLowerCase().trim();
+
+  // Extract amount — patterns: "50k", "50 nghìn", "50 ngàn", "1 triệu", "1tr", "200000"
+  let amount = null;
+  let amountMatch = null;
+
+  const patterns = [
+    // "1 triệu 5" or "1 triệu rưỡi"
+    { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(?:rưỡi|ruoi)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + 500000 },
+    { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(\d+)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + parseFloat(m[2]) * (m[2].length <= 3 ? 1000 : 1) },
+    // "1 triệu", "1tr"
+    { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 },
+    // "50k", "50K"
+    { re: /(\d+(?:[.,]\d+)?)\s*k\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000 },
+    // "50 nghìn", "50 ngàn"
+    { re: /(\d+(?:[.,]\d+)?)\s*(?:nghìn|nghin|ngàn|ngan)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000 },
+    // "200000" (bare number >= 1000)
+    { re: /(\d{4,})/i, fn: m => parseInt(m[1], 10) },
+  ];
+
+  for (const { re, fn } of patterns) {
+    const m = lower.match(re);
+    if (m) {
+      amount = fn(m);
+      amountMatch = m[0];
+      break;
+    }
+  }
+
+  // Extract description — everything except the amount part and filler words
+  let desc = lower;
+  if (amountMatch) {
+    desc = desc.replace(amountMatch, '');
+  }
+  // Remove filler words
+  desc = desc.replace(/\b(hết|het|mất|mat|tốn|ton|khoảng|khoang|là|la|được|duoc|tầm|tam)\b/g, '').trim();
+  // Clean up punctuation and extra spaces
+  desc = desc.replace(/[,.\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // Capitalize first letter
+  if (desc) desc = desc[0].toUpperCase() + desc.slice(1);
+
+  // Match category
+  let matchedCategory = null;
+  let bestScore = 0;
+  for (const [catKey, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (lower.includes(kw) && kw.length > bestScore) {
+        matchedCategory = catKey;
+        bestScore = kw.length;
+      }
+    }
+  }
+
+  return { amount, description: desc || null, categoryKey: matchedCategory };
+}
+
+function findCategoryByKeyword(catKey) {
+  if (!catKey || state.categories.length === 0) return null;
+  // Try matching category name (lowercase) with the keyword group name
+  const nameMap = {
+    food: ['food', 'ăn uống', 'an uong', 'ăn', 'food & drink', 'đồ ăn', 'do an'],
+    transport: ['transport', 'di chuyển', 'di chuyen', 'transportation', 'xăng', 'xang'],
+    shopping: ['shopping', 'mua sắm', 'mua sam'],
+    health: ['health', 'sức khỏe', 'suc khoe', 'y tế', 'y te'],
+    education: ['education', 'giáo dục', 'giao duc', 'học', 'hoc'],
+    entertainment: ['entertainment', 'giải trí', 'giai tri'],
+    bills: ['bills', 'hóa đơn', 'hoa don', 'tiện ích', 'tien ich', 'utilities'],
+  };
+
+  const keywords = nameMap[catKey] || [catKey];
+  for (const cat of state.categories) {
+    const catName = cat.name.toLowerCase();
+    for (const kw of keywords) {
+      if (catName.includes(kw) || kw.includes(catName)) return cat.id;
+    }
+  }
+  return null;
+}
+
+function initVoiceInput() {
+  const voiceBtn = document.getElementById('voice-btn');
+  const statusEl = document.getElementById('voice-status');
+  const transcriptEl = document.getElementById('voice-transcript');
+
+  if (!voiceBtn) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    voiceBtn.title = t('voice_not_supported');
+    return;
+  }
+
+  let isListening = false;
+  let recognition = null;
+
+  voiceBtn.addEventListener('click', () => {
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'vi-VN';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    isListening = true;
+    voiceBtn.classList.add('listening');
+    statusEl.style.display = 'block';
+    statusEl.textContent = t('voice_listening');
+    transcriptEl.style.display = 'none';
+
+    recognition.onresult = (event) => {
+      const result = event.results[event.results.length - 1];
+      const text = result[0].transcript;
+      transcriptEl.style.display = 'block';
+      transcriptEl.textContent = `"${text}"`;
+
+      if (result.isFinal) {
+        statusEl.textContent = t('voice_processing');
+        const parsed = parseVoiceExpense(text);
+
+        // Fill form
+        if (parsed.amount) {
+          document.getElementById('exp-amount').value = parsed.amount;
+          document.getElementById('exp-amount').dispatchEvent(new Event('input'));
+        }
+        if (parsed.description) {
+          document.getElementById('exp-desc').value = parsed.description;
+        }
+        if (parsed.categoryKey) {
+          const catId = findCategoryByKeyword(parsed.categoryKey);
+          if (catId) document.getElementById('exp-category').value = catId;
+        }
+        document.getElementById('exp-date').value = todayISO();
+
+        if (parsed.amount) {
+          statusEl.textContent = t('voice_filled');
+          statusEl.classList.add('voice-success');
+          toast(t('voice_filled'), 'success');
+        } else {
+          statusEl.textContent = t('voice_no_match');
+          statusEl.classList.add('voice-error');
+        }
+        setTimeout(() => { statusEl.classList.remove('voice-success', 'voice-error'); }, 3000);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      statusEl.textContent = t('voice_no_match');
+      statusEl.classList.add('voice-error');
+      setTimeout(() => { statusEl.classList.remove('voice-error'); }, 3000);
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      voiceBtn.classList.remove('listening');
+    };
+
+    recognition.start();
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   initTheme();
@@ -1983,6 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // AI settings & analysis
   initAISettingsUI();
+  initVoiceInput();
   document.getElementById('save-ai-settings-btn').addEventListener('click', handleSaveAISettings);
   document.getElementById('ai-fab').addEventListener('click', openAIModal);
   document.getElementById('ai-modal-close').addEventListener('click', closeAIModal);
