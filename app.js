@@ -1935,106 +1935,115 @@ function initVoiceInput() {
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    voiceBtn.title = t('voice_not_supported');
+    voiceBtn.addEventListener('click', () => toast(t('voice_not_supported'), 'error'));
     return;
   }
 
   let isListening = false;
   let recognition = null;
+  let maxTimer = null;
+  let retryCount = 0;
+  const MAX_RETRIES = 3;
 
-  voiceBtn.addEventListener('click', () => {
-    if (isListening) {
-      isListening = false;
-      recognition.stop();
-      return;
-    }
+  function stopListening() {
+    isListening = false;
+    if (maxTimer) { clearTimeout(maxTimer); maxTimer = null; }
+    voiceBtn.classList.remove('listening');
+    if (recognition) { try { recognition.abort(); } catch {} }
+    recognition = null;
+    retryCount = 0;
+  }
 
+  function startRecognition() {
     recognition = new SpeechRecognition();
     recognition.lang = 'vi-VN';
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    let hasResult = false;
-    let stopTimeout = null;
-
-    isListening = true;
-    voiceBtn.classList.add('listening');
-    statusEl.style.display = 'block';
-    statusEl.textContent = t('voice_listening');
-    transcriptEl.style.display = 'none';
-
-    // Auto-stop after 5 seconds if no final result
-    const maxTimeout = setTimeout(() => {
-      if (isListening) recognition.stop();
-    }, 5000);
-
     recognition.onresult = (event) => {
-      // Reset idle timer on every result
-      if (stopTimeout) clearTimeout(stopTimeout);
-
-      let finalText = '';
-      let interimText = '';
-      for (let i = 0; i < event.results.length; i++) {
-        const r = event.results[i];
-        if (r.isFinal) {
-          finalText += r[0].transcript;
-        } else {
-          interimText += r[0].transcript;
-        }
-      }
-
-      const displayText = finalText || interimText;
+      const result = event.results[0];
+      const text = result[0].transcript;
       transcriptEl.style.display = 'block';
-      transcriptEl.textContent = `"${displayText}"`;
+      transcriptEl.textContent = `"${text}"`;
 
-      if (finalText) {
-        hasResult = true;
-        // Wait 1.5s after final result in case user continues speaking
-        stopTimeout = setTimeout(() => {
-          recognition.stop();
-          processVoiceResult(finalText, statusEl);
-        }, 1500);
+      if (result.isFinal) {
+        // Got final result — process and auto-submit
+        stopListening();
+        const parsed = parseVoiceExpense(text);
+        processVoiceResult(text, statusEl);
+
+        // Auto-submit if we got an amount
+        if (parsed.amount) {
+          setTimeout(() => {
+            document.getElementById('add-expense-form').requestSubmit();
+          }, 800);
+        }
       }
     };
 
     recognition.onerror = (event) => {
-      // Ignore no-speech and aborted — just restart to keep listening
       if (event.error === 'no-speech' || event.error === 'aborted') {
-        // Don't show error, will auto-restart in onend
+        // Will retry in onend
         return;
       }
-      clearTimeout(maxTimeout);
+      // Real error (not-allowed, network, etc.)
+      stopListening();
       statusEl.textContent = t('voice_no_match');
       statusEl.classList.add('voice-error');
-      setTimeout(() => { statusEl.classList.remove('voice-error'); }, 3000);
+      setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
     };
 
     recognition.onend = () => {
-      // If we got a result and it's being processed, just clean up
-      if (hasResult) {
-        clearTimeout(maxTimeout);
-        isListening = false;
-        voiceBtn.classList.remove('listening');
-        return;
+      if (!isListening) return;
+
+      // Retry if no result yet and under retry limit
+      retryCount++;
+      if (retryCount <= MAX_RETRIES) {
+        setTimeout(() => {
+          if (!isListening) return;
+          try { startRecognition(); recognition.start(); }
+          catch { stopListening(); }
+        }, 200);
+      } else {
+        // Give up after retries
+        stopListening();
+        statusEl.textContent = t('voice_no_match');
+        statusEl.classList.add('voice-error');
+        setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
       }
-      // If still within timeout and no result yet, restart recognition
-      if (isListening) {
-        try {
-          recognition.start();
-        } catch {
-          // Browser may reject rapid restarts
-          clearTimeout(maxTimeout);
-          isListening = false;
-          voiceBtn.classList.remove('listening');
-        }
-        return;
-      }
-      clearTimeout(maxTimeout);
-      voiceBtn.classList.remove('listening');
     };
 
     recognition.start();
+  }
+
+  voiceBtn.addEventListener('click', () => {
+    if (isListening) {
+      stopListening();
+      return;
+    }
+
+    isListening = true;
+    retryCount = 0;
+    voiceBtn.classList.add('listening');
+    statusEl.style.display = 'block';
+    statusEl.textContent = t('voice_listening');
+    statusEl.classList.remove('voice-success', 'voice-error');
+    transcriptEl.style.display = 'none';
+
+    // Hard max timeout
+    maxTimer = setTimeout(() => {
+      if (isListening) {
+        stopListening();
+        if (!transcriptEl.textContent) {
+          statusEl.textContent = t('voice_no_match');
+          statusEl.classList.add('voice-error');
+          setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
+        }
+      }
+    }, 8000);
+
+    startRecognition();
   });
 }
 
