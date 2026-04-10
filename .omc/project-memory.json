@@ -78,20 +78,20 @@
   "hotPaths": [
     {
       "path": "app.js",
-      "accessCount": 205,
-      "lastAccessed": 1775803483474,
+      "accessCount": 220,
+      "lastAccessed": 1775804182883,
       "type": "file"
     },
     {
       "path": "index.html",
-      "accessCount": 58,
-      "lastAccessed": 1775803081143,
+      "accessCount": 59,
+      "lastAccessed": 1775804124047,
       "type": "file"
     },
     {
       "path": "style.css",
-      "accessCount": 56,
-      "lastAccessed": 1775802720625,
+      "accessCount": 59,
+      "lastAccessed": 1775804132511,
       "type": "directory"
     },
     {
@@ -102,8 +102,8 @@
     },
     {
       "path": "",
-      "accessCount": 17,
-      "lastAccessed": 1775803101680,
+      "accessCount": 19,
+      "lastAccessed": 1775803906454,
       "type": "directory"
     },
     {
@@ -125,15 +125,15 @@
       "type": "file"
     },
     {
-      "path": "functions/api/stats.js",
-      "accessCount": 4,
-      "lastAccessed": 1775803470327,
+      "path": "functions/api/admin.js",
+      "accessCount": 5,
+      "lastAccessed": 1775803912206,
       "type": "file"
     },
     {
-      "path": "functions/api/admin.js",
+      "path": "functions/api/stats.js",
       "accessCount": 4,
-      "lastAccessed": 1775803574051,
+      "lastAccessed": 1775803470327,
       "type": "file"
     },
     {
@@ -158,6 +158,12 @@
       "path": "package.json",
       "accessCount": 2,
       "lastAccessed": 1775791786853,
+      "type": "file"
+    },
+    {
+      "path": "wrangler.toml",
+      "accessCount": 2,
+      "lastAccessed": 1775803912222,
       "type": "file"
     },
     {
@@ -194,12 +200,6 @@
       "path": "docs/MOBILE_PLAN.md",
       "accessCount": 1,
       "lastAccessed": 1775791870769,
-      "type": "file"
-    },
-    {
-      "path": "wrangler.toml",
-      "accessCount": 1,
-      "lastAccessed": 1775803102047,
       "type": "file"
     },
     {

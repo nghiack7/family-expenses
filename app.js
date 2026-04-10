@@ -1256,6 +1256,16 @@ async function loadHistory(reset = false) {
   if (reset) {
     state.historyOffset = 0;
     state.historyTotal = 0;
+    // Ensure filter dropdowns are populated
+    if (state.categories.length === 0) await loadCategories();
+    populateCategorySelects();
+    if (!state.family) {
+      try {
+        const data = await api('/api/family');
+        state.family = data.family;
+      } catch (_) {}
+    }
+    populatePersonFilter();
   }
 
   const from = document.getElementById('filter-from').value || '';
