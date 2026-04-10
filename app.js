@@ -1916,6 +1916,7 @@ const AI_MODELS = {
   gemini: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'],
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1-nano'],
   anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
+  zai: ['glm-5.1', 'glm-5-turbo', 'glm-4.7', 'glm-4.7-flash', 'glm-4.5-flash'],
 };
 
 function getAISettings() {

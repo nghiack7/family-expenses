@@ -43,6 +43,18 @@ const PROVIDERS = {
       json.content?.map((b) => b.text).join('') || '',
     models: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
   },
+  zai: {
+    buildUrl: () => 'https://api.z.ai/api/paas/v4/chat/completions',
+    buildBody: (prompt, model) => ({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 2048,
+    }),
+    buildHeaders: (apiKey) => ({ Authorization: `Bearer ${apiKey}` }),
+    extractText: (json) => json.choices?.[0]?.message?.content || '',
+    models: ['glm-5.1', 'glm-5-turbo', 'glm-4.7', 'glm-4.7-flash', 'glm-4.5-flash'],
+  },
 };
 
 function buildAnalysisPrompt(data) {
@@ -85,7 +97,7 @@ Respond ONLY with valid JSON (no markdown, no code fences). Use this exact struc
     "type": "doughnut",
     "labels": ["category1", "category2"],
     "values": [amount1, amount2],
-    "colors": ["#3B82F6", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16"]
+    "colors": ["#4c645a", "#785843", "#a83836", "#4f645b", "#6b4c38", "#b2b2ac", "#40584e", "#cde9db"]
   },
   "trend": {
     "label": "Spending health",
