@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775645404586,
+  "lastScanned": 1775744216838,
   "projectRoot": "/Users/nguyennghia/go/src/github.com/personal/family-expenses",
   "techStack": {
     "languages": [
@@ -47,26 +47,27 @@
       "path": "functions",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775645404431,
+      "lastAccessed": 1775744216619,
       "keyFiles": []
     },
     "migrations": {
       "path": "migrations",
       "purpose": "Database migrations",
-      "fileCount": 4,
-      "lastAccessed": 1775645404433,
+      "fileCount": 5,
+      "lastAccessed": 1775744216619,
       "keyFiles": [
         "0001_init.sql",
         "0002_email_auth.sql",
         "0003_currency.sql",
-        "0004_profile_edit.sql"
+        "0004_profile_edit.sql",
+        "0005_username.sql"
       ]
     },
     "functions/api": {
       "path": "functions/api",
       "purpose": "API routes",
       "fileCount": 7,
-      "lastAccessed": 1775645404441,
+      "lastAccessed": 1775744216621,
       "keyFiles": [
         "_middleware.js",
         "ai-analyze.js",
@@ -77,44 +78,50 @@
   "hotPaths": [
     {
       "path": "app.js",
-      "accessCount": 35,
-      "lastAccessed": 1775653251272,
+      "accessCount": 192,
+      "lastAccessed": 1775802641977,
       "type": "file"
     },
     {
       "path": "index.html",
-      "accessCount": 31,
-      "lastAccessed": 1775653192440,
+      "accessCount": 57,
+      "lastAccessed": 1775802602878,
       "type": "file"
     },
     {
       "path": "style.css",
-      "accessCount": 26,
-      "lastAccessed": 1775647108669,
+      "accessCount": 56,
+      "lastAccessed": 1775802720625,
       "type": "directory"
     },
     {
       "path": "functions/api/auth.js",
-      "accessCount": 16,
-      "lastAccessed": 1775653259448,
+      "accessCount": 21,
+      "lastAccessed": 1775802575653,
       "type": "file"
     },
     {
       "path": "",
-      "accessCount": 4,
-      "lastAccessed": 1775653041211,
+      "accessCount": 13,
+      "lastAccessed": 1775802495520,
       "type": "directory"
+    },
+    {
+      "path": "functions/api/family.js",
+      "accessCount": 5,
+      "lastAccessed": 1775802558563,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0001_init.sql",
+      "accessCount": 4,
+      "lastAccessed": 1775802500548,
+      "type": "file"
     },
     {
       "path": "functions/api/_middleware.js",
       "accessCount": 2,
       "lastAccessed": 1775648017347,
-      "type": "file"
-    },
-    {
-      "path": "migrations/0001_init.sql",
-      "accessCount": 2,
-      "lastAccessed": 1775653041153,
       "type": "file"
     },
     {
@@ -130,9 +137,15 @@
       "type": "file"
     },
     {
+      "path": "functions/api/expenses.js",
+      "accessCount": 2,
+      "lastAccessed": 1775657020731,
+      "type": "file"
+    },
+    {
       "path": "package.json",
-      "accessCount": 1,
-      "lastAccessed": 1775645496890,
+      "accessCount": 2,
+      "lastAccessed": 1775791786853,
       "type": "file"
     },
     {
@@ -148,15 +161,27 @@
       "type": "file"
     },
     {
-      "path": "functions/api/family.js",
-      "accessCount": 1,
-      "lastAccessed": 1775648017748,
-      "type": "file"
-    },
-    {
       "path": "migrations/0005_username.sql",
       "accessCount": 1,
       "lastAccessed": 1775653059889,
+      "type": "file"
+    },
+    {
+      "path": "fix_i18n.py",
+      "accessCount": 1,
+      "lastAccessed": 1775655224125,
+      "type": "file"
+    },
+    {
+      "path": "functions",
+      "accessCount": 1,
+      "lastAccessed": 1775657003265,
+      "type": "directory"
+    },
+    {
+      "path": "docs/MOBILE_PLAN.md",
+      "accessCount": 1,
+      "lastAccessed": 1775791870769,
       "type": "file"
     }
   ],

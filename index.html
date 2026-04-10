@@ -80,6 +80,11 @@
       <main class="main">
         <!-- Dashboard view -->
         <div id="view-dashboard" class="view">
+          <div class="view-mode-toggle">
+            <button class="view-mode-btn" data-mode="day" id="mode-day">Ngày</button>
+            <button class="view-mode-btn active" data-mode="month" id="mode-month">Tháng</button>
+            <button class="view-mode-btn" data-mode="year" id="mode-year">Năm</button>
+          </div>
           <div class="month-nav">
             <button class="btn btn-icon" id="prev-month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m15 18-6-6 6-6"/></svg></button>
             <span class="month-label" id="month-label">Loading...</span>
@@ -318,6 +323,16 @@
           </div>
 
           <!-- No family: setup prompt -->
+          <!-- Pending invites for current user -->
+          <div id="my-invites-section" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title" data-i18n="you_have_invites">Bạn có lời mời tham gia gia đình</span>
+              </div>
+              <div id="my-invites-list"></div>
+            </div>
+          </div>
+
           <div id="no-family-setup" style="display:none">
             <div class="setup-card">
               <div style="margin-bottom:1rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--primary)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
@@ -344,10 +359,10 @@
 
             <div class="card">
               <div class="card-header">
-                <span class="card-title" data-i18n="invite_by_gmail">Mời qua Gmail</span>
+                <span class="card-title" data-i18n="invite_member">Mời thành viên</span>
               </div>
               <div class="input-row">
-                <input type="email" id="invite-email" placeholder="ban@gmail.com" />
+                <input type="text" id="invite-email" placeholder="Email hoặc tên đăng nhập" />
                 <button class="btn btn-primary" id="invite-btn" data-i18n="invite">Mời</button>
               </div>
               <div id="pending-invites-section" style="margin-top:1rem;display:none">

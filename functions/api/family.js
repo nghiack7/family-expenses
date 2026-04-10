@@ -46,7 +46,18 @@ export async function onRequestGet(context) {
   ).bind(user.sub).first();
 
   if (!membership) {
-    return jsonResp({ family: null });
+    // No family — check if user has pending invites
+    const userRow = await env.DB.prepare(`SELECT email FROM users WHERE id = ?`).bind(user.sub).first();
+    const myInvites = userRow ? await env.DB.prepare(
+      `SELECT fi.id, fi.family_id, fi.created_at, f.name as family_name, u.name as inviter_name
+       FROM family_invites fi
+       JOIN families f ON f.id = fi.family_id
+       JOIN users u ON u.id = fi.invited_by
+       WHERE fi.email = ? AND fi.status = 'pending'
+       ORDER BY fi.created_at DESC`
+    ).bind(userRow.email).all() : { results: [] };
+
+    return jsonResp({ family: null, my_pending_invites: myInvites.results });
   }
 
   const members = await env.DB.prepare(
@@ -142,8 +153,8 @@ export async function onRequestPut(context) {
   const action = body.action;
 
   if (action === 'invite') {
-    const email = (body.email || '').trim().toLowerCase();
-    if (!email || !email.includes('@')) return jsonError('Valid email required', 400);
+    const input = (body.email || '').trim().toLowerCase();
+    if (!input) return jsonError('Email or username required', 400);
 
     // Get user's family
     const membership = await env.DB.prepare(
@@ -151,6 +162,17 @@ export async function onRequestPut(context) {
     ).bind(user.sub).first();
 
     if (!membership) return jsonError('You are not in a family', 404);
+
+    // Resolve input: email or username
+    let email = input;
+    if (!input.includes('@')) {
+      // Lookup by username
+      const userByUsername = await env.DB.prepare(
+        `SELECT email FROM users WHERE username = ?`
+      ).bind(input).first();
+      if (!userByUsername) return jsonError('Username not found', 404);
+      email = userByUsername.email;
+    }
 
     // Check if already a member
     const existingUser = await env.DB.prepare(
@@ -272,6 +294,52 @@ export async function onRequestPut(context) {
     ).bind(currency, membership.family_id).run();
 
     return jsonResp({ ok: true, old_currency: oldCurrency, new_currency: currency, rate });
+  }
+
+  if (action === 'accept_invite') {
+    const { invite_id } = body;
+    if (!invite_id) return jsonError('invite_id required', 400);
+
+    // Verify this invite belongs to the current user's email
+    const userRow = await env.DB.prepare(`SELECT email FROM users WHERE id = ?`).bind(user.sub).first();
+    if (!userRow) return jsonError('User not found', 404);
+
+    const invite = await env.DB.prepare(
+      `SELECT id, family_id FROM family_invites WHERE id = ? AND email = ? AND status = 'pending'`
+    ).bind(invite_id, userRow.email).first();
+
+    if (!invite) return jsonError('Invite not found or already handled', 404);
+
+    // Check if already in a family
+    const existingMembership = await env.DB.prepare(
+      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
+    ).bind(user.sub).first();
+    if (existingMembership) return jsonError('You already belong to a family. Leave it first.', 409);
+
+    await env.DB.batch([
+      env.DB.prepare(`INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`).bind(invite.family_id, user.sub),
+      env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(invite_id),
+    ]);
+
+    return jsonResp({ ok: true });
+  }
+
+  if (action === 'reject_invite') {
+    const { invite_id } = body;
+    if (!invite_id) return jsonError('invite_id required', 400);
+
+    const userRow = await env.DB.prepare(`SELECT email FROM users WHERE id = ?`).bind(user.sub).first();
+    if (!userRow) return jsonError('User not found', 404);
+
+    const invite = await env.DB.prepare(
+      `SELECT id FROM family_invites WHERE id = ? AND email = ? AND status = 'pending'`
+    ).bind(invite_id, userRow.email).first();
+
+    if (!invite) return jsonError('Invite not found or already handled', 404);
+
+    await env.DB.prepare(`UPDATE family_invites SET status = 'declined' WHERE id = ?`).bind(invite_id).run();
+
+    return jsonResp({ ok: true });
   }
 
   if (action === 'remove_invite') {

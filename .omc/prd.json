@@ -1,44 +1,166 @@
 {
-  "title": "Auth completion + AI question input",
+  "title": "Family Expenses - Flutter Mobile App",
+  "description": "Build Flutter mobile app with local SQLite storage, all features from web app. Targets iOS, iPadOS, macOS, Android.",
   "stories": [
     {
       "id": "US-001",
-      "title": "Edit username (one-time only)",
-      "description": "User can update their display name once after registration. After editing, the name field becomes read-only.",
+      "title": "Project Setup & Repo Creation",
+      "priority": 1,
+      "passes": false,
       "acceptanceCriteria": [
-        "Family settings shows current username with an Edit button",
-        "Clicking Edit allows typing a new name and saving via PUT /api/auth",
-        "After saving, the Edit button disappears and name is read-only (name_edited=1 in DB)",
-        "Backend rejects name change if name_edited is already 1",
-        "Nav avatar/name updates immediately after save"
-      ],
-      "passes": false
+        "Private GitHub repo 'family-expenses-mobile' created under nghiack7",
+        "Flutter project initialized with package name com.nghia.familyexpenses",
+        "pubspec.yaml has dependencies: sqflite, path, intl, fl_chart, provider, speech_to_text, http, share_plus, csv, uuid",
+        "flutter build apk runs without errors",
+        "macOS platform enabled"
+      ]
     },
     {
       "id": "US-002",
-      "title": "Change password",
-      "description": "Users with email auth can change their password. Google-only users see a disabled state.",
+      "title": "SQLite Database Layer",
+      "priority": 2,
+      "passes": false,
       "acceptanceCriteria": [
-        "Family settings shows Change Password section for email auth users",
-        "Form has current password, new password (min 8 chars), confirm fields",
-        "Backend PUT /api/auth validates current password before updating",
-        "Google-only users see 'Signed in with Google' instead of password form",
-        "Success toast shown after password change"
-      ],
-      "passes": false
+        "DatabaseHelper class initializes SQLite on first call",
+        "Tables: profile (singleton), family_members, categories, expenses",
+        "8 default categories seeded: Ăn uống, Di chuyển, Mua sắm, Hóa đơn, Giải trí, Sức khỏe, Giáo dục, Khác",
+        "insertExpense, updateExpense, deleteExpense work correctly",
+        "getMonthlyTotal, getDailyAverage, getByCategory, getByMember return correct aggregations",
+        "Each expense has sync_status field for future sync"
+      ]
     },
     {
       "id": "US-003",
-      "title": "AI custom question input",
-      "description": "Users can type a custom question/prompt for AI analysis instead of only using the default analysis.",
+      "title": "Theme System & i18n",
+      "priority": 3,
+      "passes": false,
       "acceptanceCriteria": [
-        "Dashboard AI card has a text input for custom questions",
-        "User can type e.g. 'With 30M income, how is my financial health?'",
-        "Custom question is appended to the AI prompt sent to /api/ai-analyze",
-        "Default Analyze button still works without custom question",
-        "AI response renders the same insights card with chart"
-      ],
-      "passes": false
+        "AppTheme.light() uses Indigo primary #6366F1, Emerald accent #10B981",
+        "AppTheme.dark() uses dark variants of same palette",
+        "Be Vietnam Pro font loaded via google_fonts or bundled",
+        "AppLocalizations has all strings from web app translations object (vi + en)",
+        "ThemeProvider persists theme choice to SharedPreferences",
+        "LocaleProvider persists language choice to SharedPreferences"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Tab Navigation & Onboarding",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "BottomNavigationBar with 4 tabs: Tổng quan, Thêm, Lịch sử, Gia đình",
+        "Each tab has correct icon",
+        "First launch shows OnboardingScreen (name + currency + optional members)",
+        "Profile saved to SQLite profile table",
+        "Subsequent launches go directly to main app",
+        "AppBar shows theme toggle and language toggle"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Add Expense Screen",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "AmountInput formats with thousand separators as user types (e.g., 1.500.000)",
+        "VND preview label shows readable units (150 nghìn, 1,5 triệu, 2 tỷ)",
+        "CategoryPicker shows grid of categories with emoji icons",
+        "DatePicker defaults to today, allows selecting past dates",
+        "MemberPicker dropdown shows family members",
+        "Description TextField",
+        "Submit validates amount>0 and category selected, saves to SQLite, shows SnackBar",
+        "Form resets after successful submit"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Dashboard Screen",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Card shows total spending this month formatted with currency",
+        "Card shows daily average",
+        "Card shows biggest category name and amount",
+        "BarChart shows daily spending for current month (fl_chart)",
+        "PieChart shows spending by category with legend",
+        "BarChart shows spending by member",
+        "Recent expenses list shows last 5 items",
+        "Month-over-month comparison shows percentage change"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "History Screen",
+      "priority": 7,
+      "passes": false,
+      "acceptanceCriteria": [
+        "ListView of expenses with date headers (grouped by day)",
+        "Each item shows: category icon, description, amount, member name",
+        "Filter chips: category dropdown, member dropdown, date range picker",
+        "Swipe left to delete with confirmation dialog",
+        "Tap opens edit form (pre-filled), save updates SQLite",
+        "Pagination: loads 20 at a time, 'Load more' button or infinite scroll"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Family/Settings Screen",
+      "priority": 8,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Profile section: edit name, currency picker with common currencies",
+        "Members section: list members, add new member (name), delete member",
+        "Categories section: list custom categories, add new, delete",
+        "Appearance: theme toggle switch, language toggle switch",
+        "Export: button generates CSV of all expenses, opens share sheet",
+        "AI Settings: provider picker (OpenAI/Anthropic/Google), model text field, API key secure field"
+      ]
+    },
+    {
+      "id": "US-009",
+      "title": "Voice Input",
+      "priority": 9,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Mic FAB on Add Expense screen",
+        "speech_to_text captures Vietnamese speech",
+        "VoiceParser extracts: amount (handles nghìn/triệu/tỷ/k), description, category guess",
+        "Auto-fills amount, description, category fields from parsed result",
+        "UI states: idle, listening (animated), processing, filled",
+        "Error handling: permission denied, no speech detected, not supported"
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "AI Financial Advisor",
+      "priority": 10,
+      "passes": false,
+      "acceptanceCriteria": [
+        "AI section accessible from Family/Settings screen",
+        "Analyze button sends current month expenses to configured AI provider",
+        "HTTP POST to OpenAI/Anthropic/Google API with user's API key",
+        "Response parsed and displayed: health score badge, key insights list, tips list",
+        "Free-form question TextField appended to AI prompt",
+        "Loading state while waiting for AI response",
+        "Error handling: invalid API key, network error, empty data"
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "App Polish & Store Readiness",
+      "priority": 11,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Custom app icon (wallet/money theme, indigo color)",
+        "Splash screen with app logo",
+        "HapticFeedback on expense add, delete, tab switch",
+        "Page transitions use MaterialPageRoute or CupertinoPageRoute",
+        "flutter build apk --release succeeds",
+        "flutter build ios --release succeeds (or no-codesign for CI)",
+        "flutter build macos succeeds",
+        "README.md in repo with setup instructions"
+      ]
     }
   ]
 }

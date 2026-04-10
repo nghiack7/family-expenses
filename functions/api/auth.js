@@ -62,10 +62,15 @@ export async function onRequestPut(context) {
     if (username.length < 3 || username.length > 30) return jsonError('Username must be 3-30 characters', 400);
     if (!/^[a-z0-9_]+$/.test(username)) return jsonError('Username can only contain letters, numbers, and underscores', 400);
 
-    const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ? AND id != ?').bind(username, userId).first();
-    if (existing) return jsonError('Username already taken', 409);
-
-    await env.DB.prepare('UPDATE users SET username = ? WHERE id = ?').bind(username, userId).run();
+    try {
+      await env.DB.prepare('UPDATE users SET username = ? WHERE id = ?').bind(username, userId).run();
+    } catch (err) {
+      // UNIQUE constraint violation — another user grabbed it between check and update
+      if (err.message && err.message.includes('UNIQUE')) {
+        return jsonError('Username already taken', 409);
+      }
+      return jsonError(`Database error: ${err.message}`, 500);
+    }
     return new Response(JSON.stringify({ ok: true, username }), { headers: { 'Content-Type': 'application/json' } });
   }
 
@@ -159,9 +164,6 @@ async function handleGoogleSSO(body, env, request) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
 
-  // Check pending invite and auto-accept
-  await autoAcceptInvite(email, sub, env);
-
   return issueSession({ sub, email, name, avatar: picture || null }, env, request);
 }
 
@@ -219,8 +221,6 @@ async function handleEmailRegister(body, env, request) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
 
-  await autoAcceptInvite(email, userId, env);
-
   return issueSession({ sub: userId, email, name, avatar: null }, env, request);
 }
 
@@ -267,28 +267,6 @@ async function handleEmailLogin(body, env, request) {
 }
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
-
-async function autoAcceptInvite(email, userId, env) {
-  try {
-    const pendingInvite = await env.DB.prepare(
-      `SELECT fi.*, f.id as fam_id FROM family_invites fi
-       JOIN families f ON f.id = fi.family_id
-       WHERE fi.email = ? AND fi.status = 'pending'
-       ORDER BY fi.created_at ASC LIMIT 1`
-    ).bind(email).first();
-
-    if (pendingInvite) {
-      await env.DB.prepare(
-        `INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`
-      ).bind(pendingInvite.family_id, userId).run();
-      await env.DB.prepare(
-        `UPDATE family_invites SET status = 'accepted' WHERE id = ?`
-      ).bind(pendingInvite.id).run();
-    }
-  } catch {
-    // Non-fatal
-  }
-}
 
 async function issueSession(user, env, request) {
   // Fetch extra profile fields for the client

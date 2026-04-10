@@ -34,10 +34,14 @@ const translations = {
 
     // Dashboard
     total_this_month: 'Tổng tháng này',
+    total_this_day: 'Tổng hôm nay',
+    total_this_year: 'Tổng năm nay',
     daily_average: 'Trung bình ngày',
+    monthly_average: 'Trung bình tháng',
     biggest_category: 'Danh mục lớn nhất',
     expenses_count: '{0} khoản chi',
     days_with_spending: '{0} ngày có chi tiêu',
+    months_with_spending: '{0} tháng có chi tiêu',
     no_expenses_yet: 'Chưa có chi tiêu',
     daily_spending: 'Chi tiêu hàng ngày',
     by_category: 'Theo danh mục',
@@ -45,7 +49,12 @@ const translations = {
     recent_expenses: 'Chi tiêu gần đây',
     see_all: 'Xem tất cả',
     vs_last_month: 'so với tháng trước',
+    vs_last_year: 'so với năm trước',
+    vs_yesterday: 'so với hôm qua',
     same_as_last_month: 'Bằng tháng trước',
+    view_day: 'Ngày',
+    view_month: 'Tháng',
+    view_year: 'Năm',
     no_spending_yet: 'Chưa có chi tiêu',
     add_first_expense_breakdown: 'Thêm khoản chi đầu tiên để xem biểu đồ',
     no_members_yet: 'Chưa có thành viên',
@@ -119,10 +128,16 @@ const translations = {
     family_name_required: 'Cần nhập tên gia đình',
     family_created: 'Đã tạo gia đình!',
     members: 'Thành viên',
-    invite_by_gmail: 'Mời qua Gmail',
-    invite_placeholder: 'ban@gmail.com',
+    invite_member: 'Mời thành viên',
+    invite_placeholder: 'Email hoặc tên đăng nhập',
     invite: 'Mời',
     pending_invites: 'Lời mời đang chờ',
+    you_have_invites: 'Bạn có lời mời tham gia gia đình',
+    invite_from: '{0} mời bạn vào "{1}"',
+    accept: 'Chấp nhận',
+    reject: 'Từ chối',
+    invite_accepted: 'Đã tham gia gia đình!',
+    invite_rejected: 'Đã từ chối lời mời',
     pending: 'Đang chờ',
     invite_cancelled: 'Đã hủy lời mời',
     email_required: 'Cần nhập email',
@@ -215,10 +230,14 @@ const translations = {
     creating_account: 'Creating account...',
     signing_in: 'Signing in...',
     total_this_month: 'Total this month',
+    total_this_day: 'Total today',
+    total_this_year: 'Total this year',
     daily_average: 'Daily average',
+    monthly_average: 'Monthly average',
     biggest_category: 'Biggest category',
     expenses_count: '{0} expenses',
     days_with_spending: '{0} days with spending',
+    months_with_spending: '{0} months with spending',
     no_expenses_yet: 'No expenses yet',
     daily_spending: 'Daily spending',
     by_category: 'By category',
@@ -226,7 +245,12 @@ const translations = {
     recent_expenses: 'Recent expenses',
     see_all: 'See all',
     vs_last_month: 'vs last month',
+    vs_last_year: 'vs last year',
+    vs_yesterday: 'vs yesterday',
     same_as_last_month: 'Same as last month',
+    view_day: 'Day',
+    view_month: 'Month',
+    view_year: 'Year',
     no_spending_yet: 'No spending yet',
     add_first_expense_breakdown: 'Add your first expense to see breakdown',
     no_members_yet: 'No members yet',
@@ -294,10 +318,16 @@ const translations = {
     family_name_required: 'Family name required',
     family_created: 'Family created!',
     members: 'Members',
-    invite_by_gmail: 'Invite by Gmail',
-    invite_placeholder: 'friend@gmail.com',
+    invite_member: 'Invite member',
+    invite_placeholder: 'Email or username',
     invite: 'Invite',
     pending_invites: 'Pending invites',
+    you_have_invites: 'You have family invitations',
+    invite_from: '{0} invited you to "{1}"',
+    accept: 'Accept',
+    reject: 'Decline',
+    invite_accepted: 'Joined the family!',
+    invite_rejected: 'Invite declined',
     pending: 'Pending',
     invite_cancelled: 'Invite cancelled',
     email_required: 'Email required',
@@ -392,9 +422,9 @@ function applyLanguage() {
     }
   });
 
-  // Update month label format
-  if (state.currentMonth) {
-    document.getElementById('month-label').textContent = monthLabel(state.currentMonth.year, state.currentMonth.month);
+  // Update period label format
+  if (state.currentMonth || state.currentDay || state.currentYear) {
+    document.getElementById('month-label').textContent = getDashboardLabel();
   }
 
   // Update lang toggle button text
@@ -408,6 +438,9 @@ const state = {
   family: null,       // family object from API
   categories: [],     // flat list
   currentMonth: null, // { year, month }
+  currentDay: null,   // { year, month, day } for day view
+  currentYear: null,  // year number for year view
+  viewMode: 'month',  // 'day' | 'month' | 'year'
   stats: null,        // last fetched stats
   historyOffset: 0,
   historyTotal: 0,
@@ -686,31 +719,138 @@ function toggleTheme() {
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  if (!state.currentMonth) {
-    const now = new Date();
-    state.currentMonth = { year: now.getFullYear(), month: now.getMonth() + 1 };
-  }
-
-  document.getElementById('month-label').textContent = monthLabel(
-    state.currentMonth.year, state.currentMonth.month
-  );
-
+function getDashboardDateRange() {
   const now = new Date();
-  const isCurrentMonth =
-    state.currentMonth.year === now.getFullYear() &&
-    state.currentMonth.month === now.getMonth() + 1;
-  document.getElementById('next-month').disabled = isCurrentMonth;
+  const mode = state.viewMode || 'month';
+
+  if (mode === 'day') {
+    if (!state.currentDay) {
+      state.currentDay = { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+    }
+    const { year, month, day } = state.currentDay;
+    const ds = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return { from: ds, to: ds, monthParam: `${year}-${String(month).padStart(2, '0')}`, mode };
+  } else if (mode === 'year') {
+    if (!state.currentYear) state.currentYear = now.getFullYear();
+    const year = state.currentYear;
+    return { from: `${year}-01-01`, to: `${year}-12-31`, monthParam: null, mode };
+  } else {
+    if (!state.currentMonth) {
+      state.currentMonth = { year: now.getFullYear(), month: now.getMonth() + 1 };
+    }
+    const { year, month } = state.currentMonth;
+    const lastDay = new Date(year, month, 0).getDate();
+    const mp = `${year}-${String(month).padStart(2, '0')}`;
+    return { from: `${mp}-01`, to: `${mp}-${String(lastDay).padStart(2, '0')}`, monthParam: mp, mode };
+  }
+}
+
+function getDashboardLabel() {
+  const locale = currentLang === 'vi' ? 'vi-VN' : 'en-US';
+  const mode = state.viewMode || 'month';
+  if (mode === 'day') {
+    const { year, month, day } = state.currentDay;
+    return new Date(year, month - 1, day).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+  } else if (mode === 'year') {
+    return String(state.currentYear);
+  } else {
+    return monthLabel(state.currentMonth.year, state.currentMonth.month);
+  }
+}
+
+function isAtCurrentPeriod() {
+  const now = new Date();
+  const mode = state.viewMode || 'month';
+  if (mode === 'day') {
+    const { year, month, day } = state.currentDay;
+    return year === now.getFullYear() && month === now.getMonth() + 1 && day === now.getDate();
+  } else if (mode === 'year') {
+    return state.currentYear === now.getFullYear();
+  } else {
+    return state.currentMonth.year === now.getFullYear() && state.currentMonth.month === now.getMonth() + 1;
+  }
+}
+
+async function loadDashboard() {
+  const range = getDashboardDateRange();
+
+  document.getElementById('month-label').textContent = getDashboardLabel();
+  document.getElementById('next-month').disabled = isAtCurrentPeriod();
+
+  // Update view mode buttons
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === state.viewMode);
+  });
+  // Update view mode button labels with i18n
+  const dayBtn = document.getElementById('mode-day');
+  const monthBtn = document.getElementById('mode-month');
+  const yearBtn = document.getElementById('mode-year');
+  if (dayBtn) dayBtn.textContent = t('view_day');
+  if (monthBtn) monthBtn.textContent = t('view_month');
+  if (yearBtn) yearBtn.textContent = t('view_year');
 
   try {
-    const monthParam = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}`;
-    state.stats = await api(`/api/stats?month=${monthParam}`);
-    renderStats(state.stats);
+    if (range.mode === 'year') {
+      // Year view: fetch all 12 months stats and aggregate
+      const year = state.currentYear;
+      const promises = [];
+      for (let m = 1; m <= 12; m++) {
+        promises.push(api(`/api/stats?month=${year}-${String(m).padStart(2, '0')}`).catch(() => null));
+      }
+      const monthlyStats = await Promise.all(promises);
 
-    const from = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}-01`;
-    const lastDay = new Date(state.currentMonth.year, state.currentMonth.month, 0).getDate();
-    const to = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-    const expData = await api(`/api/expenses?from=${from}&to=${to}&limit=10`);
+      // Aggregate into a stats-like object
+      const agg = { total: 0, count: 0, by_category: {}, by_person: {}, daily: [], prev_total: 0 };
+      let monthsWithSpend = 0;
+      monthlyStats.forEach(ms => {
+        if (!ms) return;
+        agg.total += ms.total || 0;
+        agg.count += ms.count || 0;
+        agg.prev_total += ms.prev_total || 0;
+        if (ms.total > 0) monthsWithSpend++;
+        if (ms.by_category) {
+          ms.by_category.forEach(c => {
+            if (!agg.by_category[c.name]) agg.by_category[c.name] = { ...c, total: 0 };
+            agg.by_category[c.name].total += c.total;
+          });
+        }
+        if (ms.by_person) {
+          ms.by_person.forEach(p => {
+            if (!agg.by_person[p.name]) agg.by_person[p.name] = { ...p, total: 0 };
+            agg.by_person[p.name].total += p.total;
+          });
+        }
+        if (ms.daily) agg.daily.push(...ms.daily);
+      });
+
+      // Fetch prev year total for comparison
+      let prevYearTotal = 0;
+      try {
+        const prevPromises = [];
+        for (let m = 1; m <= 12; m++) {
+          prevPromises.push(api(`/api/stats?month=${year - 1}-${String(m).padStart(2, '0')}`).catch(() => null));
+        }
+        const prevStats = await Promise.all(prevPromises);
+        prevStats.forEach(ms => { if (ms) prevYearTotal += ms.total || 0; });
+      } catch {}
+
+      const stats = {
+        total: agg.total,
+        count: agg.count,
+        prev_total: prevYearTotal,
+        by_category: Object.values(agg.by_category).sort((a, b) => b.total - a.total),
+        by_person: Object.values(agg.by_person).sort((a, b) => b.total - a.total),
+        daily: agg.daily,
+      };
+      state.stats = stats;
+      renderStats(stats, 'year', monthsWithSpend);
+    } else {
+      // Month or day: use existing stats API
+      state.stats = await api(`/api/stats?month=${range.monthParam}`);
+      renderStats(state.stats, range.mode);
+    }
+
+    const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
     renderExpenseList(document.getElementById('recent-expenses'), expData.expenses);
   } catch (err) {
     if (err.message.includes('Not in a family')) {
@@ -722,18 +862,27 @@ async function loadDashboard() {
   }
 }
 
-function renderStats(s) {
+function renderStats(s, viewMode, monthsWithSpend) {
+  viewMode = viewMode || 'month';
   document.getElementById('stat-total').textContent = formatMoney(s.total);
   document.getElementById('stat-count').textContent = t('expenses_count', s.count);
 
+  // Total label
+  const totalLabel = document.querySelector('#stats-grid .stat-card:first-child .stat-label');
+  if (totalLabel) {
+    totalLabel.textContent = viewMode === 'day' ? t('total_this_day') : viewMode === 'year' ? t('total_this_year') : t('total_this_month');
+  }
+
+  // Comparison
   const changeEl = document.getElementById('stat-change');
+  const vsLabel = viewMode === 'day' ? t('vs_yesterday') : viewMode === 'year' ? t('vs_last_year') : t('vs_last_month');
   if (s.prev_total > 0) {
     const pct = ((s.total - s.prev_total) / s.prev_total * 100).toFixed(0);
     if (pct > 0) {
-      changeEl.textContent = '▲ ' + pct + '% ' + t('vs_last_month');
+      changeEl.textContent = '▲ ' + pct + '% ' + vsLabel;
       changeEl.className = 'stat-change up';
     } else if (pct < 0) {
-      changeEl.textContent = '▼ ' + Math.abs(pct) + '% ' + t('vs_last_month');
+      changeEl.textContent = '▼ ' + Math.abs(pct) + '% ' + vsLabel;
       changeEl.className = 'stat-change down';
     } else {
       changeEl.textContent = t('same_as_last_month');
@@ -743,11 +892,21 @@ function renderStats(s) {
     changeEl.textContent = '';
   }
 
-  // Daily average across days that had spending
-  const daysWithSpend = s.daily ? s.daily.length : 0;
-  const avg = daysWithSpend > 0 ? s.total / daysWithSpend : 0;
-  document.getElementById('stat-avg').textContent = formatMoney(avg);
-  document.getElementById('stat-days').textContent = t('days_with_spending', daysWithSpend);
+  // Average label
+  const avgLabel = document.querySelector('#stats-grid .stat-card:nth-child(2) .stat-label');
+  if (viewMode === 'year') {
+    const mws = monthsWithSpend || 0;
+    const avg = mws > 0 ? s.total / mws : 0;
+    document.getElementById('stat-avg').textContent = formatMoney(avg);
+    if (avgLabel) avgLabel.textContent = t('monthly_average');
+    document.getElementById('stat-days').textContent = t('months_with_spending', mws);
+  } else {
+    const daysWithSpend = s.daily ? s.daily.length : 0;
+    const avg = daysWithSpend > 0 ? s.total / daysWithSpend : 0;
+    document.getElementById('stat-avg').textContent = formatMoney(avg);
+    if (avgLabel) avgLabel.textContent = t('daily_average');
+    document.getElementById('stat-days').textContent = t('days_with_spending', daysWithSpend);
+  }
 
   // Top category
   const topCat = s.by_category && s.by_category.find(c => c.total > 0);
@@ -878,11 +1037,14 @@ function renderExpenseList(container, expenses) {
 }
 
 function refreshStatsBackground() {
-  if (state.currentMonth) {
+  // Only quick-refresh in month mode; day/year reload fully
+  if (state.viewMode === 'month' && state.currentMonth) {
     const monthParam = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}`;
     api(`/api/stats?month=${monthParam}`)
-      .then(s => { state.stats = s; renderStats(s); })
+      .then(s => { state.stats = s; renderStats(s, 'month'); })
       .catch(() => {});
+  } else {
+    loadDashboard();
   }
 }
 
@@ -1129,12 +1291,56 @@ async function loadFamily() {
     const data = await api('/api/family');
     state.family = data.family;
 
+    const myInvitesSection = document.getElementById('my-invites-section');
+
     if (!state.family) {
       noFam.style.display = 'block';
       hasFam.style.display = 'none';
+
+      // Show pending invites for this user
+      const myInvites = data.my_pending_invites || [];
+      if (myInvites.length > 0) {
+        myInvitesSection.style.display = 'block';
+        const list = document.getElementById('my-invites-list');
+        list.innerHTML = myInvites.map(inv => `
+          <div class="invite-item" style="flex-wrap:wrap;gap:0.5rem">
+            <div style="flex:1;min-width:150px">
+              <div style="font-weight:600">${escHtml(inv.family_name)}</div>
+              <div style="font-size:0.8125rem;color:var(--text-muted)">${t('invite_from', inv.inviter_name, inv.family_name)}</div>
+            </div>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn btn-primary btn-sm accept-invite" data-id="${escHtml(inv.id)}">${t('accept')}</button>
+              <button class="btn btn-secondary btn-sm reject-invite" data-id="${escHtml(inv.id)}">${t('reject')}</button>
+            </div>
+          </div>`
+        ).join('');
+
+        list.querySelectorAll('.accept-invite').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            try {
+              await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'accept_invite', invite_id: btn.dataset.id }) });
+              toast(t('invite_accepted'), 'success');
+              await loadFamily();
+              loadDashboard();
+            } catch (err) { toast(t('failed', err.message), 'error'); }
+          });
+        });
+        list.querySelectorAll('.reject-invite').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            try {
+              await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'reject_invite', invite_id: btn.dataset.id }) });
+              toast(t('invite_rejected'), 'info');
+              await loadFamily();
+            } catch (err) { toast(t('failed', err.message), 'error'); }
+          });
+        });
+      } else {
+        myInvitesSection.style.display = 'none';
+      }
       return;
     }
 
+    myInvitesSection.style.display = 'none';
     noFam.style.display = 'none';
     hasFam.style.display = 'block';
 
@@ -1258,7 +1464,7 @@ async function changeCurrency() {
     toast(t('currency_changed', newCurrency, result.rate.toFixed(6)), 'success');
     renderCurrencyUI();
     // Refresh dashboard to show new amounts
-    if (state.currentMonth) loadDashboard();
+    loadDashboard();
   } catch (err) {
     toast(t('failed', err.message), 'error');
   } finally {
@@ -1537,8 +1743,8 @@ async function runAIAnalysis(customQuestion) {
   content.innerHTML = '<div class="spinner"></div>';
 
   try {
-    const ml = state.currentMonth
-      ? monthLabel(state.currentMonth.year, state.currentMonth.month)
+    const ml = (state.currentMonth || state.currentDay || state.currentYear)
+      ? getDashboardLabel()
       : 'this month';
 
     const res = await api('/api/ai-analyze', {
@@ -1942,52 +2148,49 @@ function initVoiceInput() {
   let isListening = false;
   let recognition = null;
   let maxTimer = null;
-  let retryCount = 0;
-  const MAX_RETRIES = 3;
+  let gotResult = false;
+  let listenStartTime = 0;
 
   function stopListening() {
     isListening = false;
     if (maxTimer) { clearTimeout(maxTimer); maxTimer = null; }
     voiceBtn.classList.remove('listening');
-    if (recognition) { try { recognition.abort(); } catch {} }
+    if (recognition) { try { recognition.stop(); } catch {} }
     recognition = null;
-    retryCount = 0;
   }
 
   function startRecognition() {
     recognition = new SpeechRecognition();
     recognition.lang = 'vi-VN';
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      const result = event.results[0];
+      // Get the latest result
+      const result = event.results[event.results.length - 1];
       const text = result[0].transcript;
+      gotResult = true;
       transcriptEl.style.display = 'block';
       transcriptEl.textContent = `"${text}"`;
 
       if (result.isFinal) {
-        // Got final result — process and auto-submit
         stopListening();
-        const parsed = parseVoiceExpense(text);
         processVoiceResult(text, statusEl);
-
-        // Auto-submit if we got an amount
-        if (parsed.amount) {
-          setTimeout(() => {
-            document.getElementById('add-expense-form').requestSubmit();
-          }, 800);
-        }
       }
     };
 
     recognition.onerror = (event) => {
-      if (event.error === 'no-speech' || event.error === 'aborted') {
-        // Will retry in onend
+      // Always ignore transient errors — let continuous mode + max timer handle it
+      if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'audio-capture') {
         return;
       }
-      // Real error (not-allowed, network, etc.)
+      // For other errors (network, not-allowed), only show error if we've been listening long enough
+      const elapsed = Date.now() - listenStartTime;
+      if (elapsed < 3000) {
+        // Too early — browser fired error before user had a chance to speak, just retry
+        return;
+      }
       stopListening();
       statusEl.textContent = t('voice_no_match');
       statusEl.classList.add('voice-error');
@@ -1996,21 +2199,21 @@ function initVoiceInput() {
 
     recognition.onend = () => {
       if (!isListening) return;
-
-      // Retry if no result yet and under retry limit
-      retryCount++;
-      if (retryCount <= MAX_RETRIES) {
-        setTimeout(() => {
-          if (!isListening) return;
-          try { startRecognition(); recognition.start(); }
-          catch { stopListening(); }
-        }, 200);
-      } else {
-        // Give up after retries
-        stopListening();
-        statusEl.textContent = t('voice_no_match');
-        statusEl.classList.add('voice-error');
-        setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
+      // Browser stopped recognition — restart if still listening
+      try {
+        recognition.start();
+      } catch {
+        // Only show error if enough time passed and no result
+        const elapsed = Date.now() - listenStartTime;
+        if (elapsed < 3000 && !gotResult) {
+          // Retry after a short delay
+          setTimeout(() => {
+            if (!isListening) return;
+            try { startRecognition(); } catch { stopListening(); }
+          }, 300);
+        } else {
+          stopListening();
+        }
       }
     };
 
@@ -2024,24 +2227,26 @@ function initVoiceInput() {
     }
 
     isListening = true;
-    retryCount = 0;
+    listenStartTime = Date.now();
     voiceBtn.classList.add('listening');
     statusEl.style.display = 'block';
     statusEl.textContent = t('voice_listening');
     statusEl.classList.remove('voice-success', 'voice-error');
     transcriptEl.style.display = 'none';
 
-    // Hard max timeout
+    gotResult = false;
+
+    // Hard max timeout — give user 15 seconds to speak
     maxTimer = setTimeout(() => {
       if (isListening) {
         stopListening();
-        if (!transcriptEl.textContent) {
+        if (!gotResult) {
           statusEl.textContent = t('voice_no_match');
           statusEl.classList.add('voice-error');
           setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
         }
       }
-    }, 8000);
+    }, 15000);
 
     startRecognition();
   });
@@ -2129,24 +2334,55 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('logout-btn').addEventListener('click', logout);
 
-  // Month navigation on dashboard
+  // View mode toggle
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.viewMode = btn.dataset.mode;
+      // Initialize date state for new mode if needed
+      const now = new Date();
+      if (state.viewMode === 'day' && !state.currentDay) {
+        state.currentDay = { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+      } else if (state.viewMode === 'year' && !state.currentYear) {
+        state.currentYear = now.getFullYear();
+      }
+      loadDashboard();
+    });
+  });
+
+  // Period navigation on dashboard
   document.getElementById('prev-month').addEventListener('click', () => {
-    if (!state.currentMonth) return;
-    let { year, month } = state.currentMonth;
-    month--;
-    if (month < 1) { month = 12; year--; }
-    state.currentMonth = { year, month };
+    const mode = state.viewMode || 'month';
+    if (mode === 'day') {
+      if (!state.currentDay) return;
+      const d = new Date(state.currentDay.year, state.currentDay.month - 1, state.currentDay.day - 1);
+      state.currentDay = { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+    } else if (mode === 'year') {
+      if (!state.currentYear) return;
+      state.currentYear--;
+    } else {
+      if (!state.currentMonth) return;
+      let { year, month } = state.currentMonth;
+      month--;
+      if (month < 1) { month = 12; year--; }
+      state.currentMonth = { year, month };
+    }
     loadDashboard();
   });
 
   document.getElementById('next-month').addEventListener('click', () => {
-    if (!state.currentMonth) return;
-    let { year, month } = state.currentMonth;
-    const now = new Date();
-    if (year >= now.getFullYear() && month >= now.getMonth() + 1) return;
-    month++;
-    if (month > 12) { month = 1; year++; }
-    state.currentMonth = { year, month };
+    if (isAtCurrentPeriod()) return;
+    const mode = state.viewMode || 'month';
+    if (mode === 'day') {
+      const d = new Date(state.currentDay.year, state.currentDay.month - 1, state.currentDay.day + 1);
+      state.currentDay = { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+    } else if (mode === 'year') {
+      state.currentYear++;
+    } else {
+      let { year, month } = state.currentMonth;
+      month++;
+      if (month > 12) { month = 1; year++; }
+      state.currentMonth = { year, month };
+    }
     loadDashboard();
   });
 
