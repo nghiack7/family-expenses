@@ -188,6 +188,33 @@ const translations = {
     voice_filled: 'Đã điền! Kiểm tra và bấm Thêm chi tiêu.',
     voice_example: 'vd: "đi uống cafe hết 50 nghìn"',
 
+    // Chart
+    chart_weekly: 'Tuần',
+    chart_monthly: 'Tháng',
+    chart_spending: 'Chi tiêu',
+    weekly_spending: 'Chi tiêu theo tuần',
+    monthly_spending: 'Chi tiêu theo tháng',
+
+    // Export
+    export_excel: 'Xuất Excel',
+    exporting: 'Đang xuất...',
+    export_success: 'Đã xuất file Excel!',
+    export_no_data: 'Không có dữ liệu để xuất',
+    export_need_dates: 'Chọn khoảng thời gian để xuất',
+    sheet_details: 'Chi tiết',
+    sheet_by_category: 'Theo danh mục',
+    sheet_by_person: 'Theo thành viên',
+    sheet_by_month: 'Theo tháng',
+    col_date: 'Ngày',
+    col_description: 'Mô tả',
+    col_category: 'Danh mục',
+    col_amount: 'Số tiền',
+    col_person: 'Người chi',
+    col_total: 'Tổng',
+    col_count: 'Số lần',
+    col_percent: 'Tỷ lệ %',
+    col_month: 'Tháng',
+
     // Common
     save: 'Lưu',
     edit: 'Sửa',
@@ -375,6 +402,29 @@ const translations = {
     voice_no_match: 'Could not understand. Try: "coffee 50k"',
     voice_filled: 'Filled! Review and tap Add Expense.',
     voice_example: 'e.g. "lunch at Pho 24, 50k"',
+    chart_weekly: 'Week',
+    chart_monthly: 'Month',
+    chart_spending: 'Spending',
+    weekly_spending: 'Weekly spending',
+    monthly_spending: 'Monthly spending',
+    export_excel: 'Export Excel',
+    exporting: 'Exporting...',
+    export_success: 'Excel file exported!',
+    export_no_data: 'No data to export',
+    export_need_dates: 'Select a date range to export',
+    sheet_details: 'Details',
+    sheet_by_category: 'By Category',
+    sheet_by_person: 'By Person',
+    sheet_by_month: 'By Month',
+    col_date: 'Date',
+    col_description: 'Description',
+    col_category: 'Category',
+    col_amount: 'Amount',
+    col_person: 'Paid by',
+    col_total: 'Total',
+    col_count: 'Count',
+    col_percent: '% Share',
+    col_month: 'Month',
     save: 'Save',
     edit: 'Edit',
     cancel: 'Cancel',
@@ -987,10 +1037,29 @@ function renderStats(s, viewMode, monthsWithSpend) {
     chipsEl.innerHTML = '<span style="color:var(--text-muted);font-size:0.875rem">' + t('no_members_yet') + '</span>';
   }
 
-  // Daily bar chart
+  // Daily bar chart with granularity toggle
   if (s.daily && s.daily.length > 0) {
     document.getElementById('daily-chart-card').style.display = 'block';
-    drawDailyBarChart('daily-chart', s.daily);
+    currentChartDailyData = s.daily;
+
+    const granEl = document.getElementById('chart-granularity');
+    const granBtns = granEl.querySelectorAll('.chart-gran-btn');
+
+    if (viewMode === 'year') {
+      // Year: show week/month toggles, default to month
+      granEl.style.display = 'flex';
+      granBtns.forEach(b => b.style.display = b.dataset.gran === 'day' ? 'none' : '');
+      updateChartWithGranularity('month');
+    } else if (viewMode === 'month') {
+      // Month: show day/week toggles, default to day
+      granEl.style.display = 'flex';
+      granBtns.forEach(b => b.style.display = b.dataset.gran === 'month' ? 'none' : '');
+      updateChartWithGranularity('day');
+    } else {
+      // Day: no toggle, just show daily
+      granEl.style.display = 'none';
+      updateChartWithGranularity('day');
+    }
   }
 
   // Category donut chart
@@ -1309,6 +1378,154 @@ async function loadHistory(reset = false) {
     } else {
       toast(t('failed_load_history', err.message), 'error');
     }
+  }
+}
+
+// ── Export to Excel ───────────────────────────────────────────────────────
+async function exportToExcel() {
+  const from = document.getElementById('filter-from').value;
+  const to = document.getElementById('filter-to').value;
+
+  // Default: current year if no dates selected
+  const now = new Date();
+  const exportFrom = from || `${now.getFullYear()}-01-01`;
+  const exportTo = to || todayISO();
+
+  const btn = document.getElementById('export-excel-btn');
+  const origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = t('exporting');
+
+  try {
+    const params = new URLSearchParams({ from: exportFrom, to: exportTo });
+    const categoryId = document.getElementById('filter-category').value;
+    const personId = document.getElementById('filter-person').value;
+    if (categoryId) params.set('category_id', categoryId);
+    if (personId) params.set('user_id', personId);
+
+    const data = await api(`/api/export?${params}`);
+    if (!data.expenses || data.expenses.length === 0) {
+      toast(t('export_no_data'), 'info');
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const currency = data.currency || state.currency;
+
+    // ── Sheet 1: Details ──
+    const detailRows = data.expenses.map(e => ({
+      [t('col_date')]: e.expense_date,
+      [t('col_category')]: `${e.category_icon || ''} ${e.category_name}`.trim(),
+      [t('col_description')]: e.description || '',
+      [t('col_amount')]: Math.round(e.amount),
+      [t('col_person')]: e.user_name,
+    }));
+    const wsDetails = XLSX.utils.json_to_sheet(detailRows);
+    // Set column widths
+    wsDetails['!cols'] = [
+      { wch: 12 }, { wch: 18 }, { wch: 30 }, { wch: 15 }, { wch: 15 },
+    ];
+    XLSX.utils.book_append_sheet(wb, wsDetails, t('sheet_details'));
+
+    // ── Sheet 2: By Category ──
+    const catMap = {};
+    let grandTotal = 0;
+    for (const e of data.expenses) {
+      const key = e.category_name;
+      if (!catMap[key]) catMap[key] = { icon: e.category_icon || '', total: 0, count: 0 };
+      catMap[key].total += e.amount;
+      catMap[key].count++;
+      grandTotal += e.amount;
+    }
+    const catRows = Object.entries(catMap)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([name, d]) => ({
+        [t('col_category')]: `${d.icon} ${name}`.trim(),
+        [t('col_total')]: Math.round(d.total),
+        [t('col_count')]: d.count,
+        [t('col_percent')]: Math.round(d.total / grandTotal * 10000) / 100,
+      }));
+    // Add total row
+    catRows.push({
+      [t('col_category')]: t('col_total'),
+      [t('col_total')]: Math.round(grandTotal),
+      [t('col_count')]: data.expenses.length,
+      [t('col_percent')]: 100,
+    });
+    const wsCat = XLSX.utils.json_to_sheet(catRows);
+    wsCat['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, wsCat, t('sheet_by_category'));
+
+    // ── Sheet 3: By Person ──
+    const personMap = {};
+    for (const e of data.expenses) {
+      if (!personMap[e.user_name]) personMap[e.user_name] = { total: 0, count: 0 };
+      personMap[e.user_name].total += e.amount;
+      personMap[e.user_name].count++;
+    }
+    const personRows = Object.entries(personMap)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([name, d]) => ({
+        [t('col_person')]: name,
+        [t('col_total')]: Math.round(d.total),
+        [t('col_count')]: d.count,
+        [t('col_percent')]: Math.round(d.total / grandTotal * 10000) / 100,
+      }));
+    personRows.push({
+      [t('col_person')]: t('col_total'),
+      [t('col_total')]: Math.round(grandTotal),
+      [t('col_count')]: data.expenses.length,
+      [t('col_percent')]: 100,
+    });
+    const wsPerson = XLSX.utils.json_to_sheet(personRows);
+    wsPerson['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, wsPerson, t('sheet_by_person'));
+
+    // ── Sheet 4: By Month ──
+    const monthMap = {};
+    for (const e of data.expenses) {
+      const m = e.expense_date.slice(0, 7); // YYYY-MM
+      if (!monthMap[m]) monthMap[m] = { total: 0, count: 0, categories: {} };
+      monthMap[m].total += e.amount;
+      monthMap[m].count++;
+      const cat = e.category_name;
+      monthMap[m].categories[cat] = (monthMap[m].categories[cat] || 0) + e.amount;
+    }
+    // Get all category names for columns
+    const allCats = [...new Set(data.expenses.map(e => e.category_name))].sort();
+    const monthRows = Object.entries(monthMap)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, d]) => {
+        const row = {
+          [t('col_month')]: month,
+          [t('col_total')]: Math.round(d.total),
+          [t('col_count')]: d.count,
+        };
+        for (const cat of allCats) {
+          row[cat] = Math.round(d.categories[cat] || 0);
+        }
+        return row;
+      });
+    // Add total row
+    const totalRow = { [t('col_month')]: t('col_total'), [t('col_total')]: Math.round(grandTotal), [t('col_count')]: data.expenses.length };
+    for (const cat of allCats) {
+      totalRow[cat] = Math.round(catMap[cat]?.total || 0);
+    }
+    monthRows.push(totalRow);
+    const wsMonth = XLSX.utils.json_to_sheet(monthRows);
+    wsMonth['!cols'] = [{ wch: 10 }, { wch: 15 }, { wch: 8 }, ...allCats.map(() => ({ wch: 14 }))];
+    XLSX.utils.book_append_sheet(wb, wsMonth, t('sheet_by_month'));
+
+    // Download
+    const familyName = data.family_name || 'Family';
+    const fileName = `${familyName}_${exportFrom}_${exportTo}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast(t('export_success'), 'success');
+  } catch (err) {
+    toast(t('failed', err.message), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origText;
   }
 }
 
@@ -1870,7 +2087,59 @@ function renderAIInsights(analysis) {
   }
 }
 
-function drawDailyBarChart(canvasId, dailyData) {
+// ── Chart data aggregation ────────────────────────────────────────────────
+function aggregateByWeek(dailyData) {
+  const weeks = {};
+  for (const d of dailyData) {
+    const date = new Date(d.expense_date + 'T00:00:00');
+    // Get Monday of the week
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date);
+    monday.setDate(diff);
+    const key = monday.toISOString().slice(0, 10);
+    if (!weeks[key]) weeks[key] = { expense_date: key, total: 0 };
+    weeks[key].total += d.total;
+  }
+  return Object.values(weeks).sort((a, b) => a.expense_date.localeCompare(b.expense_date));
+}
+
+function aggregateByMonth(dailyData) {
+  const months = {};
+  for (const d of dailyData) {
+    const key = d.expense_date.slice(0, 7); // YYYY-MM
+    if (!months[key]) months[key] = { expense_date: key + '-01', label: key, total: 0 };
+    months[key].total += d.total;
+  }
+  return Object.values(months).sort((a, b) => a.expense_date.localeCompare(b.expense_date));
+}
+
+let currentChartGranularity = 'day';
+let currentChartDailyData = [];
+
+function updateChartWithGranularity(gran) {
+  currentChartGranularity = gran;
+  document.querySelectorAll('.chart-gran-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.gran === gran);
+  });
+
+  let chartData, titleKey;
+  if (gran === 'week') {
+    chartData = aggregateByWeek(currentChartDailyData);
+    titleKey = 'weekly_spending';
+  } else if (gran === 'month') {
+    chartData = aggregateByMonth(currentChartDailyData);
+    titleKey = 'monthly_spending';
+  } else {
+    chartData = currentChartDailyData;
+    titleKey = 'daily_spending';
+  }
+
+  document.getElementById('chart-title').textContent = t(titleKey);
+  drawDailyBarChart('daily-chart', chartData, gran);
+}
+
+function drawDailyBarChart(canvasId, dailyData, granularity) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -1933,15 +2202,23 @@ function drawDailyBarChart(canvasId, dailyData) {
     ctx.closePath();
     ctx.fill();
 
-    // Date label (show every few days to avoid overlap)
+    // Date label
     const showLabel = dailyData.length <= 15 || i % Math.ceil(dailyData.length / 10) === 0 || i === dailyData.length - 1;
     if (showLabel && d.expense_date) {
-      const day = d.expense_date.split('-')[2];
+      let label;
+      if (granularity === 'month') {
+        label = d.label || d.expense_date.slice(5, 7);
+      } else if (granularity === 'week') {
+        const dd = d.expense_date.split('-');
+        label = dd[2] + '/' + dd[1];
+      } else {
+        label = d.expense_date.split('-')[2];
+      }
       ctx.fillStyle = textColor;
       ctx.font = '10px "Nunito Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(day, x + barW / 2, padTop + chartH + 6);
+      ctx.fillText(label, x + barW / 2, padTop + chartH + 6);
     }
   });
 
@@ -2567,6 +2844,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadHistory(true);
   });
   document.getElementById('load-more-btn').addEventListener('click', () => loadHistory(false));
+  document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+
+  // Chart granularity toggle
+  document.querySelectorAll('.chart-gran-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateChartWithGranularity(btn.dataset.gran));
+  });
 
   // Enter key shortcuts
   document.getElementById('invite-email').addEventListener('keydown', (e) => {

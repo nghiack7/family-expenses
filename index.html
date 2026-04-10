@@ -113,7 +113,12 @@
           <!-- Daily bar chart -->
           <div class="card" id="daily-chart-card" style="display:none">
             <div class="card-header">
-              <span class="card-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
+              <span class="card-title" id="chart-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
+              <div class="chart-granularity" id="chart-granularity" style="display:none">
+                <button class="chart-gran-btn active" data-gran="day" data-i18n="view_day">Ngày</button>
+                <button class="chart-gran-btn" data-gran="week" data-i18n="chart_weekly">Tuần</button>
+                <button class="chart-gran-btn" data-gran="month" data-i18n="chart_monthly">Tháng</button>
+              </div>
             </div>
             <div class="chart-container">
               <canvas id="daily-chart"></canvas>
@@ -252,6 +257,7 @@
             </select>
             <button class="btn btn-secondary btn-sm" id="filter-apply" data-i18n="filter">Lọc</button>
             <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            <button class="btn btn-secondary btn-sm" id="export-excel-btn" title="Export Excel" data-i18n="export_excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:middle;margin-right:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Excel</button>
           </div>
           <div class="expense-list" id="history-list">
             <div class="spinner"></div>
@@ -477,6 +483,7 @@
   <!-- Toast container -->
   <div class="toast-container" id="toast-container"></div>
 
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
