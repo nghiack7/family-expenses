@@ -68,7 +68,7 @@ export async function onRequestGet(context) {
   ).bind(membership.family_id).all();
 
   const invites = await env.DB.prepare(
-    `SELECT id, email, status, created_at FROM family_invites
+    `SELECT id, email, status, created_at, invite_token FROM family_invites
      WHERE family_id = ? AND status = 'pending'`
   ).bind(membership.family_id).all();
 
@@ -192,9 +192,10 @@ export async function onRequestPut(context) {
     if (existingInvite) return jsonError('Already invited', 409);
 
     const inviteId = randomId();
+    const inviteToken = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
     await env.DB.prepare(
-      `INSERT INTO family_invites (id, family_id, email, invited_by) VALUES (?, ?, ?, ?)`
-    ).bind(inviteId, membership.family_id, email, user.sub).run();
+      `INSERT INTO family_invites (id, family_id, email, invited_by, invite_token) VALUES (?, ?, ?, ?, ?)`
+    ).bind(inviteId, membership.family_id, email, user.sub, inviteToken).run();
 
     // Get family name for the email
     const family = await env.DB.prepare(
@@ -213,7 +214,8 @@ export async function onRequestPut(context) {
       });
     } catch { /* non-fatal */ }
 
-    return jsonResp({ ok: true, invite_id: inviteId, email_sent: emailSent, app_url: appUrl });
+    const inviteLink = `${appUrl}#invite/${inviteToken}`;
+    return jsonResp({ ok: true, invite_id: inviteId, email_sent: emailSent, app_url: appUrl, invite_link: inviteLink });
   }
 
   if (action === 'leave') {
@@ -355,6 +357,30 @@ export async function onRequestPut(context) {
     await env.DB.prepare(
       `DELETE FROM family_invites WHERE id = ? AND family_id = ?`
     ).bind(invite_id, membership.family_id).run();
+
+    return jsonResp({ ok: true });
+  }
+
+  if (action === 'accept_invite_token') {
+    const { token } = body;
+    if (!token) return jsonError('Token required', 400);
+
+    const invite = await env.DB.prepare(
+      `SELECT id, family_id, email FROM family_invites WHERE invite_token = ? AND status = 'pending'`
+    ).bind(token).first();
+
+    if (!invite) return jsonError('Invite not found or already used', 404);
+
+    // Check if already in a family
+    const existingMembership = await env.DB.prepare(
+      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
+    ).bind(user.sub).first();
+    if (existingMembership) return jsonError('You already belong to a family. Leave it first.', 409);
+
+    await env.DB.batch([
+      env.DB.prepare(`INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`).bind(invite.family_id, user.sub),
+      env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(invite.id),
+    ]);
 
     return jsonResp({ ok: true });
   }

@@ -52,26 +52,53 @@ export async function onRequestPut(context) {
     return issueSession({ sub: full.id, email: full.email, name: full.name, avatar: full.avatar }, env, request);
   }
 
-  // ── Update username ──
+  // ── Update username (one-time) ──
   if (action === 'update_username') {
     const username = (body.username || '').trim().toLowerCase();
-    if (!username) {
-      await env.DB.prepare('UPDATE users SET username = NULL WHERE id = ?').bind(userId).run();
-      return new Response(JSON.stringify({ ok: true, username: null }), { headers: { 'Content-Type': 'application/json' } });
-    }
+    if (!username) return jsonError('Username cannot be empty', 400);
     if (username.length < 3 || username.length > 30) return jsonError('Username must be 3-30 characters', 400);
     if (!/^[a-z0-9_]+$/.test(username)) return jsonError('Username can only contain letters, numbers, and underscores', 400);
 
+    const user = await env.DB.prepare('SELECT username, username_edited FROM users WHERE id = ?').bind(userId).first();
+    if (!user) return jsonError('User not found', 404);
+    if (user.username && user.username_edited) return jsonError('Username can only be set once', 403);
+
     try {
-      await env.DB.prepare('UPDATE users SET username = ? WHERE id = ?').bind(username, userId).run();
+      await env.DB.prepare('UPDATE users SET username = ?, username_edited = 1 WHERE id = ?').bind(username, userId).run();
     } catch (err) {
-      // UNIQUE constraint violation — another user grabbed it between check and update
       if (err.message && err.message.includes('UNIQUE')) {
         return jsonError('Username already taken', 409);
       }
       return jsonError(`Database error: ${err.message}`, 500);
     }
     return new Response(JSON.stringify({ ok: true, username }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // ── Link Google account ──
+  if (action === 'link_google') {
+    const { credential } = body;
+    if (!credential) return jsonError('Missing Google credential', 400);
+
+    const clientId = env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID;
+    let googlePayload;
+    try {
+      googlePayload = await verifyGoogleJWT(credential, clientId);
+    } catch (err) {
+      return jsonError(`Invalid Google credential: ${err.message}`, 401);
+    }
+
+    const { sub, email: googleEmail, picture } = googlePayload;
+
+    // Check if this Google account is already linked to another user
+    const existingGoogle = await env.DB.prepare('SELECT id FROM users WHERE google_sub = ? AND id != ?').bind(sub, userId).first();
+    if (existingGoogle) return jsonError('This Google account is already linked to another user', 409);
+
+    await env.DB.prepare(
+      'UPDATE users SET google_sub = ?, avatar = COALESCE(avatar, ?), auth_provider = CASE WHEN auth_provider = \'email\' THEN \'email+google\' ELSE auth_provider END WHERE id = ?'
+    ).bind(sub, picture || null, userId).run();
+
+    const full = await env.DB.prepare('SELECT id, email, name, avatar FROM users WHERE id = ?').bind(userId).first();
+    return issueSession({ sub: full.id, email: full.email, name: full.name, avatar: full.avatar }, env, request);
   }
 
   // ── Change password ──
@@ -296,7 +323,7 @@ async function issueSession(user, env, request) {
   let hasPassword = false;
   let username = null;
   try {
-    const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash, username FROM users WHERE id = ?').bind(user.sub).first();
+    const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash, username, username_edited, google_sub FROM users WHERE id = ?').bind(user.sub).first();
     if (row) {
       nameEdited = row.name_edited || 0;
       authProvider = row.auth_provider || 'google';
@@ -317,7 +344,7 @@ async function issueSession(user, env, request) {
     : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
 
   return new Response(
-    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, username, name_edited: nameEdited, auth_provider: authProvider, has_password: hasPassword } }),
+    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, username, name_edited: nameEdited, username_edited: row?.username_edited || 0, auth_provider: authProvider, has_password: hasPassword, google_linked: !!row?.google_sub } }),
     {
       headers: {
         'Content-Type': 'application/json',

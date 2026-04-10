@@ -102,6 +102,16 @@ const translations = {
     username_saved: 'Đã lưu tên đăng nhập!',
     username_cleared: 'Đã xóa tên đăng nhập',
     username_invalid: 'Tên đăng nhập phải 3-30 ký tự, chỉ chữ/số/gạch dưới',
+    username_edit_used: 'Tên đăng nhập đã được đặt (chỉ cho phép đặt 1 lần)',
+    username_set_confirm: 'Bạn chỉ có thể đặt tên đăng nhập 1 lần. Bạn chắc chứ?',
+    link_google: 'Liên kết Google',
+    link_google_success: 'Đã liên kết tài khoản Google!',
+    google_linked: 'Đã liên kết Google',
+    copy_invite_link: 'Sao chép link mời',
+    invite_link_copied: 'Đã sao chép link mời!',
+    invite_link_join: 'Bạn được mời vào gia đình! Đang tham gia...',
+    invite_link_joined: 'Đã tham gia gia đình qua link mời!',
+    invite_link_invalid: 'Link mời không hợp lệ hoặc đã hết hạn',
     name_edit_used: 'Tên đã được thay đổi (chỉ cho phép sửa 1 lần)',
     name_change_confirm: 'Bạn chỉ có thể đổi tên 1 lần. Bạn chắc chứ?',
     name_updated: 'Đã cập nhật tên!',
@@ -319,6 +329,16 @@ const translations = {
     username_saved: 'Username saved!',
     username_cleared: 'Username cleared',
     username_invalid: 'Username must be 3-30 chars, letters/numbers/underscores only',
+    username_edit_used: 'Username has been set (one-time only)',
+    username_set_confirm: 'You can only set your username once. Are you sure?',
+    link_google: 'Link Google',
+    link_google_success: 'Google account linked!',
+    google_linked: 'Google linked',
+    copy_invite_link: 'Copy invite link',
+    invite_link_copied: 'Invite link copied!',
+    invite_link_join: "You've been invited to a family! Joining...",
+    invite_link_joined: 'Joined the family via invite link!',
+    invite_link_invalid: 'Invite link is invalid or expired',
     name_edit_used: 'Name has already been changed (one-time edit used)',
     name_change_confirm: 'You can only change your name once. Are you sure?',
     name_updated: 'Name updated!',
@@ -603,6 +623,29 @@ function formatDate(iso) {
   return new Date(+y, +m - 1, +d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
+// ── Invite token handler ──────────────────────────────────────────────────
+async function handleInviteToken(token) {
+  try {
+    await api('/api/family', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'accept_invite_token', token }),
+    });
+    toast(t('invite_link_joined'), 'success');
+    await loadFamily();
+    loadDashboard();
+  } catch (err) {
+    toast(t('invite_link_invalid') + ': ' + err.message, 'error');
+  }
+}
+
+function checkPendingInviteToken() {
+  const token = sessionStorage.getItem('pending_invite_token');
+  if (token) {
+    sessionStorage.removeItem('pending_invite_token');
+    handleInviteToken(token);
+  }
+}
+
 // ── Routing ────────────────────────────────────────────────────────────────
 const VIEWS = ['dashboard', 'add-expense', 'history', 'family'];
 
@@ -613,6 +656,20 @@ function navigate(view) {
 
 function applyRoute() {
   const hash = window.location.hash.replace('#', '') || 'dashboard';
+
+  // Handle invite link: #invite/TOKEN
+  if (hash.startsWith('invite/')) {
+    const token = hash.split('/')[1];
+    if (token && state.user) {
+      handleInviteToken(token);
+    } else if (token) {
+      // Not logged in — save token, will process after login
+      sessionStorage.setItem('pending_invite_token', token);
+    }
+    window.location.hash = 'family';
+    return;
+  }
+
   const view = VIEWS.includes(hash) ? hash : 'dashboard';
 
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -643,6 +700,7 @@ function showApp() {
   renderNavUser();
   applyLanguage();
   applyRoute();
+  checkPendingInviteToken();
 }
 
 function renderNavUser() {
@@ -672,8 +730,28 @@ async function handleGoogleCredential(response) {
   }
 }
 
+// Link Google account to existing email user
+async function handleLinkGoogle(response) {
+  try {
+    const data = await api('/api/auth', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'link_google', credential: response.credential }),
+    });
+    state.user = data.user;
+    sessionStorage.setItem('user', JSON.stringify(data.user));
+    renderNavUser();
+    initProfileUI();
+    toast(t('link_google_success'), 'success');
+  } catch (err) {
+    toast(t('failed', err.message), 'error');
+  }
+}
+
 // Expose to global scope so GSI data-callback attribute can reach it
-if (typeof window !== 'undefined') window.handleGoogleCredential = handleGoogleCredential;
+if (typeof window !== 'undefined') {
+  window.handleGoogleCredential = handleGoogleCredential;
+  window.handleLinkGoogle = handleLinkGoogle;
+}
 
 // ── Email auth ─────────────────────────────────────────────────────────────
 function initAuthTabs() {
@@ -1637,16 +1715,28 @@ async function loadFamily() {
 
     if (pendingInvites.length > 0) {
       pendingSection.style.display = 'block';
+      const appOrigin = window.location.origin + window.location.pathname;
       pendingList.innerHTML = pendingInvites.map(inv =>
         `<div class="invite-item">
-          <div>
+          <div style="flex:1;min-width:0">
             <div class="invite-email">${escHtml(inv.email)}</div>
             <div class="invite-status">${t('pending')}</div>
           </div>
-          <button class="btn btn-icon btn-sm cancel-invite" data-id="${escHtml(inv.id)}" title="Cancel invite">✕</button>
+          <div style="display:flex;gap:0.25rem">
+            ${inv.invite_token ? `<button class="btn btn-secondary btn-sm copy-invite-link" data-link="${escHtml(appOrigin)}#invite/${escHtml(inv.invite_token)}" title="${t('copy_invite_link')}">📋</button>` : ''}
+            <button class="btn btn-icon btn-sm cancel-invite" data-id="${escHtml(inv.id)}" title="Cancel invite">✕</button>
+          </div>
         </div>`
       ).join('');
 
+      pendingList.querySelectorAll('.copy-invite-link').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.link);
+            toast(t('invite_link_copied'), 'success');
+          } catch { toast(btn.dataset.link, 'info'); }
+        });
+      });
       pendingList.querySelectorAll('.cancel-invite').forEach(btn => {
         btn.addEventListener('click', async () => {
           try {
@@ -1749,37 +1839,71 @@ function initProfileUI() {
   nameInput.value = state.user.name || '';
   emailInput.value = state.user.email || '';
 
-  // Username
+  // Username (one-time set)
   const usernameInput = document.getElementById('profile-username');
   const saveUsernameBtn = document.getElementById('save-username-btn');
   const usernameHint = document.getElementById('username-hint');
   if (usernameInput) {
     usernameInput.value = state.user.username || '';
-    saveUsernameBtn.onclick = async () => {
-      const val = usernameInput.value.trim();
-      if (val && (val.length < 3 || val.length > 30 || !/^[a-zA-Z0-9_]+$/.test(val))) {
-        toast(t('username_invalid'), 'error');
-        return;
-      }
-      saveUsernameBtn.disabled = true;
-      saveUsernameBtn.textContent = t('saving');
-      try {
-        await api('/api/auth', {
-          method: 'PUT',
-          body: JSON.stringify({ action: 'update_username', username: val }),
+    const usernameEdited = state.user.username && state.user.username_edited;
+    if (usernameEdited) {
+      usernameInput.disabled = true;
+      saveUsernameBtn.style.display = 'none';
+      usernameHint.textContent = t('username_edit_used');
+      usernameHint.style.color = 'var(--text-muted)';
+    } else {
+      saveUsernameBtn.onclick = async () => {
+        const val = usernameInput.value.trim();
+        if (!val) { toast(t('username_invalid'), 'error'); return; }
+        if (val.length < 3 || val.length > 30 || !/^[a-zA-Z0-9_]+$/.test(val)) {
+          toast(t('username_invalid'), 'error');
+          return;
+        }
+        if (!confirm(t('username_set_confirm'))) return;
+        saveUsernameBtn.disabled = true;
+        saveUsernameBtn.textContent = t('saving');
+        try {
+          await api('/api/auth', {
+            method: 'PUT',
+            body: JSON.stringify({ action: 'update_username', username: val }),
+          });
+          state.user.username = val;
+          state.user.username_edited = 1;
+          sessionStorage.setItem('user', JSON.stringify(state.user));
+          usernameInput.disabled = true;
+          saveUsernameBtn.style.display = 'none';
+          usernameHint.textContent = t('username_saved');
+          usernameHint.style.color = 'var(--success)';
+          toast(t('username_saved'), 'success');
+        } catch (err) {
+          toast(t('failed', err.message), 'error');
+        } finally {
+          saveUsernameBtn.disabled = false;
+          saveUsernameBtn.textContent = t('save');
+        }
+      };
+    }
+  }
+
+  // Google account linking
+  const linkGoogleBtn = document.getElementById('link-google-btn');
+  const googleLinkedBadge = document.getElementById('google-linked-badge');
+  if (linkGoogleBtn && googleLinkedBadge) {
+    if (state.user.google_linked) {
+      linkGoogleBtn.style.display = 'none';
+      googleLinkedBadge.style.display = '';
+    } else {
+      linkGoogleBtn.style.display = '';
+      googleLinkedBadge.style.display = 'none';
+      linkGoogleBtn.onclick = () => {
+        google.accounts.id.initialize({
+          client_id: '96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com',
+          callback: handleLinkGoogle,
+          auto_select: false,
         });
-        state.user.username = val || null;
-        sessionStorage.setItem('user', JSON.stringify(state.user));
-        usernameHint.textContent = val ? t('username_saved') : t('username_cleared');
-        usernameHint.style.color = 'var(--success)';
-        toast(val ? t('username_saved') : t('username_cleared'), 'success');
-      } catch (err) {
-        toast(t('failed', err.message), 'error');
-      } finally {
-        saveUsernameBtn.disabled = false;
-        saveUsernameBtn.textContent = t('save');
-      }
-    };
+        google.accounts.id.prompt();
+      };
+    }
   }
 
   // Check if name was already edited (stored in user state from session)
@@ -2808,7 +2932,10 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ action: 'invite', email }),
       });
       document.getElementById('invite-email').value = '';
-      if (inviteRes.email_sent) {
+      if (inviteRes.invite_link) {
+        await navigator.clipboard.writeText(inviteRes.invite_link).catch(() => {});
+        toast(t('invite_link_copied'), 'success');
+      } else if (inviteRes.email_sent) {
         toast(t('invite_sent'), 'success');
       } else {
         toast(t('invite_no_email', inviteRes.app_url), 'info');
