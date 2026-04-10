@@ -4,3 +4,7 @@ node_modules/
 client_secret*.json
 .DS_Store
 .gstack/
+.claude
+.omc
+.github
+*.zip

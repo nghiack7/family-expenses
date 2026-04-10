@@ -322,6 +322,8 @@ async function issueSession(user, env, request) {
   let authProvider = user.auth_provider || 'google';
   let hasPassword = false;
   let username = null;
+  let usernameEdited = 0;
+  let googleLinked = false;
   try {
     const row = await env.DB.prepare('SELECT name_edited, auth_provider, password_hash, username, username_edited, google_sub FROM users WHERE id = ?').bind(user.sub).first();
     if (row) {
@@ -329,6 +331,8 @@ async function issueSession(user, env, request) {
       authProvider = row.auth_provider || 'google';
       hasPassword = !!row.password_hash;
       username = row.username || null;
+      usernameEdited = row.username_edited || 0;
+      googleLinked = !!row.google_sub;
     }
   } catch { /* non-fatal */ }
 
@@ -344,7 +348,7 @@ async function issueSession(user, env, request) {
     : 'HttpOnly; SameSite=Strict; Path=/; Max-Age=86400';
 
   return new Response(
-    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, username, name_edited: nameEdited, username_edited: row?.username_edited || 0, auth_provider: authProvider, has_password: hasPassword, google_linked: !!row?.google_sub } }),
+    JSON.stringify({ ok: true, user: { id: user.sub, email: user.email, name: user.name, avatar: user.avatar, username, name_edited: nameEdited, username_edited: usernameEdited, auth_provider: authProvider, has_password: hasPassword, google_linked: googleLinked } }),
     {
       headers: {
         'Content-Type': 'application/json',
