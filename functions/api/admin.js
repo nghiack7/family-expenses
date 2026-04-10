@@ -65,9 +65,18 @@ export async function onRequestGet(context) {
   // Public: check if registration is open
   if (url.searchParams.get('check') === 'registration') {
     try {
-      const dbSize = await env.DB.prepare(
-        "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
-      ).first();
+      let dbSize = null;
+      try {
+        dbSize = await env.DB.prepare(
+          "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+        ).first();
+      } catch {
+        const [pc, ps] = await Promise.all([
+          env.DB.prepare("PRAGMA page_count").first(),
+          env.DB.prepare("PRAGMA page_size").first(),
+        ]);
+        dbSize = { size: (pc?.page_count || 0) * (ps?.page_size || 0) };
+      }
       const usedMB = (dbSize?.size || 0) / (1024 * 1024);
       const open = usedMB < 2048;
       return jsonResp({ registration_open: open });
@@ -81,12 +90,32 @@ export async function onRequestGet(context) {
   }
 
   try {
-    const [usersResult, familiesResult, expensesResult, dbSizeResult] = await Promise.all([
+    const [usersResult, familiesResult, expensesResult] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) as count FROM users').first(),
       env.DB.prepare('SELECT COUNT(*) as count FROM families').first(),
       env.DB.prepare('SELECT COUNT(*) as count FROM expenses').first(),
-      env.DB.prepare("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()").first(),
     ]);
+
+    // D1 may restrict pragma access — query DB size separately so it doesn't break everything
+    let dbSizeResult = null;
+    try {
+      dbSizeResult = await env.DB.prepare(
+        "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+      ).first();
+    } catch {
+      // fallback: try PRAGMA directly
+      try {
+        const [pc, ps] = await Promise.all([
+          env.DB.prepare("PRAGMA page_count").first(),
+          env.DB.prepare("PRAGMA page_size").first(),
+        ]);
+        const pageCount = pc?.page_count || 0;
+        const pageSize = ps?.page_size || 0;
+        dbSizeResult = { size: pageCount * pageSize };
+      } catch {
+        // DB size unavailable
+      }
+    }
 
     const totalUsers = usersResult?.count || 0;
     const totalFamilies = familiesResult?.count || 0;
