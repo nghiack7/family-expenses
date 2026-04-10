@@ -44,16 +44,19 @@ const PROVIDERS = {
     models: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
   },
   zai: {
-    buildUrl: () => 'https://api.z.ai/api/paas/v4/chat/completions',
+    buildUrl: () => 'https://api.z.ai/api/anthropic/v1/messages',
     buildBody: (prompt, model) => ({
       model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
       max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }],
     }),
-    buildHeaders: (apiKey) => ({ Authorization: `Bearer ${apiKey}` }),
-    extractText: (json) => json.choices?.[0]?.message?.content || '',
-    models: ['glm-5.1', 'glm-5-turbo', 'glm-4.7', 'glm-4.7-flash', 'glm-4.5-flash'],
+    buildHeaders: (apiKey) => ({
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    }),
+    extractText: (json) =>
+      json.content?.map((b) => b.text).join('') || '',
+    models: ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
   },
 };
 
