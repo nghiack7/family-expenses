@@ -154,6 +154,16 @@ async function handleGoogleSSO(body, env, request) {
       return issueSession({ sub: userId, email, name, avatar: picture || null }, env, request);
     }
 
+    // Waitlist gate for new Google users
+    try {
+      const dbSize = await env.DB.prepare(
+        "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+      ).first();
+      if ((dbSize?.size || 0) / (1024 * 1024) >= 2048) {
+        return jsonError('Registration is currently closed. The system is at capacity.', 503);
+      }
+    } catch { /* fail open */ }
+
     // New user via Google: use sub as id
     await env.DB.prepare(
       `INSERT INTO users (id, email, name, avatar, auth_provider, google_sub)
@@ -173,6 +183,17 @@ async function handleEmailRegister(body, env, request) {
   const { email, password, name, username } = body;
   if (!email || !password || !name) return jsonError('Missing email, password, or name', 400);
   if (password.length < 8) return jsonError('Password must be at least 8 characters', 400);
+
+  // Waitlist gate: block new registrations when DB usage > 2GB (remaining < 3GB of 5GB)
+  try {
+    const dbSize = await env.DB.prepare(
+      "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+    ).first();
+    const usedMB = (dbSize?.size || 0) / (1024 * 1024);
+    if (usedMB >= 2048) {
+      return jsonError('Registration is currently closed. The system is at capacity. Please try again later or contact the administrator.', 503);
+    }
+  } catch { /* fail open — allow registration if check fails */ }
 
   // Validate username if provided
   const cleanUsername = username ? username.trim().toLowerCase() : null;

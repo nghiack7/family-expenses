@@ -29,21 +29,29 @@ export async function onRequestGet(context) {
 
   const familyId = membership.family_id;
 
-  // Parse month param (YYYY-MM), default to current month
-  const monthParam = url.searchParams.get('month');
-  let year, month;
-  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-    [year, month] = monthParam.split('-').map(Number);
-  } else {
-    const now = new Date();
-    year = now.getFullYear();
-    month = now.getMonth() + 1;
-  }
+  // Support single-day query: ?date=YYYY-MM-DD
+  const dateParam = url.searchParams.get('date');
+  let from, to, year, month;
 
-  const from = `${year}-${String(month).padStart(2, '0')}-01`;
-  // Last day of month
-  const lastDay = new Date(year, month, 0).getDate();
-  const to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    // Single day mode
+    from = dateParam;
+    to = dateParam;
+    [year, month] = dateParam.split('-').map(Number);
+  } else {
+    // Parse month param (YYYY-MM), default to current month
+    const monthParam = url.searchParams.get('month');
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      [year, month] = monthParam.split('-').map(Number);
+    } else {
+      const now = new Date();
+      year = now.getFullYear();
+      month = now.getMonth() + 1;
+    }
+    from = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    to = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  }
 
   // Total for month
   const totalResult = await env.DB.prepare(
@@ -92,12 +100,23 @@ export async function onRequestGet(context) {
      ORDER BY expense_date ASC`
   ).bind(familyId, from, to).all();
 
-  // Previous month comparison
-  const prevMonth = month === 1 ? 12 : month - 1;
-  const prevYear = month === 1 ? year - 1 : year;
-  const prevFrom = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
-  const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
-  const prevTo = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
+  // Previous period comparison
+  let prevFrom, prevTo;
+  if (dateParam) {
+    // Previous day
+    const d = new Date(dateParam + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    const pd = d.toISOString().slice(0, 10);
+    prevFrom = pd;
+    prevTo = pd;
+  } else {
+    // Previous month
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    prevFrom = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+    const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
+    prevTo = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
+  }
 
   const prevTotal = await env.DB.prepare(
     `SELECT COALESCE(SUM(amount), 0) as total FROM expenses

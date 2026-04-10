@@ -1,7 +1,7 @@
 // Auth middleware for all /api/* routes
 // Verifies session JWT cookie and injects user into request context
 
-const PUBLIC_PATHS = ['/api/auth'];
+const PUBLIC_PATHS = ['/api/auth', '/api/admin'];
 
 export async function onRequest(context) {
   const { request, env, next } = context;

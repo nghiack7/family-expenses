@@ -638,7 +638,9 @@ function initAuthTabs() {
   const emailLabel = document.getElementById('auth-email-label');
   const emailInput = document.getElementById('auth-email');
 
-  toggleBtn.addEventListener('click', () => {
+  let registrationOpen = true; // assume open until checked
+
+  toggleBtn.addEventListener('click', async () => {
     isRegisterMode = !isRegisterMode;
     nameGroup.style.display = isRegisterMode ? '' : 'none';
     usernameGroup.style.display = isRegisterMode ? '' : 'none';
@@ -649,6 +651,24 @@ function initAuthTabs() {
     toggleBtn.textContent = isRegisterMode ? t('have_account') : t('no_account');
     document.getElementById('auth-password').autocomplete = isRegisterMode ? 'new-password' : 'current-password';
     errEl.style.display = 'none';
+
+    // Check waitlist when switching to register mode
+    if (isRegisterMode) {
+      try {
+        const res = await fetch('/api/admin?check=registration');
+        const d = await res.json();
+        registrationOpen = d.registration_open;
+        if (!registrationOpen) {
+          errEl.textContent = currentLang === 'vi'
+            ? 'Hệ thống đã đầy. Đăng ký tạm đóng, vui lòng liên hệ admin.'
+            : 'Registration is closed. System is at capacity. Please contact the administrator.';
+          errEl.style.display = 'block';
+          btn.disabled = true;
+        }
+      } catch { /* fail open */ }
+    } else {
+      btn.disabled = false;
+    }
   });
 
   // Set login mode defaults
@@ -664,6 +684,16 @@ function initAuthTabs() {
     const origText = btn.textContent;
     btn.disabled = true;
     btn.textContent = isRegisterMode ? t('creating_account') : t('signing_in');
+
+    if (isRegisterMode && !registrationOpen) {
+      errEl.textContent = currentLang === 'vi'
+        ? 'Đăng ký tạm đóng. Vui lòng liên hệ admin.'
+        : 'Registration is closed. Please contact the administrator.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = origText;
+      return;
+    }
 
     try {
       const body = isRegisterMode
@@ -844,10 +874,14 @@ async function loadDashboard() {
       };
       state.stats = stats;
       renderStats(stats, 'year', monthsWithSpend);
+    } else if (range.mode === 'day') {
+      // Day view: fetch stats for specific date
+      state.stats = await api(`/api/stats?date=${range.from}`);
+      renderStats(state.stats, 'day');
     } else {
-      // Month or day: use existing stats API
+      // Month view
       state.stats = await api(`/api/stats?month=${range.monthParam}`);
-      renderStats(state.stats, range.mode);
+      renderStats(state.stats, 'month');
     }
 
     const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
