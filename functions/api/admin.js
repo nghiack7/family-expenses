@@ -67,15 +67,19 @@ export async function onRequestGet(context) {
     try {
       let dbSize = null;
       try {
-        dbSize = await env.DB.prepare(
-          "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
-        ).first();
-      } catch {
-        const [pc, ps] = await Promise.all([
-          env.DB.prepare("PRAGMA page_count").first(),
-          env.DB.prepare("PRAGMA page_size").first(),
+        const [pcRows, psRows] = await Promise.all([
+          env.DB.prepare("PRAGMA page_count").raw(),
+          env.DB.prepare("PRAGMA page_size").raw(),
         ]);
-        dbSize = { size: (pc?.page_count || 0) * (ps?.page_size || 0) };
+        dbSize = { size: (pcRows?.[0]?.[0] || 0) * (psRows?.[0]?.[0] || 0) };
+      } catch {
+        try {
+          dbSize = await env.DB.prepare(
+            "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+          ).first();
+        } catch {
+          dbSize = { size: 0 };
+        }
       }
       const usedMB = (dbSize?.size || 0) / (1024 * 1024);
       const open = usedMB < 2048;
@@ -99,19 +103,20 @@ export async function onRequestGet(context) {
     // D1 may restrict pragma access — query DB size separately so it doesn't break everything
     let dbSizeResult = null;
     try {
-      dbSizeResult = await env.DB.prepare(
-        "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
-      ).first();
+      // D1 supports PRAGMA via prepare — use .raw() for reliable column access
+      const [pcRows, psRows] = await Promise.all([
+        env.DB.prepare("PRAGMA page_count").raw(),
+        env.DB.prepare("PRAGMA page_size").raw(),
+      ]);
+      const pageCount = pcRows?.[0]?.[0] || 0;
+      const pageSize = psRows?.[0]?.[0] || 0;
+      dbSizeResult = { size: pageCount * pageSize };
     } catch {
-      // fallback: try PRAGMA directly
+      // fallback: table-valued function syntax
       try {
-        const [pc, ps] = await Promise.all([
-          env.DB.prepare("PRAGMA page_count").first(),
-          env.DB.prepare("PRAGMA page_size").first(),
-        ]);
-        const pageCount = pc?.page_count || 0;
-        const pageSize = ps?.page_size || 0;
-        dbSizeResult = { size: pageCount * pageSize };
+        dbSizeResult = await env.DB.prepare(
+          "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+        ).first();
       } catch {
         // DB size unavailable
       }

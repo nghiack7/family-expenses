@@ -162,7 +162,8 @@ async function handleGoogleSSO(body, env, request) {
     return jsonError(`Invalid Google credential: ${err.message}`, 401);
   }
 
-  const { sub, email, name, picture } = googlePayload;
+  const { sub, email: rawEmail, name, picture } = googlePayload;
+  const email = rawEmail.trim().toLowerCase();
 
   // Upsert user — if email already exists (email/password account), link Google sub
   try {
@@ -207,9 +208,10 @@ async function handleGoogleSSO(body, env, request) {
 // ── Email Registration ─────────────────────────────────────────────────────────
 
 async function handleEmailRegister(body, env, request) {
-  const { email, password, name, username } = body;
-  if (!email || !password || !name) return jsonError('Missing email, password, or name', 400);
+  const { email: rawEmail, password, name, username } = body;
+  if (!rawEmail || !password || !name) return jsonError('Missing email, password, or name', 400);
   if (password.length < 8) return jsonError('Password must be at least 8 characters', 400);
+  const email = rawEmail.trim().toLowerCase();
 
   // Waitlist gate: block new registrations when DB usage > 2GB (remaining < 3GB of 5GB)
   try {

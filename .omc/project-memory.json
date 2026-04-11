@@ -98,8 +98,8 @@
   "hotPaths": [
     {
       "path": "app.js",
-      "accessCount": 329,
-      "lastAccessed": 1775866398045,
+      "accessCount": 332,
+      "lastAccessed": 1775877488353,
       "type": "file"
     },
     {
@@ -110,14 +110,14 @@
     },
     {
       "path": "index.html",
-      "accessCount": 93,
-      "lastAccessed": 1775866298626,
+      "accessCount": 94,
+      "lastAccessed": 1775877483967,
       "type": "file"
     },
     {
       "path": "functions/api/auth.js",
-      "accessCount": 41,
-      "lastAccessed": 1775834404353,
+      "accessCount": 47,
+      "lastAccessed": 1775871609260,
       "type": "file"
     },
     {
@@ -134,8 +134,8 @@
     },
     {
       "path": "functions/api/admin.js",
-      "accessCount": 12,
-      "lastAccessed": 1775834415007,
+      "accessCount": 15,
+      "lastAccessed": 1775916551356,
       "type": "file"
     },
     {
@@ -268,6 +268,12 @@
       "path": "functions/api/ai-extract.js",
       "accessCount": 1,
       "lastAccessed": 1775866288838,
+      "type": "file"
+    },
+    {
+      "path": "admin/index.html",
+      "accessCount": 1,
+      "lastAccessed": 1775916503709,
       "type": "file"
     }
   ],
