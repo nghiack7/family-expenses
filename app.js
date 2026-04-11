@@ -170,7 +170,7 @@ const translations = {
     model: 'Mô hình',
     api_key: 'API Key',
     api_key_placeholder: 'Dán API key của bạn ở đây',
-    api_key_hint: 'Chỉ lưu trên thiết bị. Không gửi đến máy chủ.',
+    api_key_hint: 'Được mã hóa và lưu an toàn. Mỗi nhà cung cấp lưu 1 key riêng.',
     monthly_income: 'Thu nhập hàng tháng (tùy chọn)',
     current_savings: 'Tiết kiệm hiện tại (tùy chọn)',
     save_ai_settings: 'Lưu cài đặt AI',
@@ -190,6 +190,15 @@ const translations = {
     ai_needs_attention: 'Cần chú ý',
     key_insights: 'Nhận xét chính',
     tips: 'Gợi ý',
+    ai_extract_btn: 'Quét ảnh hóa đơn bằng AI',
+    ai_extracting: 'AI đang nhận dạng...',
+    ai_extract_no_ai: 'Cấu hình AI trong tab Gia đình trước',
+    ai_extract_found: 'AI tìm thấy {0} chi tiêu',
+    ai_extract_none: 'Không nhận dạng được chi tiêu nào từ ảnh',
+    ai_extract_add_all: 'Thêm tất cả',
+    ai_extract_adding: 'Đang thêm...',
+    ai_extract_added: 'Đã thêm {0} chi tiêu!',
+    ai_extract_remove: 'Bỏ',
     voice_input: 'Nhập bằng giọng nói',
     voice_listening: 'Đang nghe...',
     voice_processing: 'Đang xử lý...',
@@ -395,7 +404,7 @@ const translations = {
     model: 'Model',
     api_key: 'API Key',
     api_key_placeholder: 'Paste your API key here',
-    api_key_hint: 'Stored locally on your device only. Never sent to our server for storage.',
+    api_key_hint: 'Encrypted and stored securely. Each provider has its own key.',
     monthly_income: 'Monthly Income (optional)',
     current_savings: 'Current Savings (optional)',
     save_ai_settings: 'Save AI Settings',
@@ -415,6 +424,15 @@ const translations = {
     ai_needs_attention: 'Needs Attention',
     key_insights: 'Key Insights',
     tips: 'Tips',
+    ai_extract_btn: 'Scan receipt with AI',
+    ai_extracting: 'AI is scanning...',
+    ai_extract_no_ai: 'Configure AI in Family tab first',
+    ai_extract_found: 'AI found {0} expenses',
+    ai_extract_none: 'No expenses detected from image',
+    ai_extract_add_all: 'Add all',
+    ai_extract_adding: 'Adding...',
+    ai_extract_added: '{0} expenses added!',
+    ai_extract_remove: 'Remove',
     voice_input: 'Voice input',
     voice_listening: 'Listening...',
     voice_processing: 'Processing...',
@@ -2049,37 +2067,90 @@ function getAISettings() {
   } catch { return {}; }
 }
 
-function saveAISettings(settings) {
+function saveAISettingsLocal(settings) {
   localStorage.setItem('ai_settings', JSON.stringify(settings));
 }
 
-function initAISettingsUI() {
+async function loadAISettingsFromServer() {
+  try {
+    const res = await api('/api/family', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'get_ai_settings' }),
+    });
+    if (res.settings) {
+      // Flatten: set apiKey for current provider from apiKeys map
+      const s = res.settings;
+      s.apiKey = s.apiKeys?.[s.provider] || '';
+      saveAISettingsLocal(s);
+      return s;
+    }
+  } catch { /* fallback to local */ }
+  return getAISettings();
+}
+
+async function saveAISettingsToServer(settings) {
+  try {
+    await api('/api/family', {
+      method: 'PUT',
+      body: JSON.stringify({
+        action: 'save_ai_settings',
+        provider: settings.provider,
+        model: settings.model,
+        apiKey: settings.apiKey,
+        income: settings.income,
+        savings: settings.savings,
+      }),
+    });
+    // Update local cache with the new key in apiKeys map
+    const local = getAISettings();
+    const apiKeys = local.apiKeys || {};
+    if (settings.apiKey) apiKeys[settings.provider] = settings.apiKey;
+    saveAISettingsLocal({ ...settings, apiKeys });
+  } catch (err) {
+    saveAISettingsLocal(settings);
+    throw err;
+  }
+}
+
+async function initAISettingsUI() {
   const providerSel = document.getElementById('ai-provider');
   const modelSel = document.getElementById('ai-model');
+  const apiKeyInput = document.getElementById('ai-api-key');
   if (!providerSel || !modelSel) return;
+
+  // Load from server (falls back to localStorage)
+  const saved = await loadAISettingsFromServer();
+  const apiKeys = saved.apiKeys || {};
 
   function populateModels() {
     const provider = providerSel.value;
     const models = AI_MODELS[provider] || [];
-    const saved = getAISettings();
     modelSel.innerHTML = models.map(m =>
-      `<option value="${m}" ${m === saved.model ? 'selected' : ''}>${m}</option>`
+      `<option value="${m}" ${m === saved.model && provider === saved.provider ? 'selected' : ''}>${m}</option>`
     ).join('');
   }
 
-  providerSel.addEventListener('change', populateModels);
+  function updateApiKeyForProvider() {
+    const provider = providerSel.value;
+    const key = apiKeys[provider] || '';
+    apiKeyInput.value = key;
+    apiKeyInput.placeholder = key ? '' : (saved.providersWithKeys?.includes(provider) ? '••••••••  (saved)' : t('api_key_placeholder'));
+  }
 
-  // Restore saved settings
-  const saved = getAISettings();
+  providerSel.addEventListener('change', () => {
+    populateModels();
+    updateApiKeyForProvider();
+  });
+
   if (saved.provider) providerSel.value = saved.provider;
   populateModels();
+  updateApiKeyForProvider();
   if (saved.model) modelSel.value = saved.model;
-  if (saved.apiKey) document.getElementById('ai-api-key').value = saved.apiKey;
   if (saved.income) document.getElementById('ai-income').value = saved.income;
   if (saved.savings) document.getElementById('ai-savings').value = saved.savings;
 }
 
-function handleSaveAISettings() {
+async function handleSaveAISettings() {
   const settings = {
     provider: document.getElementById('ai-provider').value,
     model: document.getElementById('ai-model').value,
@@ -2087,10 +2158,15 @@ function handleSaveAISettings() {
     income: document.getElementById('ai-income').value || '',
     savings: document.getElementById('ai-savings').value || '',
   };
-  if (!settings.apiKey) { toast(t('api_key_required'), 'error'); return; }
-  saveAISettings(settings);
-  toast(t('ai_settings_saved'), 'success');
-  // Show the AI FAB
+  const local = getAISettings();
+  const hasExistingKey = !!(local.apiKeys?.[settings.provider]);
+  if (!settings.apiKey && !hasExistingKey) { toast(t('api_key_required'), 'error'); return; }
+  try {
+    await saveAISettingsToServer(settings);
+    toast(t('ai_settings_saved'), 'success');
+  } catch {
+    toast(t('ai_settings_saved'), 'success'); // saved locally as fallback
+  }
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
 }
@@ -2111,7 +2187,8 @@ function closeAIModal() {
 
 async function runAIAnalysis(customQuestion) {
   const settings = getAISettings();
-  if (!settings.apiKey || !settings.provider || !settings.model) {
+  const apiKey = settings.apiKeys?.[settings.provider] || settings.apiKey;
+  if (!apiKey || !settings.provider || !settings.model) {
     toast(t('configure_ai_first'), 'error');
     navigate('family');
     return;
@@ -2138,7 +2215,7 @@ async function runAIAnalysis(customQuestion) {
       body: JSON.stringify({
         provider: settings.provider,
         model: settings.model,
-        apiKey: settings.apiKey,
+        apiKey: apiKey,
         stats: state.stats,
         monthLabel: ml,
         currency: state.currency,
@@ -2210,6 +2287,128 @@ function renderAIInsights(analysis) {
   if (analysis.chart && analysis.chart.labels && analysis.chart.values) {
     drawDoughnutChart('ai-chart', analysis.chart);
   }
+}
+
+// ── AI Expense Extraction ─────────────────────────────────────────────────
+
+async function handleAIExtract(file) {
+  const settings = getAISettings();
+  const apiKey = settings.apiKeys?.[settings.provider] || settings.apiKey;
+  if (!apiKey || !settings.provider || !settings.model) {
+    toast(t('ai_extract_no_ai'), 'error');
+    return;
+  }
+
+  const btn = document.getElementById('ai-extract-btn');
+  const preview = document.getElementById('ai-extract-preview');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:6px"></div> ${t('ai_extracting')}`;
+  preview.style.display = 'none';
+
+  try {
+    const formData = new FormData();
+    formData.append('provider', settings.provider);
+    formData.append('model', settings.model);
+    formData.append('apiKey', apiKey);
+    formData.append('currency', state.currency || 'VND');
+    formData.append('file', file);
+
+    const res = await fetch('/api/ai-extract', {
+      method: 'POST',
+      body: formData,
+      credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'AI extraction failed');
+
+    if (!data.expenses || data.expenses.length === 0) {
+      toast(t('ai_extract_none'), 'error');
+      preview.style.display = 'none';
+      return;
+    }
+
+    toast(t('ai_extract_found', data.expenses.length), 'success');
+    renderExtractedExpenses(data.expenses, data.categories || []);
+  } catch (err) {
+    toast(err.message, 'error');
+    preview.style.display = 'none';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:4px">photo_camera</span> ${t('ai_extract_btn')}`;
+  }
+}
+
+function renderExtractedExpenses(expenses, categories) {
+  const preview = document.getElementById('ai-extract-preview');
+  let items = [...expenses];
+
+  function render() {
+    if (items.length === 0) {
+      preview.style.display = 'none';
+      return;
+    }
+    preview.style.display = 'block';
+    preview.innerHTML = `
+      <div style="margin-top:0.75rem">
+        <div style="font-weight:600;margin-bottom:0.5rem;font-size:0.9rem">${t('ai_extract_found', items.length)}</div>
+        <div class="ai-extract-list">
+          ${items.map((e, i) => `
+            <div class="ai-extract-item" style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:500;font-size:0.85rem">${escHtml(e.description || '')}</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">${escHtml(e.category_name || '')} · ${e.expense_date}</div>
+              </div>
+              <div style="font-weight:600;margin:0 0.75rem;white-space:nowrap">${formatMoney(e.amount)}</div>
+              <button type="button" class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.7rem" data-remove-idx="${i}">${t('ai_extract_remove')}</button>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-primary btn-full" id="ai-extract-add-all" style="margin-top:0.75rem">${t('ai_extract_add_all')}</button>
+      </div>
+    `;
+
+    // Remove buttons
+    preview.querySelectorAll('[data-remove-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        items.splice(parseInt(btn.dataset.removeIdx), 1);
+        render();
+      });
+    });
+
+    // Add all button
+    document.getElementById('ai-extract-add-all').addEventListener('click', () => addAllExtracted(items));
+  }
+
+  render();
+}
+
+async function addAllExtracted(items) {
+  const btn = document.getElementById('ai-extract-add-all');
+  btn.disabled = true;
+  btn.textContent = t('ai_extract_adding');
+
+  let added = 0;
+  for (const item of items) {
+    try {
+      await api('/api/expenses', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: item.amount,
+          description: item.description || '',
+          category_id: item.category_id,
+          expense_date: item.expense_date,
+        }),
+      });
+      added++;
+    } catch { /* skip failed items */ }
+  }
+
+  toast(t('ai_extract_added', added), 'success');
+  document.getElementById('ai-extract-preview').style.display = 'none';
+  document.getElementById('ai-extract-preview').innerHTML = '';
+
+  // Refresh dashboard
+  if (typeof loadDashboard === 'function') loadDashboard();
 }
 
 // ── Chart data aggregation ────────────────────────────────────────────────
@@ -2830,6 +3029,16 @@ document.addEventListener('DOMContentLoaded', () => {
       state.currentMonth = { year, month };
     }
     loadDashboard();
+  });
+
+  // AI Extract from image
+  document.getElementById('ai-extract-btn').addEventListener('click', () => {
+    document.getElementById('ai-extract-file').click();
+  });
+  document.getElementById('ai-extract-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleAIExtract(file);
+    e.target.value = ''; // reset so same file can be selected again
   });
 
   // Add expense form submit

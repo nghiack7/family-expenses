@@ -98,26 +98,26 @@
   "hotPaths": [
     {
       "path": "app.js",
-      "accessCount": 292,
-      "lastAccessed": 1775830982228,
+      "accessCount": 329,
+      "lastAccessed": 1775866398045,
       "type": "file"
     },
     {
       "path": "style.css",
-      "accessCount": 103,
-      "lastAccessed": 1775828060790,
+      "accessCount": 106,
+      "lastAccessed": 1775866367549,
       "type": "directory"
     },
     {
       "path": "index.html",
-      "accessCount": 84,
-      "lastAccessed": 1775830995956,
+      "accessCount": 93,
+      "lastAccessed": 1775866298626,
       "type": "file"
     },
     {
       "path": "functions/api/auth.js",
-      "accessCount": 38,
-      "lastAccessed": 1775833998801,
+      "accessCount": 41,
+      "lastAccessed": 1775834404353,
       "type": "file"
     },
     {
@@ -128,32 +128,32 @@
     },
     {
       "path": "functions/api/family.js",
-      "accessCount": 12,
-      "lastAccessed": 1775830882459,
+      "accessCount": 21,
+      "lastAccessed": 1775866182958,
       "type": "file"
     },
     {
       "path": "functions/api/admin.js",
-      "accessCount": 11,
-      "lastAccessed": 1775830435267,
-      "type": "file"
-    },
-    {
-      "path": "functions/api/_middleware.js",
-      "accessCount": 7,
-      "lastAccessed": 1775830412791,
+      "accessCount": 12,
+      "lastAccessed": 1775834415007,
       "type": "file"
     },
     {
       "path": "functions/api/ai-analyze.js",
-      "accessCount": 6,
-      "lastAccessed": 1775829271639,
+      "accessCount": 9,
+      "lastAccessed": 1775834453877,
+      "type": "file"
+    },
+    {
+      "path": "functions/api/_middleware.js",
+      "accessCount": 8,
+      "lastAccessed": 1775834391954,
       "type": "file"
     },
     {
       "path": "migrations/0001_init.sql",
-      "accessCount": 6,
-      "lastAccessed": 1775830421642,
+      "accessCount": 7,
+      "lastAccessed": 1775834397877,
       "type": "file"
     },
     {
@@ -164,44 +164,56 @@
     },
     {
       "path": "package.json",
-      "accessCount": 4,
-      "lastAccessed": 1775830399853,
+      "accessCount": 5,
+      "lastAccessed": 1775834378684,
       "type": "file"
     },
     {
       "path": "functions/api/expenses.js",
-      "accessCount": 3,
-      "lastAccessed": 1775814689058,
-      "type": "file"
-    },
-    {
-      "path": "migrations/0002_email_auth.sql",
-      "accessCount": 3,
-      "lastAccessed": 1775830421809,
-      "type": "file"
-    },
-    {
-      "path": "migrations/0004_profile_edit.sql",
-      "accessCount": 3,
-      "lastAccessed": 1775830422296,
+      "accessCount": 5,
+      "lastAccessed": 1775866112859,
       "type": "file"
     },
     {
       "path": "wrangler.toml",
-      "accessCount": 3,
-      "lastAccessed": 1775830431529,
+      "accessCount": 4,
+      "lastAccessed": 1775834379325,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0002_email_auth.sql",
+      "accessCount": 4,
+      "lastAccessed": 1775834398098,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0004_profile_edit.sql",
+      "accessCount": 4,
+      "lastAccessed": 1775834400971,
       "type": "file"
     },
     {
       "path": "migrations/0005_username.sql",
-      "accessCount": 2,
-      "lastAccessed": 1775830422676,
+      "accessCount": 3,
+      "lastAccessed": 1775834401279,
       "type": "file"
     },
     {
       "path": "README.md",
+      "accessCount": 3,
+      "lastAccessed": 1775834409769,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0006_username_lock_and_invite_token.sql",
       "accessCount": 2,
-      "lastAccessed": 1775830431581,
+      "lastAccessed": 1775834398357,
+      "type": "file"
+    },
+    {
+      "path": "migrations/0003_currency.sql",
+      "accessCount": 2,
+      "lastAccessed": 1775834400884,
       "type": "file"
     },
     {
@@ -241,21 +253,21 @@
       "type": "file"
     },
     {
-      "path": "migrations/0003_currency.sql",
-      "accessCount": 1,
-      "lastAccessed": 1775830422020,
-      "type": "file"
-    },
-    {
       "path": "functions/api",
       "accessCount": 1,
       "lastAccessed": 1775830427882,
       "type": "directory"
     },
     {
-      "path": "migrations/0006_username_lock_and_invite_token.sql",
+      "path": "migrations/0007_family_ai_settings.sql",
       "accessCount": 1,
-      "lastAccessed": 1775830826940,
+      "lastAccessed": 1775834473340,
+      "type": "file"
+    },
+    {
+      "path": "functions/api/ai-extract.js",
+      "accessCount": 1,
+      "lastAccessed": 1775866288838,
       "type": "file"
     }
   ],

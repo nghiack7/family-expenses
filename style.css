@@ -1829,3 +1829,12 @@ input::placeholder, textarea::placeholder {
 #currency-setting {
   border: none;
 }
+
+/* AI Extract */
+.ai-extract-card {
+  background: var(--primary-soft);
+  border: 1px dashed var(--primary);
+}
+.ai-extract-item:last-child {
+  border-bottom: none !important;
+}

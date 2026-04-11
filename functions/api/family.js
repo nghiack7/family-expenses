@@ -32,6 +32,53 @@ function randomId() {
   return crypto.randomUUID();
 }
 
+// ── AES-GCM encryption for API keys ─────────────────────────────────────
+
+async function getEncryptionKey(env) {
+  const secret = env.AI_ENCRYPTION_KEY || env.JWT_SECRET;
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: new TextEncoder().encode('family-ai-settings'), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptText(plaintext, env) {
+  const key = await getEncryptionKey(env);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(plaintext)
+  );
+  const buf = new Uint8Array(iv.length + encrypted.byteLength);
+  buf.set(iv, 0);
+  buf.set(new Uint8Array(encrypted), iv.length);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decryptText(cipherBase64, env) {
+  const key = await getEncryptionKey(env);
+  const buf = Uint8Array.from(atob(cipherBase64), c => c.charCodeAt(0));
+  const iv = buf.slice(0, 12);
+  const data = buf.slice(12);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    data
+  );
+  return new TextDecoder().decode(decrypted);
+}
+
 // GET /api/family — get current user's family
 export async function onRequestGet(context) {
   const { env, data } = context;
@@ -383,6 +430,91 @@ export async function onRequestPut(context) {
     ]);
 
     return jsonResp({ ok: true });
+  }
+
+  if (action === 'save_ai_settings') {
+    const membership = await env.DB.prepare(
+      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
+    ).bind(user.sub).first();
+    if (!membership) return jsonError('Not in a family', 404);
+
+    const { provider, model, apiKey, income, savings } = body;
+    if (!provider || !model) return jsonError('Provider and model are required', 400);
+
+    // Load existing settings to preserve other providers' keys
+    const existing = (await env.DB.prepare(
+      `SELECT ai_settings FROM families WHERE id = ?`
+    ).bind(membership.family_id).first())?.ai_settings;
+
+    let prevSettings = {};
+    if (existing) {
+      try { prevSettings = JSON.parse(existing); } catch { /* ignore */ }
+    }
+
+    // Migrate old format (single encryptedApiKey) to per-provider apiKeys
+    const apiKeys = prevSettings.apiKeys || {};
+    if (prevSettings.encryptedApiKey && prevSettings.provider && !apiKeys[prevSettings.provider]) {
+      apiKeys[prevSettings.provider] = prevSettings.encryptedApiKey;
+    }
+
+    // Encrypt and store the new key for the current provider
+    if (apiKey) {
+      apiKeys[provider] = await encryptText(apiKey, env);
+    }
+
+    const settings = { provider, model, apiKeys, income: income || '', savings: savings || '' };
+
+    await env.DB.prepare(
+      `UPDATE families SET ai_settings = ? WHERE id = ?`
+    ).bind(JSON.stringify(settings), membership.family_id).run();
+
+    return jsonResp({ ok: true });
+  }
+
+  if (action === 'get_ai_settings') {
+    const membership = await env.DB.prepare(
+      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
+    ).bind(user.sub).first();
+    if (!membership) return jsonError('Not in a family', 404);
+
+    const row = await env.DB.prepare(
+      `SELECT ai_settings FROM families WHERE id = ?`
+    ).bind(membership.family_id).first();
+
+    if (!row?.ai_settings) return jsonResp({ settings: null });
+
+    try {
+      const settings = JSON.parse(row.ai_settings);
+
+      // Migrate old format
+      const apiKeys = settings.apiKeys || {};
+      if (settings.encryptedApiKey && settings.provider && !apiKeys[settings.provider]) {
+        apiKeys[settings.provider] = settings.encryptedApiKey;
+      }
+
+      // Decrypt all provider keys
+      const decryptedKeys = {};
+      const providersWithKeys = [];
+      for (const [p, enc] of Object.entries(apiKeys)) {
+        try {
+          decryptedKeys[p] = await decryptText(enc, env);
+          providersWithKeys.push(p);
+        } catch { /* skip corrupted keys */ }
+      }
+
+      return jsonResp({
+        settings: {
+          provider: settings.provider,
+          model: settings.model,
+          income: settings.income || '',
+          savings: settings.savings || '',
+          apiKeys: decryptedKeys,
+          providersWithKeys,
+        },
+      });
+    } catch {
+      return jsonResp({ settings: null });
+    }
   }
 
   return jsonError('Unknown action', 400);

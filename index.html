@@ -184,6 +184,15 @@
             <div id="voice-status" class="voice-status" style="display:none"></div>
             <div id="voice-transcript" class="voice-transcript" style="display:none"></div>
           </div>
+          <!-- AI Extract from image -->
+          <div class="card ai-extract-card">
+            <button type="button" class="btn btn-secondary btn-full" id="ai-extract-btn">
+              <span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:4px">photo_camera</span>
+              <span data-i18n="ai_extract_btn">Quét ảnh hóa đơn bằng AI</span>
+            </button>
+            <input type="file" id="ai-extract-file" accept="image/*" capture="environment" style="display:none" />
+            <div id="ai-extract-preview" style="display:none"></div>
+          </div>
           <div class="card">
             <form id="add-expense-form">
               <div class="form-group">
@@ -411,7 +420,7 @@
               <div class="form-group">
                 <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key</label>
                 <input type="password" id="ai-api-key" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
-                <div class="form-hint" data-i18n="api_key_hint">Chỉ lưu trên thiết bị của bạn. Không bao giờ gửi lên server để lưu trữ.</div>
+                <div class="form-hint" data-i18n="api_key_hint">Được mã hóa và lưu trữ an toàn. Mỗi nhà cung cấp lưu 1 key riêng.</div>
               </div>
               <div class="form-row">
                 <div class="form-group">
