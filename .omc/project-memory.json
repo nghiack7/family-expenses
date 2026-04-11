@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775830674841,
+  "lastScanned": 1775917475154,
   "projectRoot": "/Users/nguyennghia/go/src/github.com/personal/family-expenses",
   "techStack": {
     "languages": [
@@ -49,7 +49,7 @@
       "path": "admin",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775830674741,
+      "lastAccessed": 1775917475030,
       "keyFiles": [
         "index.html"
       ]
@@ -58,7 +58,7 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 1,
-      "lastAccessed": 1775830674741,
+      "lastAccessed": 1775917475030,
       "keyFiles": [
         "MOBILE_PLAN.md"
       ]
@@ -67,14 +67,14 @@
       "path": "functions",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775830674741,
+      "lastAccessed": 1775917475030,
       "keyFiles": []
     },
     "migrations": {
       "path": "migrations",
       "purpose": "Database migrations",
-      "fileCount": 5,
-      "lastAccessed": 1775830674744,
+      "fileCount": 7,
+      "lastAccessed": 1775917475033,
       "keyFiles": [
         "0001_init.sql",
         "0002_email_auth.sql",
@@ -86,8 +86,8 @@
     "functions/api": {
       "path": "functions/api",
       "purpose": "API routes",
-      "fileCount": 9,
-      "lastAccessed": 1775830674744,
+      "fileCount": 10,
+      "lastAccessed": 1775917475033,
       "keyFiles": [
         "_middleware.js",
         "admin.js",
@@ -127,15 +127,15 @@
       "type": "directory"
     },
     {
-      "path": "functions/api/family.js",
-      "accessCount": 21,
-      "lastAccessed": 1775866182958,
+      "path": "functions/api/admin.js",
+      "accessCount": 22,
+      "lastAccessed": 1775918549001,
       "type": "file"
     },
     {
-      "path": "functions/api/admin.js",
-      "accessCount": 15,
-      "lastAccessed": 1775916551356,
+      "path": "functions/api/family.js",
+      "accessCount": 21,
+      "lastAccessed": 1775866182958,
       "type": "file"
     },
     {
@@ -176,8 +176,14 @@
     },
     {
       "path": "wrangler.toml",
-      "accessCount": 4,
-      "lastAccessed": 1775834379325,
+      "accessCount": 5,
+      "lastAccessed": 1775917515809,
+      "type": "file"
+    },
+    {
+      "path": "admin/index.html",
+      "accessCount": 5,
+      "lastAccessed": 1775918597634,
       "type": "file"
     },
     {
@@ -268,12 +274,6 @@
       "path": "functions/api/ai-extract.js",
       "accessCount": 1,
       "lastAccessed": 1775866288838,
-      "type": "file"
-    },
-    {
-      "path": "admin/index.html",
-      "accessCount": 1,
-      "lastAccessed": 1775916503709,
       "type": "file"
     }
   ],

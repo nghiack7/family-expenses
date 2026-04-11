@@ -62,31 +62,9 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
 
-  // Public: check if registration is open
+  // Public: check if registration is open (always open now)
   if (url.searchParams.get('check') === 'registration') {
-    try {
-      let dbSize = null;
-      try {
-        const [pcRows, psRows] = await Promise.all([
-          env.DB.prepare("PRAGMA page_count").raw(),
-          env.DB.prepare("PRAGMA page_size").raw(),
-        ]);
-        dbSize = { size: (pcRows?.[0]?.[0] || 0) * (psRows?.[0]?.[0] || 0) };
-      } catch {
-        try {
-          dbSize = await env.DB.prepare(
-            "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
-          ).first();
-        } catch {
-          dbSize = { size: 0 };
-        }
-      }
-      const usedMB = (dbSize?.size || 0) / (1024 * 1024);
-      const open = usedMB < 2048;
-      return jsonResp({ registration_open: open });
-    } catch {
-      return jsonResp({ registration_open: true }); // fail open
-    }
+    return jsonResp({ registration_open: true });
   }
 
   if (!verifyAdminCookie(request)) {
@@ -94,46 +72,25 @@ export async function onRequestGet(context) {
   }
 
   try {
-    const [usersResult, familiesResult, expensesResult] = await Promise.all([
+    const [usersResult, familiesResult, expensesResult, dailyUsers, dailyExpenses] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) as count FROM users').first(),
       env.DB.prepare('SELECT COUNT(*) as count FROM families').first(),
       env.DB.prepare('SELECT COUNT(*) as count FROM expenses').first(),
+      env.DB.prepare(
+        `SELECT DATE(created_at) as date, COUNT(*) as count
+         FROM users
+         WHERE created_at >= DATE('now', '-30 days')
+         GROUP BY DATE(created_at)
+         ORDER BY date`
+      ).all(),
+      env.DB.prepare(
+        `SELECT DATE(created_at) as date, COUNT(*) as count
+         FROM expenses
+         WHERE created_at >= DATE('now', '-30 days')
+         GROUP BY DATE(created_at)
+         ORDER BY date`
+      ).all(),
     ]);
-
-    // D1 may restrict pragma access — query DB size separately so it doesn't break everything
-    let dbSizeResult = null;
-    try {
-      // D1 supports PRAGMA via prepare — use .raw() for reliable column access
-      const [pcRows, psRows] = await Promise.all([
-        env.DB.prepare("PRAGMA page_count").raw(),
-        env.DB.prepare("PRAGMA page_size").raw(),
-      ]);
-      const pageCount = pcRows?.[0]?.[0] || 0;
-      const pageSize = psRows?.[0]?.[0] || 0;
-      dbSizeResult = { size: pageCount * pageSize };
-    } catch {
-      // fallback: table-valued function syntax
-      try {
-        dbSizeResult = await env.DB.prepare(
-          "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
-        ).first();
-      } catch {
-        // DB size unavailable
-      }
-    }
-
-    const totalUsers = usersResult?.count || 0;
-    const totalFamilies = familiesResult?.count || 0;
-    const totalExpenses = expensesResult?.count || 0;
-    const dbSizeBytes = dbSizeResult?.size || 0;
-    const dbSizeMB = (dbSizeBytes / (1024 * 1024)).toFixed(2);
-    const dbLimitMB = 5120; // 5GB in MB
-    const dbUsedPct = ((dbSizeBytes / (1024 * 1024)) / dbLimitMB * 100).toFixed(2);
-    const dbRemainingMB = (dbLimitMB - dbSizeBytes / (1024 * 1024)).toFixed(2);
-
-    // Waitlist threshold: 3GB remaining = 2GB used
-    const waitlistThresholdMB = 2048; // when used > 2GB (remaining < 3GB)
-    const registrationOpen = (dbSizeBytes / (1024 * 1024)) < waitlistThresholdMB;
 
     // Recent users
     const recentUsers = await env.DB.prepare(
@@ -150,16 +107,11 @@ export async function onRequestGet(context) {
     ).all();
 
     return jsonResp({
-      users: totalUsers,
-      families: totalFamilies,
-      expenses: totalExpenses,
-      db: {
-        size_mb: parseFloat(dbSizeMB),
-        limit_mb: dbLimitMB,
-        used_pct: parseFloat(dbUsedPct),
-        remaining_mb: parseFloat(dbRemainingMB),
-      },
-      registration_open: registrationOpen,
+      users: usersResult?.count || 0,
+      families: familiesResult?.count || 0,
+      expenses: expensesResult?.count || 0,
+      daily_users: dailyUsers.results || [],
+      daily_expenses: dailyExpenses.results || [],
       recent_users: recentUsers.results || [],
       recent_families: recentFamilies.results || [],
     });
@@ -177,6 +129,3 @@ export async function onRequestDelete(context) {
     },
   });
 }
-
-// GET /api/admin?action=registration_status — public, no auth needed
-// Used by registration form to check if registration is open
