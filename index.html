@@ -3,12 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#4c645a" />
+  <meta name="theme-color" content="#133127" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Family Expenses" />
   <title>Family Expenses</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/icons/app-icon.svg" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <script>window.GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com";</script>
@@ -16,478 +22,655 @@
 </head>
 <body>
   <div id="app">
-    <!-- Login page (shown when not authenticated) -->
     <div id="login-page" class="login-page" style="display:none">
-      <div class="login-card">
-        <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-        <h1 data-i18n="login_title">The Quiet Guardian</h1>
-        <p data-i18n="login_subtitle">Quản lý chi tiêu, biết tiền đi đâu mỗi ngày.</p>
-
-        <!-- Google sign-in -->
-        <div class="google-btn-wrapper">
-          <div id="google-signin-btn"></div>
-        </div>
-
-        <div class="login-divider"><span data-i18n="or_continue_email">hoặc đăng nhập bằng email</span></div>
-
-        <!-- Single email form (login + register) -->
-        <form id="email-auth-form">
-          <div class="form-group" id="auth-name-group" style="display:none">
-            <label class="form-label" for="auth-name" data-i18n="full_name">Họ và tên</label>
-            <input type="text" id="auth-name" placeholder="Nguyen Van A" autocomplete="name" />
+      <div class="login-shell">
+        <section class="login-story">
+          <div class="eyebrow">Family Expenses</div>
+          <h1 data-i18n="login_title">Chi tiêu gia đình</h1>
+          <p data-i18n="login_subtitle">Quản lý chi tiêu, biết tiền đi đâu mỗi ngày.</p>
+          <div class="login-story-grid">
+            <article class="login-story-card">
+              <span class="material-symbols-outlined">dashboard</span>
+              <strong>Tổng quan rõ ràng</strong>
+              <span>Xem tháng này, danh mục lớn nhất và biến động ngay trên một màn hình.</span>
+            </article>
+            <article class="login-story-card">
+              <span class="material-symbols-outlined">keyboard_voice</span>
+              <strong>Nhập nhanh bằng giọng nói</strong>
+              <span>Nói một lần, app tách thành nhiều draft để bạn sửa trước khi lưu.</span>
+            </article>
+            <article class="login-story-card">
+              <span class="material-symbols-outlined">family_restroom</span>
+              <strong>Dùng chung cho cả nhà</strong>
+              <span>Theo dõi người chi, danh mục và lịch sử trong cùng một không gian.</span>
+            </article>
           </div>
-          <div class="form-group" id="auth-username-group" style="display:none">
-            <label class="form-label" for="auth-username" data-i18n="username">Tên đăng nhập <span style="color:var(--text-muted);font-weight:normal" data-i18n="username_optional">(không bắt buộc)</span></label>
-            <input type="text" id="auth-username" placeholder="e.g. nghia_nguyen" autocomplete="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="auth-email" id="auth-email-label" data-i18n="email">Email</label>
-            <input type="text" id="auth-email" placeholder="you@example.com" required autocomplete="email" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="auth-password" data-i18n="password">Mật khẩu</label>
-            <input type="password" id="auth-password" placeholder="Ít nhất 8 ký tự" required autocomplete="current-password" minlength="8" />
-          </div>
-          <div id="email-auth-error" class="form-error" style="display:none"></div>
-          <button type="submit" class="btn btn-primary btn-full" id="email-auth-btn" data-i18n="sign_in">Đăng nhập</button>
-        </form>
-        <div style="text-align:center;margin-top:0.75rem">
-          <button type="button" class="btn-link" id="toggle-auth-mode" data-i18n="no_account">Chưa có tài khoản? Đăng ký</button>
-        </div>
+        </section>
 
-        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:1.25rem">
-          <span data-i18n="currency_hint">Tiền tệ có thể cài đặt trong Cài đặt gia đình</span>
-        </p>
+        <section class="login-card">
+          <div class="login-card-badge">Household Ledger</div>
+          <h2>Welcome back</h2>
+          <p class="login-card-copy">Đăng nhập để tiếp tục quản lý chi tiêu gia đình với giao diện mới gọn và dễ dùng hơn.</p>
+
+          <div class="google-btn-wrapper">
+            <div id="google-signin-btn"></div>
+          </div>
+
+          <div class="login-divider"><span data-i18n="or_continue_email">hoặc đăng nhập bằng email</span></div>
+
+          <form id="email-auth-form">
+            <div class="form-group" id="auth-name-group" style="display:none">
+              <label class="form-label" for="auth-name" data-i18n="full_name">Họ và tên</label>
+              <input type="text" id="auth-name" placeholder="Nguyen Van A" autocomplete="name" />
+            </div>
+            <div class="form-group" id="auth-username-group" style="display:none">
+              <label class="form-label" for="auth-username" data-i18n="username">Tên đăng nhập <span class="subtle-inline" data-i18n="username_optional">(không bắt buộc)</span></label>
+              <input type="text" id="auth-username" placeholder="e.g. nghia_nguyen" autocomplete="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="auth-email" id="auth-email-label" data-i18n="email">Email</label>
+              <input type="text" id="auth-email" placeholder="you@example.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="auth-password" data-i18n="password">Mật khẩu</label>
+              <input type="password" id="auth-password" placeholder="Ít nhất 8 ký tự" required autocomplete="current-password" minlength="8" />
+            </div>
+            <div id="email-auth-error" class="form-error" style="display:none"></div>
+            <button type="submit" class="btn btn-primary btn-full" id="email-auth-btn" data-i18n="sign_in">Đăng nhập</button>
+          </form>
+
+          <div class="login-card-actions">
+            <button type="button" class="btn-link" id="toggle-auth-mode" data-i18n="no_account">Chưa có tài khoản? Đăng ký</button>
+          </div>
+
+          <p class="login-footnote">
+            <span data-i18n="currency_hint">Tiền tệ có thể cài đặt trong Cài đặt gia đình</span>
+          </p>
+        </section>
       </div>
     </div>
 
-    <!-- Authenticated app shell -->
     <div id="app-shell" style="display:none">
-      <!-- Top nav -->
-      <nav class="nav">
-        <div class="nav-brand"><div class="nav-brand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span>The Quiet</span> Guardian</div>
-        <div class="nav-links">
-          <button class="nav-link" data-view="dashboard" data-i18n="dashboard">Tổng quan</button>
-          <button class="nav-link" data-view="add-expense" data-i18n="add">Thêm</button>
-          <button class="nav-link" data-view="history" data-i18n="history">Lịch sử</button>
-          <button class="nav-link" data-view="family" data-i18n="family">Gia đình</button>
-        </div>
-        <div class="nav-actions">
-          <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
-          <button class="theme-toggle" id="theme-toggle" title="Toggle theme"><span class="material-symbols-outlined" style="font-size:18px">dark_mode</span></button>
-          <div id="nav-user"></div>
-          <button class="btn btn-sm btn-secondary" id="logout-btn" data-i18n="sign_out">Đăng xuất</button>
-        </div>
-      </nav>
-
-      <!-- Main content area -->
-      <main class="main">
-        <!-- Dashboard view -->
-        <div id="view-dashboard" class="view">
-          <div class="view-mode-toggle">
-            <button class="view-mode-btn" data-mode="day" id="mode-day">Ngày</button>
-            <button class="view-mode-btn active" data-mode="month" id="mode-month">Tháng</button>
-            <button class="view-mode-btn" data-mode="year" id="mode-year">Năm</button>
-          </div>
-          <div class="month-nav">
-            <button class="btn btn-icon" id="prev-month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m15 18-6-6 6-6"/></svg></button>
-            <span class="month-label" id="month-label">Loading...</span>
-            <button class="btn btn-icon" id="next-month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg></button>
-          </div>
-
-          <div class="stats-grid" id="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label" data-i18n="total_this_month">Tổng tháng này</div>
-              <div class="stat-value" id="stat-total">—</div>
-              <div class="stat-sub" id="stat-count">0 expenses</div>
-              <div class="stat-change" id="stat-change"></div>
+      <div class="app-layout">
+        <nav class="nav app-sidebar">
+          <div class="sidebar-top">
+            <div class="nav-brand">
+              <div class="nav-brand-icon">
+                <span class="material-symbols-outlined">savings</span>
+              </div>
+              <div>
+                <span>Household</span>
+                <strong>Flow</strong>
+              </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-label" data-i18n="daily_average">Trung bình ngày</div>
-              <div class="stat-value" id="stat-avg">—</div>
-              <div class="stat-sub" id="stat-days">0 days tracked</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label" data-i18n="biggest_category">Danh mục lớn nhất</div>
-              <div class="stat-value" id="stat-top-cat">—</div>
-              <div class="stat-sub" id="stat-top-cat-pct"></div>
+
+            <div class="sidebar-nav-group">
+              <button class="nav-link" data-view="dashboard">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span data-i18n="dashboard">Tổng quan</span>
+              </button>
+              <button class="nav-link" data-view="add-expense">
+                <span class="material-symbols-outlined">add_circle</span>
+                <span data-i18n="add">Thêm</span>
+              </button>
+              <button class="nav-link" data-view="history">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span data-i18n="history">Lịch sử</span>
+              </button>
+              <button class="nav-link" data-view="family">
+                <span class="material-symbols-outlined">family_restroom</span>
+                <span data-i18n="family">Gia đình</span>
+              </button>
             </div>
           </div>
 
-          <!-- Daily bar chart -->
-          <div class="card" id="daily-chart-card" style="display:none">
-            <div class="card-header">
-              <span class="card-title" id="chart-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
-              <div class="chart-granularity" id="chart-granularity" style="display:none">
-                <button class="chart-gran-btn active" data-gran="day" data-i18n="view_day">Ngày</button>
-                <button class="chart-gran-btn" data-gran="week" data-i18n="chart_weekly">Tuần</button>
-                <button class="chart-gran-btn" data-gran="month" data-i18n="chart_monthly">Tháng</button>
-              </div>
+          <div class="sidebar-bottom">
+            <div class="nav-actions">
+              <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
+              <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                <span class="material-symbols-outlined">dark_mode</span>
+              </button>
             </div>
-            <div class="chart-container">
-              <canvas id="daily-chart"></canvas>
+            <div class="sidebar-user-card">
+              <div id="nav-user"></div>
+              <button class="btn btn-secondary btn-sm" id="logout-btn" data-i18n="sign_out">Đăng xuất</button>
             </div>
           </div>
+        </nav>
 
-          <!-- Charts row: category donut + category bars -->
-          <div class="charts-row">
-            <div class="card chart-card-half" id="category-donut-card" style="display:none">
-              <div class="card-header">
-                <span class="card-title" data-i18n="by_category">Theo danh mục</span>
-              </div>
-              <div class="chart-container" style="display:flex;flex-direction:column;align-items:center">
-                <canvas id="category-donut" width="220" height="220"></canvas>
-                <div id="category-donut-legend" class="ai-chart-legend" style="margin-top:0.75rem"></div>
-              </div>
+        <main class="main app-main">
+          <header class="topbar">
+            <div>
+              <div class="eyebrow">Family Operating System</div>
+              <h1 class="topbar-title">Money with context, not clutter.</h1>
             </div>
-            <div class="card chart-card-half">
-              <div class="card-header">
-                <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+            <div class="topbar-actions">
+              <button class="btn btn-secondary btn-sm" data-view="history" data-i18n="see_all">Xem tất cả</button>
+              <button class="btn btn-primary btn-sm" data-view="add-expense" data-i18n="add_expense_btn">Thêm chi tiêu</button>
+            </div>
+          </header>
+
+          <div id="view-dashboard" class="view">
+            <section class="hero-panel dashboard-hero">
+              <div class="hero-copy">
+                <div class="eyebrow">Overview</div>
+                <h2>Chi tiêu gia đình trong một nhịp nhìn.</h2>
+                <p>Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.</p>
               </div>
-              <div class="category-bars" id="category-bars">
+              <div class="hero-toolbar">
+                <div class="view-mode-toggle">
+                  <button class="view-mode-btn" data-mode="day" id="mode-day">Ngày</button>
+                  <button class="view-mode-btn active" data-mode="month" id="mode-month">Tháng</button>
+                  <button class="view-mode-btn" data-mode="year" id="mode-year">Năm</button>
+                </div>
+                <div class="month-nav">
+                  <button class="btn btn-icon" id="prev-month" aria-label="Previous period">
+                    <span class="material-symbols-outlined">west</span>
+                  </button>
+                  <span class="month-label" id="month-label">Loading...</span>
+                  <button class="btn btn-icon" id="next-month" aria-label="Next period">
+                    <span class="material-symbols-outlined">east</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="stats-grid" id="stats-grid">
+              <article class="stat-card stat-card-primary">
+                <div class="stat-label" data-i18n="total_this_month">Tổng tháng này</div>
+                <div class="stat-value" id="stat-total">—</div>
+                <div class="stat-sub" id="stat-count">0 expenses</div>
+                <div class="stat-change" id="stat-change"></div>
+              </article>
+              <article class="stat-card">
+                <div class="stat-label" data-i18n="daily_average">Trung bình ngày</div>
+                <div class="stat-value" id="stat-avg">—</div>
+                <div class="stat-sub" id="stat-days">0 days tracked</div>
+              </article>
+              <article class="stat-card">
+                <div class="stat-label" data-i18n="biggest_category">Danh mục lớn nhất</div>
+                <div class="stat-value" id="stat-top-cat">—</div>
+                <div class="stat-sub" id="stat-top-cat-pct"></div>
+              </article>
+            </section>
+
+            <section class="dashboard-grid">
+              <article class="card card-wide" id="daily-chart-card" style="display:none">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Pattern</div>
+                    <span class="card-title" id="chart-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
+                  </div>
+                  <div class="chart-granularity" id="chart-granularity" style="display:none">
+                    <button class="chart-gran-btn active" data-gran="day" data-i18n="view_day">Ngày</button>
+                    <button class="chart-gran-btn" data-gran="week" data-i18n="chart_weekly">Tuần</button>
+                    <button class="chart-gran-btn" data-gran="month" data-i18n="chart_monthly">Tháng</button>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="daily-chart"></canvas>
+                </div>
+              </article>
+
+              <div class="charts-row">
+                <article class="card chart-card-half" id="category-donut-card" style="display:none">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Mix</div>
+                      <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+                    </div>
+                  </div>
+                  <div class="chart-container chart-center">
+                    <canvas id="category-donut" width="220" height="220"></canvas>
+                    <div id="category-donut-legend" class="ai-chart-legend"></div>
+                  </div>
+                </article>
+
+                <article class="card chart-card-half">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Ranking</div>
+                      <span class="card-title" data-i18n="by_category">Theo danh mục</span>
+                    </div>
+                  </div>
+                  <div class="category-bars" id="category-bars">
+                    <div class="spinner"></div>
+                  </div>
+                </article>
+              </div>
+
+              <article class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">People</div>
+                    <span class="card-title" data-i18n="by_person">Theo thành viên</span>
+                  </div>
+                </div>
+                <div class="person-chips" id="person-chips"></div>
+              </article>
+
+              <article class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Latest</div>
+                    <span class="card-title" data-i18n="recent_expenses">Chi tiêu gần đây</span>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" data-view="history" data-i18n="see_all">Xem tất cả</button>
+                </div>
+                <div class="expense-list" id="recent-expenses">
+                  <div class="spinner"></div>
+                </div>
+              </article>
+            </section>
+          </div>
+
+          <div id="view-add-expense" class="view">
+            <section class="hero-panel add-hero">
+              <div class="hero-copy">
+                <div class="eyebrow">Capture</div>
+                <h2 data-i18n="add_expense">Thêm chi tiêu</h2>
+                <p>Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.</p>
+              </div>
+              <div class="hero-pills">
+                <span class="hero-pill">Manual</span>
+                <span class="hero-pill">Voice batch</span>
+                <span class="hero-pill">Receipt AI</span>
+              </div>
+            </section>
+
+            <section class="add-workspace">
+              <div class="add-main-stack">
+                <article class="card voice-card voice-card-featured">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Voice Batch</div>
+                      <span class="card-title">Nói một lần, tạo nhiều draft</span>
+                    </div>
+                    <button type="button" class="btn btn-voice" id="voice-btn">
+                      <span class="material-symbols-outlined">graphic_eq</span>
+                      <span data-i18n="voice_input">Nhập bằng giọng nói</span>
+                    </button>
+                  </div>
+                  <p class="voice-helper">Ví dụ: “đi chợ 100k cafe 50k mua đồ chơi cho con 5k”. App sẽ tách thành từng khoản, đoán danh mục, để bạn sửa rồi mới lưu.</p>
+                  <div id="voice-status" class="voice-status" style="display:none"></div>
+                  <div id="voice-transcript" class="voice-transcript" style="display:none"></div>
+                </article>
+
+                <article class="card draft-card" id="voice-draft-panel" style="display:none">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Draft Review</div>
+                      <span class="card-title">Danh sách bill tạm</span>
+                    </div>
+                    <div class="draft-summary" id="voice-draft-summary">0 item</div>
+                  </div>
+                  <div class="draft-list" id="voice-draft-list"></div>
+                  <div class="draft-actions" id="voice-draft-actions">
+                    <button type="button" class="btn btn-secondary" id="voice-cancel-btn" data-i18n="cancel">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="voice-save-btn">Save all</button>
+                  </div>
+                </article>
+
+                <article class="card ai-extract-card">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Receipt</div>
+                      <span class="card-title">Quét hóa đơn bằng AI</span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-full" id="ai-extract-btn">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                    <span data-i18n="ai_extract_btn">Quét ảnh hóa đơn bằng AI</span>
+                  </button>
+                  <input type="file" id="ai-extract-file" accept="image/*" capture="environment" style="display:none" />
+                  <div id="ai-extract-preview" style="display:none"></div>
+                </article>
+              </div>
+
+              <div class="add-side-stack">
+                <article class="card form-card">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Manual Entry</div>
+                      <span class="card-title">Thêm thủ công</span>
+                    </div>
+                  </div>
+                  <form id="add-expense-form">
+                    <div class="form-group">
+                      <label class="form-label" for="exp-amount" data-i18n="amount_label">Số tiền (VND) *</label>
+                      <input type="text" id="exp-amount" name="amount" inputmode="numeric" placeholder="vd: 150,000" required autocomplete="off" />
+                      <div class="amount-shortcuts">
+                        <button type="button" class="amt-btn" data-append="000">+000</button>
+                        <button type="button" class="amt-btn" data-set="10000">10K</button>
+                        <button type="button" class="amt-btn" data-set="20000">20K</button>
+                        <button type="button" class="amt-btn" data-set="50000">50K</button>
+                        <button type="button" class="amt-btn" data-set="100000">100K</button>
+                        <button type="button" class="amt-btn" data-set="200000">200K</button>
+                        <button type="button" class="amt-btn" data-set="500000">500K</button>
+                        <button type="button" class="amt-btn" data-set="1000000">1M</button>
+                      </div>
+                      <div class="form-hint" id="exp-amount-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label" for="exp-desc" data-i18n="description">Mô tả</label>
+                      <input type="text" id="exp-desc" name="description" placeholder="vd: Ăn trưa Phở 24" maxlength="200" />
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="exp-category" data-i18n="category">Danh mục *</label>
+                        <select id="exp-category" name="category_id" required>
+                          <option value="">Chọn danh mục...</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="exp-date" data-i18n="date">Ngày *</label>
+                        <input type="date" id="exp-date" name="expense_date" required />
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label" data-i18n="paid_by">Người chi</label>
+                      <input type="text" id="exp-paid-by" disabled />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="add-expense-btn" data-i18n="add_expense_btn">
+                      Thêm chi tiêu
+                    </button>
+                  </form>
+                </article>
+
+                <article class="card">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Custom Taxonomy</div>
+                      <span class="card-title" data-i18n="custom_categories">Danh mục tùy chỉnh</span>
+                    </div>
+                  </div>
+                  <div class="input-row input-row-compact">
+                    <input type="text" id="new-cat-name" placeholder="Tên danh mục" maxlength="50" />
+                    <input type="text" id="new-cat-icon" placeholder="🏷️" class="icon-input" maxlength="4" />
+                    <button class="btn btn-secondary" id="add-cat-btn">Add</button>
+                  </div>
+                  <div id="custom-categories-list"></div>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div id="view-history" class="view">
+            <section class="hero-panel">
+              <div class="hero-copy">
+                <div class="eyebrow">History</div>
+                <h2 data-i18n="expense_history">Lịch sử chi tiêu</h2>
+                <p>Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.</p>
+              </div>
+            </section>
+
+            <article class="card">
+              <div class="filters-shell">
+                <div class="filters-mobile-bar">
+                  <button class="btn btn-secondary btn-sm filters-toggle" id="history-filters-toggle" type="button">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span data-i18n="filter">Lọc</span>
+                  </button>
+                  <div class="filters-summary" id="history-filters-summary">All time · All categories · All members</div>
+                </div>
+                <div class="filters-panel" id="history-filters-panel">
+                  <div class="filters">
+                    <input type="date" id="filter-from" />
+                    <input type="date" id="filter-to" />
+                    <select id="filter-category">
+                      <option value="">Tất cả danh mục</option>
+                    </select>
+                    <select id="filter-person">
+                      <option value="">Tất cả thành viên</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm" id="filter-apply" data-i18n="filter">Lọc</button>
+                    <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset">
+                      <span class="material-symbols-outlined">restart_alt</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="export-excel-btn" title="Export Excel" data-i18n="export_excel">
+                      <span class="material-symbols-outlined">download</span>
+                      Excel
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="expense-list" id="history-list">
                 <div class="spinner"></div>
               </div>
-            </div>
-          </div>
-
-          <!-- By person -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title" data-i18n="by_person">Theo thành viên</span>
-            </div>
-            <div class="person-chips" id="person-chips"></div>
-          </div>
-
-          <!-- AI insights rendered in modal -->
-
-          <!-- Recent expenses -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title" data-i18n="recent_expenses">Chi tiêu gần đây</span>
-              <button class="btn btn-sm btn-secondary" data-view="history" data-i18n="see_all">Xem tất cả</button>
-            </div>
-            <div class="expense-list" id="recent-expenses">
-              <div class="spinner"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Add Expense view -->
-        <div id="view-add-expense" class="view">
-          <div class="section-title" data-i18n="add_expense">Thêm chi tiêu</div>
-          <!-- Voice input -->
-          <div class="card voice-card">
-            <button type="button" class="btn btn-voice" id="voice-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-              <span data-i18n="voice_input">Nhập bằng giọng nói</span>
-            </button>
-            <div id="voice-status" class="voice-status" style="display:none"></div>
-            <div id="voice-transcript" class="voice-transcript" style="display:none"></div>
-          </div>
-          <!-- AI Extract from image -->
-          <div class="card ai-extract-card">
-            <button type="button" class="btn btn-secondary btn-full" id="ai-extract-btn">
-              <span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:4px">photo_camera</span>
-              <span data-i18n="ai_extract_btn">Quét ảnh hóa đơn bằng AI</span>
-            </button>
-            <input type="file" id="ai-extract-file" accept="image/*" capture="environment" style="display:none" />
-            <div id="ai-extract-preview" style="display:none"></div>
-          </div>
-          <div class="card">
-            <form id="add-expense-form">
-              <div class="form-group">
-                <label class="form-label" for="exp-amount" data-i18n="amount_label">Số tiền (VND) *</label>
-                <input type="text" id="exp-amount" name="amount" inputmode="numeric"
-                  placeholder="vd: 150,000" required autocomplete="off" />
-                <div class="amount-shortcuts">
-                  <button type="button" class="amt-btn" data-append="000">+000</button>
-                  <button type="button" class="amt-btn" data-set="10000">10K</button>
-                  <button type="button" class="amt-btn" data-set="20000">20K</button>
-                  <button type="button" class="amt-btn" data-set="50000">50K</button>
-                  <button type="button" class="amt-btn" data-set="100000">100K</button>
-                  <button type="button" class="amt-btn" data-set="200000">200K</button>
-                  <button type="button" class="amt-btn" data-set="500000">500K</button>
-                  <button type="button" class="amt-btn" data-set="1000000">1M</button>
-                </div>
-                <div class="form-hint" id="exp-amount-preview"></div>
+              <div id="history-pagination" class="pagination-wrap" style="display:none">
+                <button class="btn btn-secondary btn-sm" id="load-more-btn" data-i18n="load_more">Xem thêm</button>
               </div>
+            </article>
+          </div>
 
-              <div class="form-group">
-                <label class="form-label" for="exp-desc" data-i18n="description">Mô tả</label>
-                <input type="text" id="exp-desc" name="description"
-                  placeholder="vd: Ăn trưa Phở 24" maxlength="200" />
+          <div id="view-family" class="view">
+            <section class="hero-panel">
+              <div class="hero-copy">
+                <div class="eyebrow">Family Ops</div>
+                <h2 data-i18n="family_settings">Cài đặt gia đình</h2>
+                <p>Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.</p>
               </div>
+            </section>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="exp-category" data-i18n="category">Danh mục *</label>
-                  <select id="exp-category" name="category_id" required>
-                    <option value="">Chọn danh mục...</option>
-                  </select>
+            <section class="family-grid">
+              <article class="card" id="profile-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Profile</div>
+                    <span class="card-title" data-i18n="your_profile">Hồ sơ của bạn</span>
+                  </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="exp-date" data-i18n="date">Ngày *</label>
-                  <input type="date" id="exp-date" name="expense_date" required />
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" data-i18n="paid_by">Người chi</label>
-                <input type="text" id="exp-paid-by" disabled />
-              </div>
-
-              <button type="submit" class="btn btn-primary btn-full" id="add-expense-btn" data-i18n="add_expense_btn">
-                Thêm chi tiêu
-              </button>
-            </form>
-          </div>
-
-          <!-- Add custom category -->
-          <div class="card">
-            <div class="card-header">
-              <span class="card-title" data-i18n="custom_categories">Danh mục tùy chỉnh</span>
-            </div>
-            <div class="input-row" style="margin-bottom:0.75rem">
-              <input type="text" id="new-cat-name" placeholder="Tên danh mục" maxlength="50" />
-              <input type="text" id="new-cat-icon" placeholder="🏷️" style="width:60px;text-align:center" maxlength="4" />
-              <button class="btn btn-secondary" id="add-cat-btn">Add</button>
-            </div>
-            <div id="custom-categories-list"></div>
-          </div>
-        </div>
-
-        <!-- History view -->
-        <div id="view-history" class="view">
-          <div class="section-title" data-i18n="expense_history">Lịch sử chi tiêu</div>
-          <div class="filters">
-            <input type="date" id="filter-from" style="width:auto" />
-            <input type="date" id="filter-to" style="width:auto" />
-            <select id="filter-category">
-              <option value="">Tất cả danh mục</option>
-            </select>
-            <select id="filter-person">
-              <option value="">Tất cả thành viên</option>
-            </select>
-            <button class="btn btn-secondary btn-sm" id="filter-apply" data-i18n="filter">Lọc</button>
-            <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-            <button class="btn btn-secondary btn-sm" id="export-excel-btn" title="Export Excel" data-i18n="export_excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:middle;margin-right:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Excel</button>
-          </div>
-          <div class="expense-list" id="history-list">
-            <div class="spinner"></div>
-          </div>
-          <div id="history-pagination" style="text-align:center;margin-top:1rem;display:none">
-            <button class="btn btn-secondary btn-sm" id="load-more-btn" data-i18n="load_more">Xem thêm</button>
-          </div>
-        </div>
-
-        <!-- Family view -->
-        <div id="view-family" class="view">
-          <div class="section-title" data-i18n="family_settings">Cài đặt gia đình</div>
-
-          <!-- Profile section (always visible) -->
-          <div class="card" id="profile-card">
-            <div class="card-header">
-              <span class="card-title" data-i18n="your_profile">Hồ sơ của bạn</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="display_name">Tên hiển thị</label>
-              <div class="input-row" id="profile-name-row">
-                <input type="text" id="profile-name" maxlength="100" disabled />
-                <button class="btn btn-secondary" id="edit-name-btn" style="display:none" data-i18n="edit">Sửa</button>
-                <button class="btn btn-primary" id="save-name-btn" style="display:none" data-i18n="save">Lưu</button>
-                <button class="btn btn-secondary" id="cancel-name-btn" style="display:none" data-i18n="cancel">Hủy</button>
-              </div>
-              <div class="form-hint" id="name-edit-hint"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="username">Tên đăng nhập</label>
-              <div class="input-row" id="profile-username-row">
-                <input type="text" id="profile-username" placeholder="Đặt tên đăng nhập" maxlength="30" />
-                <button class="btn btn-primary" id="save-username-btn" data-i18n="save">Lưu</button>
-              </div>
-              <div class="form-hint" id="username-hint" data-i18n="username_hint">3-30 ký tự, chỉ cho phép chữ cái, số và dấu gạch dưới</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="text" id="profile-email" disabled />
-            </div>
-            <div class="form-group">
-              <label class="form-label" data-i18n="link_google">Liên kết Google</label>
-              <div style="display:flex;align-items:center;gap:0.75rem">
-                <button class="btn btn-secondary" id="link-google-btn" style="display:none" data-i18n="link_google">Liên kết Google</button>
-                <span id="google-linked-badge" style="display:none;color:var(--success);font-size:0.875rem;font-weight:600" data-i18n="google_linked">Đã liên kết Google ✓</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Change password (email auth only) -->
-          <div class="card" id="password-card" style="display:none">
-            <div class="card-header">
-              <span class="card-title" data-i18n="change_password">Đổi mật khẩu</span>
-            </div>
-            <div id="password-form-content">
-              <div class="form-group">
-                <label class="form-label" for="current-password" data-i18n="current_password">Mật khẩu hiện tại</label>
-                <input type="password" id="current-password" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="new-password" data-i18n="new_password">Mật khẩu mới</label>
-                <input type="password" id="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" autocomplete="new-password" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="confirm-password" data-i18n="confirm_password">Xác nhận mật khẩu mới</label>
-                <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" />
-              </div>
-              <div id="password-error" class="form-error" style="display:none"></div>
-              <button class="btn btn-primary btn-full" id="change-password-btn" data-i18n="change_password">Đổi mật khẩu</button>
-            </div>
-            <div id="google-auth-notice" style="display:none">
-              <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.9375rem" data-i18n="google_auth_notice">
-                Đăng nhập bằng Google. Không hỗ trợ quản lý mật khẩu.
-              </div>
-            </div>
-          </div>
-
-          <!-- No family: setup prompt -->
-          <!-- Pending invites for current user -->
-          <div id="my-invites-section" style="display:none">
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title" data-i18n="you_have_invites">Bạn có lời mời tham gia gia đình</span>
-              </div>
-              <div id="my-invites-list"></div>
-            </div>
-          </div>
-
-          <div id="no-family-setup" style="display:none">
-            <div class="setup-card">
-              <div style="margin-bottom:1rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="color:var(--primary)"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-              <h2 data-i18n="create_family_title">Tạo nhóm gia đình</h2>
-              <p data-i18n="create_family_desc">Tạo nhóm gia đình để cùng theo dõi chi tiêu.</p>
-              <div class="input-row" style="max-width:360px;margin:0 auto 1rem">
-                <input type="text" id="new-family-name" placeholder="Tên gia đình, vd: Nhà Nguyễn" maxlength="100" />
-                <button class="btn btn-primary" id="create-family-btn" data-i18n="create">Tạo</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Has family -->
-          <div id="has-family" style="display:none">
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title" id="family-name-heading">—</span>
-                <span class="role-badge owner" id="my-role-badge">owner</span>
-              </div>
-
-              <div class="section-title" style="font-size:0.9rem;margin-bottom:0.75rem" data-i18n="members">Thành viên</div>
-              <div class="member-list" id="member-list"></div>
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title" data-i18n="invite_member">Mời thành viên</span>
-              </div>
-              <div class="input-row">
-                <input type="text" id="invite-email" placeholder="Email hoặc tên đăng nhập" />
-                <button class="btn btn-primary" id="invite-btn" data-i18n="invite">Mời</button>
-              </div>
-              <div id="pending-invites-section" style="margin-top:1rem;display:none">
-                <div style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;color:var(--text-muted)" data-i18n="pending_invites">Lời mời đang chờ</div>
-                <div id="pending-invites-list"></div>
-              </div>
-            </div>
-
-            <div class="card" id="currency-setting" style="display:none"></div>
-
-            <!-- AI Settings -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title" data-i18n="ai_settings">Cài đặt phân tích AI</span>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="ai-provider" data-i18n="provider">Nhà cung cấp</label>
-                <select id="ai-provider">
-                  <option value="gemini">Google Gemini (Free)</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic Claude</option>
-                  <option value="zai">Z.AI (Anthropic)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="ai-model" data-i18n="model">Mô hình</label>
-                <select id="ai-model"></select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key</label>
-                <input type="password" id="ai-api-key" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
-                <div class="form-hint" data-i18n="api_key_hint">Được mã hóa và lưu trữ an toàn. Mỗi nhà cung cấp lưu 1 key riêng.</div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label" for="ai-income" data-i18n="monthly_income">Thu nhập hàng tháng (tùy chọn)</label>
-                  <input type="number" id="ai-income" placeholder="vd: 30000000" min="0" />
+                  <label class="form-label" data-i18n="display_name">Tên hiển thị</label>
+                  <div class="input-row" id="profile-name-row">
+                    <input type="text" id="profile-name" maxlength="100" disabled />
+                    <button class="btn btn-secondary" id="edit-name-btn" style="display:none" data-i18n="edit">Sửa</button>
+                    <button class="btn btn-primary" id="save-name-btn" style="display:none" data-i18n="save">Lưu</button>
+                    <button class="btn btn-secondary" id="cancel-name-btn" style="display:none" data-i18n="cancel">Hủy</button>
+                  </div>
+                  <div class="form-hint" id="name-edit-hint"></div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="ai-savings" data-i18n="current_savings">Tiết kiệm hiện tại (tùy chọn)</label>
-                  <input type="number" id="ai-savings" placeholder="vd: 100000000" min="0" />
+                  <label class="form-label" data-i18n="username">Tên đăng nhập</label>
+                  <div class="input-row" id="profile-username-row">
+                    <input type="text" id="profile-username" placeholder="Đặt tên đăng nhập" maxlength="30" />
+                    <button class="btn btn-primary" id="save-username-btn" data-i18n="save">Lưu</button>
+                  </div>
+                  <div class="form-hint" id="username-hint" data-i18n="username_hint">3-30 ký tự, chỉ cho phép chữ cái, số và dấu gạch dưới</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input type="text" id="profile-email" disabled />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" data-i18n="link_google">Liên kết Google</label>
+                  <div class="inline-actions">
+                    <button class="btn btn-secondary" id="link-google-btn" style="display:none" data-i18n="link_google">Liên kết Google</button>
+                    <span id="google-linked-badge" class="badge-success" style="display:none" data-i18n="google_linked">Đã liên kết Google ✓</span>
+                  </div>
+                </div>
+              </article>
+
+              <article class="card" id="password-card" style="display:none">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Security</div>
+                    <span class="card-title" data-i18n="change_password">Đổi mật khẩu</span>
+                  </div>
+                </div>
+                <div id="password-form-content">
+                  <div class="form-group">
+                    <label class="form-label" for="current-password" data-i18n="current_password">Mật khẩu hiện tại</label>
+                    <input type="password" id="current-password" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="new-password" data-i18n="new_password">Mật khẩu mới</label>
+                    <input type="password" id="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" autocomplete="new-password" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="confirm-password" data-i18n="confirm_password">Xác nhận mật khẩu mới</label>
+                    <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" />
+                  </div>
+                  <div id="password-error" class="form-error" style="display:none"></div>
+                  <button class="btn btn-primary btn-full" id="change-password-btn" data-i18n="change_password">Đổi mật khẩu</button>
+                </div>
+                <div id="google-auth-notice" style="display:none">
+                  <div class="notice-box" data-i18n="google_auth_notice">Đăng nhập bằng Google. Không hỗ trợ quản lý mật khẩu.</div>
+                </div>
+              </article>
+
+              <div id="my-invites-section" style="display:none">
+                <article class="card">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Inbox</div>
+                      <span class="card-title" data-i18n="you_have_invites">Bạn có lời mời tham gia gia đình</span>
+                    </div>
+                  </div>
+                  <div id="my-invites-list"></div>
+                </article>
+              </div>
+
+              <div id="no-family-setup" style="display:none">
+                <article class="setup-card">
+                  <div class="setup-icon"><span class="material-symbols-outlined">groups</span></div>
+                  <h2 data-i18n="create_family_title">Tạo nhóm gia đình</h2>
+                  <p data-i18n="create_family_desc">Tạo nhóm gia đình để cùng theo dõi chi tiêu.</p>
+                  <div class="input-row">
+                    <input type="text" id="new-family-name" placeholder="Tên gia đình, vd: Nhà Nguyễn" maxlength="100" />
+                    <button class="btn btn-primary" id="create-family-btn" data-i18n="create">Tạo</button>
+                  </div>
+                </article>
+              </div>
+
+              <div id="has-family" style="display:none">
+                <div class="family-stack">
+                  <article class="card">
+                    <div class="card-header">
+                      <div>
+                        <div class="card-kicker">Workspace</div>
+                        <span class="card-title" id="family-name-heading">—</span>
+                      </div>
+                      <span class="role-badge owner" id="my-role-badge">owner</span>
+                    </div>
+                    <div class="section-title section-title-small" data-i18n="members">Thành viên</div>
+                    <div class="member-list" id="member-list"></div>
+                  </article>
+
+                  <article class="card">
+                    <div class="card-header">
+                      <div>
+                        <div class="card-kicker">Invite</div>
+                        <span class="card-title" data-i18n="invite_member">Mời thành viên</span>
+                      </div>
+                    </div>
+                    <div class="input-row">
+                      <input type="text" id="invite-email" placeholder="Email hoặc tên đăng nhập" />
+                      <button class="btn btn-primary" id="invite-btn" data-i18n="invite">Mời</button>
+                    </div>
+                    <div id="pending-invites-section" class="pending-wrap" style="margin-top:1rem;display:none">
+                      <div class="pending-title" data-i18n="pending_invites">Lời mời đang chờ</div>
+                      <div id="pending-invites-list"></div>
+                    </div>
+                  </article>
+
+                  <article class="card" id="currency-setting" style="display:none"></article>
+
+                  <article class="card">
+                    <div class="card-header">
+                      <div>
+                        <div class="card-kicker">AI</div>
+                        <span class="card-title" data-i18n="ai_settings">Cài đặt phân tích AI</span>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="ai-provider" data-i18n="provider">Nhà cung cấp</label>
+                      <select id="ai-provider">
+                        <option value="gemini">Google Gemini (Free)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic Claude</option>
+                        <option value="zai">Z.AI (Anthropic)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="ai-model" data-i18n="model">Mô hình</label>
+                      <select id="ai-model"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key</label>
+                      <input type="password" id="ai-api-key" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
+                      <div class="form-hint" data-i18n="api_key_hint">Được mã hóa và lưu trữ an toàn. Mỗi nhà cung cấp lưu 1 key riêng.</div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="ai-income" data-i18n="monthly_income">Thu nhập hàng tháng (tùy chọn)</label>
+                        <input type="number" id="ai-income" placeholder="vd: 30000000" min="0" />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="ai-savings" data-i18n="current_savings">Tiết kiệm hiện tại (tùy chọn)</label>
+                        <input type="number" id="ai-savings" placeholder="vd: 100000000" min="0" />
+                      </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="save-ai-settings-btn" data-i18n="save_ai_settings">Lưu cài đặt AI</button>
+                  </article>
+
+                  <article class="card danger-card">
+                    <div class="card-title danger-title" data-i18n="danger_zone">Vùng nguy hiểm</div>
+                    <button class="btn btn-danger" id="leave-family-btn" data-i18n="leave_family">Rời gia đình</button>
+                  </article>
                 </div>
               </div>
-              <button class="btn btn-primary btn-full" id="save-ai-settings-btn" data-i18n="save_ai_settings">Lưu cài đặt AI</button>
-            </div>
-
-            <div class="card" style="border-color:var(--danger);border-opacity:0.3">
-              <div class="card-title" style="color:var(--danger);margin-bottom:0.75rem" data-i18n="danger_zone">Vùng nguy hiểm</div>
-              <button class="btn btn-danger" id="leave-family-btn" data-i18n="leave_family">Rời gia đình</button>
-            </div>
+            </section>
           </div>
-        </div>
-      </main>
+        </main>
 
-      <!-- Mobile bottom nav -->
-      <nav class="bottom-nav">
-        <button class="bottom-nav-item" data-view="dashboard">
-          <span class="bnav-icon"><span class="material-symbols-outlined">dashboard</span></span>
-          <span data-i18n="dashboard">Tổng quan</span>
-        </button>
-        <button class="bottom-nav-item" data-view="add-expense">
-          <span class="bnav-icon"><span class="material-symbols-outlined">add_circle</span></span>
-          <span data-i18n="add">Thêm</span>
-        </button>
-        <button class="bottom-nav-item" data-view="history">
-          <span class="bnav-icon"><span class="material-symbols-outlined">receipt_long</span></span>
-          <span data-i18n="history">Lịch sử</span>
-        </button>
-        <button class="bottom-nav-item" data-view="family">
-          <span class="bnav-icon"><span class="material-symbols-outlined">family_restroom</span></span>
-          <span data-i18n="family">Gia đình</span>
-        </button>
-      </nav>
+        <nav class="bottom-nav">
+          <button class="bottom-nav-item" data-view="dashboard">
+            <span class="bnav-icon"><span class="material-symbols-outlined">dashboard</span></span>
+            <span data-i18n="dashboard">Tổng quan</span>
+          </button>
+          <button class="bottom-nav-item" data-view="add-expense">
+            <span class="bnav-icon"><span class="material-symbols-outlined">add_circle</span></span>
+            <span data-i18n="add">Thêm</span>
+          </button>
+          <button class="bottom-nav-item" data-view="history">
+            <span class="bnav-icon"><span class="material-symbols-outlined">receipt_long</span></span>
+            <span data-i18n="history">Lịch sử</span>
+          </button>
+          <button class="bottom-nav-item" data-view="family">
+            <span class="bnav-icon"><span class="material-symbols-outlined">family_restroom</span></span>
+            <span data-i18n="family">Gia đình</span>
+          </button>
+        </nav>
+      </div>
     </div>
   </div>
 
-  <!-- AI Chat FAB -->
   <button class="ai-fab" id="ai-fab" title="Ask AI about your finances" style="display:none">
-    <span class="material-symbols-outlined" style="font-size:26px">lightbulb</span>
+    <span class="material-symbols-outlined">lightbulb</span>
   </button>
 
-  <!-- AI Chat Modal -->
   <div class="ai-modal-overlay" id="ai-modal-overlay">
     <div class="ai-modal">
       <div class="ai-modal-header">
         <div class="ai-modal-header-icon">
-          <span class="material-symbols-outlined" style="font-size:20px;color:#fff">lightbulb</span>
+          <span class="material-symbols-outlined">lightbulb</span>
         </div>
         <div>
           <div class="ai-modal-header-title" data-i18n="ai_advisor">Cố vấn tài chính AI</div>
           <div class="ai-modal-header-sub" data-i18n="ai_powered_by">Được hỗ trợ bởi nhà cung cấp AI của bạn</div>
         </div>
         <button class="ai-modal-close" id="ai-modal-close">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <div class="ai-modal-body" id="ai-insights-content">
-        <div class="ai-empty-hint" style="text-align:center;padding:2rem 0.75rem;color:var(--text-muted);font-size:0.875rem">
-          <span class="material-symbols-outlined" style="font-size:40px;color:var(--primary);margin-bottom:0.75rem;opacity:0.5">lightbulb</span>
+        <div class="ai-empty-hint">
+          <span class="material-symbols-outlined">lightbulb</span>
           <div data-i18n="ai_empty_hint">Đặt câu hỏi hoặc nhấn <strong>Phân tích</strong> để xem báo cáo chi tiêu</div>
         </div>
       </div>
@@ -501,7 +684,6 @@
     </div>
   </div>
 
-  <!-- Toast container -->
   <div class="toast-container" id="toast-container"></div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>

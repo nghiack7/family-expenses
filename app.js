@@ -89,6 +89,7 @@ const translations = {
     load_more: 'Xem thêm',
     no_expenses: 'Không có chi tiêu',
     add_first_expense: 'Thêm khoản chi đầu tiên!',
+    all_time: 'Mọi thời gian',
     delete_expense_confirm: 'Xóa khoản chi tiêu này?',
     expense_deleted: 'Đã xóa chi tiêu',
     edit_expense: 'Sửa chi tiêu',
@@ -206,6 +207,20 @@ const translations = {
     voice_no_match: 'Không nhận ra. Thử nói: "đi uống cafe hết 50k"',
     voice_filled: 'Đã điền! Kiểm tra và bấm Thêm chi tiêu.',
     voice_example: 'vd: "đi uống cafe hết 50 nghìn"',
+    voice_drafts_ready: 'Đã tạo {0} draft. Kiểm tra lại rồi bấm Lưu tất cả.',
+    voice_drafts_empty: 'Chưa có draft nào. Bấm mic và đọc liên tiếp nhiều khoản chi.',
+    voice_save_all: 'Lưu tất cả',
+    voice_saving_all: 'Đang lưu...',
+    voice_saved_all: 'Đã lưu {0} khoản chi!',
+    voice_partial_saved: 'Đã lưu {0} khoản, còn {1} draft cần sửa.',
+    voice_cancelled: 'Đã hủy danh sách draft',
+    voice_desc_label: 'Mô tả',
+    voice_amount_label: 'Số tiền',
+    voice_category_label: 'Danh mục',
+    voice_date_label: 'Ngày',
+    voice_remove_draft: 'Xóa draft',
+    voice_invalid_amount: 'Draft {0} cần số tiền hợp lệ',
+    voice_invalid_category: 'Draft {0} cần chọn danh mục',
 
     // Chart
     chart_weekly: 'Tuần',
@@ -327,6 +342,7 @@ const translations = {
     load_more: 'Load more',
     no_expenses: 'No expenses',
     add_first_expense: 'Add your first expense!',
+    all_time: 'All time',
     delete_expense_confirm: 'Delete this expense?',
     expense_deleted: 'Expense deleted',
     edit_expense: 'Edit Expense',
@@ -440,6 +456,20 @@ const translations = {
     voice_no_match: 'Could not understand. Try: "coffee 50k"',
     voice_filled: 'Filled! Review and tap Add Expense.',
     voice_example: 'e.g. "lunch at Pho 24, 50k"',
+    voice_drafts_ready: '{0} drafts created. Review them and tap Save all.',
+    voice_drafts_empty: 'No drafts yet. Tap the mic and dictate multiple expenses in one go.',
+    voice_save_all: 'Save all',
+    voice_saving_all: 'Saving...',
+    voice_saved_all: '{0} expenses saved!',
+    voice_partial_saved: '{0} saved, {1} drafts still need attention.',
+    voice_cancelled: 'Draft list discarded',
+    voice_desc_label: 'Description',
+    voice_amount_label: 'Amount',
+    voice_category_label: 'Category',
+    voice_date_label: 'Date',
+    voice_remove_draft: 'Remove draft',
+    voice_invalid_amount: 'Draft {0} needs a valid amount',
+    voice_invalid_category: 'Draft {0} needs a category',
     chart_weekly: 'Week',
     chart_monthly: 'Month',
     chart_spending: 'Spending',
@@ -518,6 +548,11 @@ function applyLanguage() {
   // Update lang toggle button text
   const langBtn = document.getElementById('lang-toggle');
   if (langBtn) langBtn.textContent = currentLang === 'vi' ? 'EN' : 'VI';
+
+  const voiceSaveBtn = document.getElementById('voice-save-btn');
+  if (voiceSaveBtn) voiceSaveBtn.textContent = t('voice_save_all');
+
+  updateHistoryFiltersSummary();
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -533,6 +568,8 @@ const state = {
   historyOffset: 0,
   historyTotal: 0,
   currency: 'VND',   // family currency
+  voiceDrafts: [],
+  voiceTranscript: '',
 };
 
 // ── Currency formatter ────────────────────────────────────────────────────
@@ -702,12 +739,16 @@ function applyRoute() {
   if (view === 'history') loadHistory(true);
   if (view === 'family') loadFamily();
   if (view === 'add-expense') prepareAddExpense();
+  if (view !== 'history') setHistoryFiltersCollapsed(window.matchMedia('(max-width: 720px)').matches);
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 function showLogin() {
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
+  closeAIModal();
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = 'none';
   applyLanguage();
 }
 
@@ -719,6 +760,7 @@ function showApp() {
   applyLanguage();
   applyRoute();
   checkPendingInviteToken();
+  checkAIConfigured();
 }
 
 function renderNavUser() {
@@ -880,6 +922,11 @@ function initTheme() {
   applyTheme(saved);
 }
 
+function updateThemeColorMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#09120f' : '#133127');
+}
+
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('theme-toggle');
@@ -887,6 +934,7 @@ function applyTheme(theme) {
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   localStorage.setItem('theme', theme);
+  updateThemeColorMeta(theme);
 }
 
 function toggleTheme() {
@@ -1350,6 +1398,8 @@ async function prepareAddExpense() {
 
   await loadCategories();
   populateCategorySelects();
+  renderVoiceDrafts();
+  setVoiceTranscript(state.voiceTranscript);
 }
 
 async function loadCategories() {
@@ -1384,6 +1434,7 @@ function populateCategorySelects() {
       sel.appendChild(opt);
     });
   });
+  updateHistoryFiltersSummary();
 }
 
 function renderCustomCategoriesList() {
@@ -1431,6 +1482,7 @@ async function loadHistory(reset = false) {
       } catch (_) {}
     }
     populatePersonFilter();
+    updateHistoryFiltersSummary();
   }
 
   const from = document.getElementById('filter-from').value || '';
@@ -1468,6 +1520,10 @@ async function loadHistory(reset = false) {
     state.historyOffset += data.expenses.length;
     const pagEl = document.getElementById('history-pagination');
     pagEl.style.display = state.historyOffset < state.historyTotal ? 'block' : 'none';
+    updateHistoryFiltersSummary();
+    if (reset && window.matchMedia('(max-width: 720px)').matches) {
+      setHistoryFiltersCollapsed(true);
+    }
   } catch (err) {
     if (err.message.includes('Not in a family')) {
       renderNeedFamily('history-list');
@@ -1637,6 +1693,7 @@ function populatePersonFilter() {
     if (m.id === current) opt.selected = true;
     sel.appendChild(opt);
   });
+  updateHistoryFiltersSummary();
 }
 
 // ── Family ─────────────────────────────────────────────────────────────────
@@ -2173,7 +2230,9 @@ async function handleSaveAISettings() {
 
 function checkAIConfigured() {
   const fab = document.getElementById('ai-fab');
-  if (fab) fab.style.display = 'flex';
+  if (!fab) return;
+  const isAuthenticated = !!state.user && document.getElementById('app-shell')?.style.display !== 'none';
+  fab.style.display = isAuthenticated ? 'flex' : 'none';
 }
 
 function openAIModal() {
@@ -2183,6 +2242,80 @@ function openAIModal() {
 
 function closeAIModal() {
   document.getElementById('ai-modal-overlay').classList.remove('open');
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+function initKeyboardAwareUI() {
+  const formSelector = 'input, select, textarea';
+  document.addEventListener('focusin', (event) => {
+    if (event.target && event.target.matches && event.target.matches(formSelector)) {
+      document.body.classList.add('keyboard-open');
+    }
+  });
+  document.addEventListener('focusout', () => {
+    setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || !active.matches || !active.matches(formSelector)) {
+        document.body.classList.remove('keyboard-open');
+      }
+    }, 50);
+  });
+}
+
+function updateHistoryFiltersSummary() {
+  const summary = document.getElementById('history-filters-summary');
+  if (!summary) return;
+
+  const from = document.getElementById('filter-from')?.value || '';
+  const to = document.getElementById('filter-to')?.value || '';
+  const categorySelect = document.getElementById('filter-category');
+  const personSelect = document.getElementById('filter-person');
+
+  const timeText = from || to
+    ? `${from || '...'} → ${to || todayISO()}`
+    : t('all_time');
+  const categoryText = categorySelect?.selectedOptions?.[0]?.textContent?.trim() || t('all_categories');
+  const personText = personSelect?.selectedOptions?.[0]?.textContent?.trim() || t('all_members');
+
+  summary.textContent = `${timeText} · ${categoryText} · ${personText}`;
+}
+
+function setHistoryFiltersCollapsed(collapsed) {
+  const panel = document.getElementById('history-filters-panel');
+  const toggle = document.getElementById('history-filters-toggle');
+  if (!panel || !toggle) return;
+  panel.classList.toggle('collapsed', collapsed);
+  toggle.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function initHistoryFiltersUI() {
+  const toggle = document.getElementById('history-filters-toggle');
+  if (!toggle) return;
+
+  const isMobile = () => window.matchMedia('(max-width: 720px)').matches;
+  const syncCollapsed = () => setHistoryFiltersCollapsed(isMobile());
+
+  toggle.addEventListener('click', () => {
+    if (!isMobile()) return;
+    const panel = document.getElementById('history-filters-panel');
+    setHistoryFiltersCollapsed(!panel.classList.contains('collapsed'));
+  });
+
+  ['filter-from', 'filter-to', 'filter-category', 'filter-person'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', updateHistoryFiltersSummary);
+  });
+
+  window.addEventListener('resize', syncCollapsed);
+  syncCollapsed();
+  updateHistoryFiltersSummary();
 }
 
 async function runAIAnalysis(customQuestion) {
@@ -2639,9 +2772,9 @@ function drawDoughnutChart(canvasId, chartData) {
 
 // ── Voice Input ───────────────────────────────────────────────────────────
 const CATEGORY_KEYWORDS = {
-  food: ['ăn', 'an', 'cơm', 'com', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'cafe', 'cà phê', 'ca phe', 'trà', 'tra', 'bia', 'nhậu', 'nhau', 'lunch', 'dinner', 'breakfast', 'food', 'drink', 'coffee', 'rau', 'thịt', 'thit', 'trái cây', 'trai cay', 'chợ', 'cho', 'siêu thị', 'sieu thi'],
+  food: ['ăn', 'an', 'cơm', 'com', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'cafe', 'cà phê', 'ca phe', 'trà', 'tra', 'bia', 'nhậu', 'nhau', 'lunch', 'dinner', 'breakfast', 'food', 'drink', 'coffee', 'rau', 'thịt', 'thit', 'trái cây', 'trai cay', 'đi chợ', 'di cho', 'chợ', 'siêu thị', 'sieu thi'],
   transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'đổ xăng', 'do xang', 'gửi xe', 'gui xe', 'parking', 'gas', 'fuel', 'bus', 'vé', 've'],
-  shopping: ['mua', 'shopping', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'dép', 'dep', 'clothes', 'shoes', 'máy giặt', 'may giat', 'tủ lạnh', 'tu lanh', 'máy', 'may', 'điện thoại', 'dien thoai', 'laptop', 'iphone', 'samsung'],
+  shopping: ['mua', 'shopping', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'dép', 'dep', 'clothes', 'shoes', 'máy giặt', 'may giat', 'tủ lạnh', 'tu lanh', 'máy', 'may', 'điện thoại', 'dien thoai', 'laptop', 'iphone', 'samsung', 'đồ chơi', 'do choi', 'toy', 'toys'],
   health: ['thuốc', 'thuoc', 'bệnh viện', 'benh vien', 'khám', 'kham', 'doctor', 'medicine', 'hospital', 'pharmacy'],
   education: ['học', 'hoc', 'sách', 'sach', 'khóa', 'khoa', 'course', 'book', 'school', 'tuition'],
   entertainment: ['phim', 'game', 'chơi', 'choi', 'karaoke', 'movie', 'cinema', 'giải trí', 'giai tri'],
@@ -2649,10 +2782,11 @@ const CATEGORY_KEYWORDS = {
   other: [],
 };
 
-function parseVoiceExpense(text) {
-  let lower = text.toLowerCase().trim();
+const VOICE_AMOUNT_REGEX = /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(?:rưỡi|ruoi|ruỡi|\d+)?|(\d+(?:[.,]\d+)?)\s*(?:nghìn|nghin|ngàn|ngan|k)\b|\d{4,}/gi;
 
-  // Normalize: convert written numbers to digits
+function normalizeVoiceText(text) {
+  let lower = String(text || '').toLowerCase().trim();
+
   const wordToNum = {
     'không': '0', 'một': '1', 'hai': '2', 'ba': '3', 'bốn': '4', 'bón': '4',
     'năm': '5', 'nam': '5', 'sáu': '6', 'sau': '6', 'bảy': '7', 'bay': '7',
@@ -2660,60 +2794,45 @@ function parseVoiceExpense(text) {
     'mười': '10', 'muoi': '10', 'mươi': '10', 'muoi': '10',
   };
 
-  // Handle "mười X" → 1X, "X mươi" → X0
   lower = lower.replace(/(?:mười|muời|muoi)\s*(một|hai|ba|bốn|bón|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin)/gi, (_, d) => '1' + wordToNum[d.toLowerCase()]);
   lower = lower.replace(/(một|hai|ba|bốn|bón|năm|nam|sáu|sau|bảy|bay|tám|tam|chín|chin)\s*(?:mươi|muoi)/gi, (_, d) => wordToNum[d.toLowerCase()] + '0');
 
-  // Simple word → digit: "mười" → "10", "một" → "1" etc (only before triệu/nghìn/k)
   for (const [word, digit] of Object.entries(wordToNum)) {
     const re = new RegExp(`\\b${word}\\s*(?=triệu|trieu|tr\\b|nghìn|nghin|ngàn|ngan|k\\b)`, 'gi');
     lower = lower.replace(re, digit + ' ');
   }
 
-  // Normalize "10.000.000" or "10,000,000" → "10000000"
   lower = lower.replace(/(\d{1,3}(?:[.,]\d{3})+)/g, (match) => match.replace(/[.,]/g, ''));
+  lower = lower.replace(/[;|/]+/g, ' ');
+  lower = lower.replace(/\s+/g, ' ').trim();
+  return lower;
+}
 
-  // Extract amount
-  let amount = null;
-  let amountMatch = null;
+function parseVoiceAmount(raw) {
+  if (!raw) return null;
+  const value = raw.trim();
 
   const patterns = [
-    // "1 triệu 5" or "1 triệu rưỡi"
     { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(?:rưỡi|ruoi|ruỡi)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + 500000 },
     { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\s*(\d+)/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 + parseFloat(m[2]) * (m[2].length <= 3 ? 1000 : 1) },
-    // "1 triệu", "1tr"
     { re: /(\d+(?:[.,]\d+)?)\s*(?:triệu|trieu|tr)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000000 },
-    // "50k", "50K"
     { re: /(\d+(?:[.,]\d+)?)\s*k\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000 },
-    // "50 nghìn", "50 ngàn"
     { re: /(\d+(?:[.,]\d+)?)\s*(?:nghìn|nghin|ngàn|ngan)\b/i, fn: m => parseFloat(m[1].replace(',', '.')) * 1000 },
-    // "200000" (bare number >= 1000)
     { re: /(\d{4,})/i, fn: m => parseInt(m[1], 10) },
-    // Small number that might be spoken as just "10" meaning 10 triệu context-dependent — skip, too ambiguous
   ];
 
   for (const { re, fn } of patterns) {
-    const m = lower.match(re);
+    const m = value.match(re);
     if (m) {
-      amount = fn(m);
-      amountMatch = m[0];
-      break;
+      const amount = Math.round(fn(m));
+      return Number.isFinite(amount) && amount > 0 ? amount : null;
     }
   }
+  return null;
+}
 
-  // Extract description — everything except the amount part and filler words
-  let desc = lower;
-  if (amountMatch) {
-    desc = desc.replace(amountMatch, '');
-  }
-  // Remove filler words
-  desc = desc.replace(/\b(hết|het|mất|mat|tốn|ton|khoảng|khoang|là|la|được|duoc|tầm|tam)\b/g, '').trim();
-  // Clean up punctuation and extra spaces
-  desc = desc.replace(/[,.\-]+/g, ' ').replace(/\s+/g, ' ').trim();
-  // Capitalize first letter
-  if (desc) desc = desc[0].toUpperCase() + desc.slice(1);
-
-  // Match category
+function inferVoiceCategoryKey(text) {
+  const lower = String(text || '').toLowerCase();
   let matchedCategory = null;
   let bestScore = 0;
   for (const [catKey, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
@@ -2725,7 +2844,65 @@ function parseVoiceExpense(text) {
     }
   }
 
-  return { amount, description: desc || null, categoryKey: matchedCategory };
+  return matchedCategory;
+}
+
+function cleanupVoiceDescription(text) {
+  let desc = String(text || '')
+    .replace(/^[,.\-:]+|[,.\-:]+$/g, ' ')
+    .replace(/\b(và|va|rồi|roi|xong|hết|het|mất|mat|tốn|ton|là|la|khoảng|khoang|tầm|tam)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!desc) return '';
+  return desc[0].toUpperCase() + desc.slice(1);
+}
+
+function buildVoiceDraft(description, amount) {
+  return {
+    id: crypto.randomUUID(),
+    description: cleanupVoiceDescription(description) || '',
+    amount: Math.round(amount),
+    category_id: findCategoryIdByDescription(description),
+    expense_date: todayISO(),
+  };
+}
+
+function parseVoiceExpenseBatch(text) {
+  const normalized = normalizeVoiceText(text);
+  const matches = [];
+  let match;
+
+  VOICE_AMOUNT_REGEX.lastIndex = 0;
+  while ((match = VOICE_AMOUNT_REGEX.exec(normalized)) !== null) {
+    const amount = parseVoiceAmount(match[0]);
+    if (!amount) continue;
+    matches.push({
+      raw: match[0],
+      start: match.index,
+      end: match.index + match[0].length,
+      amount,
+    });
+  }
+
+  if (!matches.length) return [];
+
+  const drafts = [];
+  for (let i = 0; i < matches.length; i++) {
+    const current = matches[i];
+    const prevEnd = i === 0 ? 0 : matches[i - 1].end;
+    const nextStart = i + 1 < matches.length ? matches[i + 1].start : normalized.length;
+    let description = cleanupVoiceDescription(normalized.slice(prevEnd, current.start));
+
+    if (!description && i === 0) {
+      description = cleanupVoiceDescription(normalized.slice(current.end, nextStart));
+    }
+
+    const draft = buildVoiceDraft(description || 'Chi tiêu', current.amount);
+    drafts.push(draft);
+  }
+
+  return drafts.filter(draft => draft.amount > 0);
 }
 
 function findCategoryByKeyword(catKey) {
@@ -2751,36 +2928,260 @@ function findCategoryByKeyword(catKey) {
   return null;
 }
 
-function processVoiceResult(text, statusEl) {
-  const parsed = parseVoiceExpense(text);
+function findCategoryIdByDescription(description) {
+  const normalizedDesc = normalizeVoiceText(description);
+  if (!normalizedDesc) return '';
 
-  if (parsed.amount) {
-    setAmountInputValue(document.getElementById('exp-amount'), parsed.amount);
+  for (const cat of state.categories) {
+    const normalizedName = normalizeVoiceText(cat.name);
+    if (normalizedName && normalizedDesc.includes(normalizedName)) {
+      return cat.id;
+    }
   }
-  if (parsed.description) {
-    document.getElementById('exp-desc').value = parsed.description;
-  }
-  if (parsed.categoryKey) {
-    const catId = findCategoryByKeyword(parsed.categoryKey);
-    if (catId) document.getElementById('exp-category').value = catId;
-  }
-  document.getElementById('exp-date').value = todayISO();
 
-  if (parsed.amount) {
-    statusEl.textContent = `${t('voice_filled')} → ${formatMoney(parsed.amount)}`;
-    statusEl.classList.add('voice-success');
-    toast(t('voice_filled'), 'success');
-  } else {
-    statusEl.textContent = t('voice_no_match');
-    statusEl.classList.add('voice-error');
+  const categoryKey = inferVoiceCategoryKey(description);
+  return findCategoryByKeyword(categoryKey) || '';
+}
+
+function setVoiceStatus(message, type = '') {
+  const statusEl = document.getElementById('voice-status');
+  if (!statusEl) return;
+  statusEl.style.display = message ? 'block' : 'none';
+  statusEl.textContent = message || '';
+  statusEl.classList.remove('voice-success', 'voice-error');
+  if (type === 'success') statusEl.classList.add('voice-success');
+  if (type === 'error') statusEl.classList.add('voice-error');
+}
+
+function setVoiceTranscript(text) {
+  const transcriptEl = document.getElementById('voice-transcript');
+  if (!transcriptEl) return;
+  const content = String(text || '').trim();
+  transcriptEl.style.display = content ? 'block' : 'none';
+  transcriptEl.textContent = content ? `"${content}"` : '';
+}
+
+function formatDraftAmountValue(amount) {
+  return Number.isFinite(amount) && amount > 0 ? Math.round(amount).toLocaleString('vi-VN') : '';
+}
+
+function getVoiceDraftCategoryOptions(selectedId) {
+  const placeholder = `<option value="">${escHtml(t('select_category'))}</option>`;
+  const options = state.categories.map(cat => {
+    const selected = cat.id === selectedId ? 'selected' : '';
+    return `<option value="${escHtml(cat.id)}" ${selected}>${escHtml(cat.icon || '📦')} ${escHtml(cat.name)}</option>`;
+  }).join('');
+  return placeholder + options;
+}
+
+function renderVoiceDrafts() {
+  const panel = document.getElementById('voice-draft-panel');
+  const list = document.getElementById('voice-draft-list');
+  const summary = document.getElementById('voice-draft-summary');
+  const saveBtn = document.getElementById('voice-save-btn');
+
+  if (!panel || !list || !summary || !saveBtn) return;
+
+  saveBtn.textContent = t('voice_save_all');
+
+  if (!state.voiceDrafts.length) {
+    panel.style.display = 'none';
+    list.innerHTML = '';
+    summary.textContent = '0 draft';
+    return;
   }
-  setTimeout(() => { statusEl.classList.remove('voice-success', 'voice-error'); }, 3000);
+
+  panel.style.display = 'grid';
+
+  const total = state.voiceDrafts.reduce((sum, draft) => sum + (draft.amount || 0), 0);
+  summary.textContent = `${state.voiceDrafts.length} draft · ${formatMoney(total)}`;
+
+  list.innerHTML = state.voiceDrafts.map((draft, index) => `
+    <div class="voice-draft-item" data-index="${index}">
+      <div class="voice-draft-head">
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <span class="voice-draft-index">${index + 1}</span>
+          <div>
+            <div class="voice-draft-title" style="font-weight:700">${escHtml(draft.description || `Draft ${index + 1}`)}</div>
+            <div class="draft-summary">${formatMoney(draft.amount || 0)}</div>
+          </div>
+        </div>
+        <button type="button" class="voice-draft-remove" data-remove-index="${index}" title="${escHtml(t('voice_remove_draft'))}">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+      <div class="draft-grid">
+        <div class="draft-field">
+          <label>${escHtml(t('voice_desc_label'))}</label>
+          <input type="text" value="${escHtml(draft.description || '')}" data-field="description" data-index="${index}" maxlength="200" />
+        </div>
+        <div class="draft-field">
+          <label>${escHtml(t('voice_amount_label'))}</label>
+          <input type="text" value="${escHtml(formatDraftAmountValue(draft.amount))}" inputmode="numeric" data-field="amount" data-index="${index}" />
+        </div>
+        <div class="draft-field">
+          <label>${escHtml(t('voice_category_label'))}</label>
+          <select data-field="category_id" data-index="${index}">
+            ${getVoiceDraftCategoryOptions(draft.category_id)}
+          </select>
+        </div>
+        <div class="draft-field">
+          <label>${escHtml(t('voice_date_label'))}</label>
+          <input type="date" value="${escHtml(draft.expense_date || todayISO())}" data-field="expense_date" data-index="${index}" />
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-remove-index]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.voiceDrafts.splice(Number(btn.dataset.removeIndex), 1);
+      renderVoiceDrafts();
+    });
+  });
+
+  list.querySelectorAll('[data-field="description"]').forEach(input => {
+    input.addEventListener('input', () => {
+      const draft = state.voiceDrafts[Number(input.dataset.index)];
+      if (!draft) return;
+      draft.description = input.value.trimStart();
+      const row = input.closest('.voice-draft-item');
+      const titleEl = row && row.querySelector('.voice-draft-title');
+      if (titleEl) titleEl.textContent = draft.description || `Draft ${Number(input.dataset.index) + 1}`;
+    });
+  });
+
+  list.querySelectorAll('[data-field="amount"]').forEach(input => {
+    input.addEventListener('input', () => {
+      formatAmountInput(input);
+      const draft = state.voiceDrafts[Number(input.dataset.index)];
+      if (!draft) return;
+      draft.amount = getAmountInputValue(input);
+      const row = input.closest('.voice-draft-item');
+      const summaryEl = row && row.querySelector('.draft-summary');
+      if (summaryEl) summaryEl.textContent = draft.amount ? formatMoney(draft.amount) : '—';
+      const total = state.voiceDrafts.reduce((sum, item) => sum + (item.amount || 0), 0);
+      summary.textContent = `${state.voiceDrafts.length} draft · ${formatMoney(total)}`;
+    });
+  });
+
+  list.querySelectorAll('[data-field="category_id"]').forEach(select => {
+    select.addEventListener('change', () => {
+      const draft = state.voiceDrafts[Number(select.dataset.index)];
+      if (!draft) return;
+      draft.category_id = select.value;
+    });
+  });
+
+  list.querySelectorAll('[data-field="expense_date"]').forEach(input => {
+    input.addEventListener('change', () => {
+      const draft = state.voiceDrafts[Number(input.dataset.index)];
+      if (!draft) return;
+      draft.expense_date = input.value;
+    });
+  });
+}
+
+function resetVoiceDrafts(options = {}) {
+  state.voiceDrafts = [];
+  state.voiceTranscript = '';
+  renderVoiceDrafts();
+  setVoiceTranscript('');
+  if (!options.keepStatus) setVoiceStatus('');
+}
+
+function validateVoiceDrafts() {
+  for (let i = 0; i < state.voiceDrafts.length; i++) {
+    const draft = state.voiceDrafts[i];
+    if (!draft.amount || Number.isNaN(draft.amount) || draft.amount <= 0) {
+      return t('voice_invalid_amount', i + 1);
+    }
+    if (!draft.category_id) {
+      return t('voice_invalid_category', i + 1);
+    }
+  }
+  return null;
+}
+
+async function saveVoiceDrafts() {
+  const saveBtn = document.getElementById('voice-save-btn');
+  if (!saveBtn || !state.voiceDrafts.length) return;
+
+  const validationError = validateVoiceDrafts();
+  if (validationError) {
+    setVoiceStatus(validationError, 'error');
+    toast(validationError, 'error');
+    return;
+  }
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = t('voice_saving_all');
+
+  let savedCount = 0;
+  let firstError = null;
+  const remaining = [];
+
+  for (const draft of state.voiceDrafts) {
+    try {
+      await api('/api/expenses', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: Math.round(draft.amount),
+          description: (draft.description || '').trim(),
+          category_id: draft.category_id,
+          expense_date: draft.expense_date || todayISO(),
+        }),
+      });
+      savedCount++;
+    } catch (err) {
+      remaining.push(draft);
+      if (!firstError) firstError = err;
+    }
+  }
+
+  state.voiceDrafts = remaining;
+  renderVoiceDrafts();
+
+  if (savedCount > 0) {
+    refreshStatsBackground();
+  }
+
+  if (remaining.length === 0 && savedCount > 0) {
+    setVoiceStatus(t('voice_saved_all', savedCount), 'success');
+    toast(t('voice_saved_all', savedCount), 'success');
+    setVoiceTranscript('');
+    state.voiceTranscript = '';
+  } else if (savedCount > 0) {
+    const message = t('voice_partial_saved', savedCount, remaining.length);
+    setVoiceStatus(firstError ? `${message} ${firstError.message}` : message, 'error');
+    toast(message, 'error');
+  } else if (firstError) {
+    setVoiceStatus(firstError.message, 'error');
+    toast(firstError.message, 'error');
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.textContent = t('voice_save_all');
+}
+
+function processVoiceResult(text) {
+  state.voiceTranscript = String(text || '').trim();
+  setVoiceTranscript(state.voiceTranscript);
+
+  const drafts = parseVoiceExpenseBatch(state.voiceTranscript);
+  if (!drafts.length) {
+    setVoiceStatus(t('voice_no_match'), 'error');
+    return;
+  }
+
+  state.voiceDrafts = drafts;
+  renderVoiceDrafts();
+  setVoiceStatus(t('voice_drafts_ready', drafts.length), 'success');
+  toast(t('voice_drafts_ready', drafts.length), 'success');
 }
 
 function initVoiceInput() {
   const voiceBtn = document.getElementById('voice-btn');
-  const statusEl = document.getElementById('voice-status');
-  const transcriptEl = document.getElementById('voice-transcript');
 
   if (!voiceBtn) return;
 
@@ -2812,46 +3213,36 @@ function initVoiceInput() {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      // Get the latest result
       const result = event.results[event.results.length - 1];
       const text = result[0].transcript;
       gotResult = true;
-      transcriptEl.style.display = 'block';
-      transcriptEl.textContent = `"${text}"`;
+      setVoiceTranscript(text);
 
       if (result.isFinal) {
         stopListening();
-        processVoiceResult(text, statusEl);
+        processVoiceResult(text);
       }
     };
 
     recognition.onerror = (event) => {
-      // Always ignore transient errors — let continuous mode + max timer handle it
       if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'audio-capture') {
         return;
       }
-      // For other errors (network, not-allowed), only show error if we've been listening long enough
       const elapsed = Date.now() - listenStartTime;
       if (elapsed < 3000) {
-        // Too early — browser fired error before user had a chance to speak, just retry
         return;
       }
       stopListening();
-      statusEl.textContent = t('voice_no_match');
-      statusEl.classList.add('voice-error');
-      setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
+      setVoiceStatus(t('voice_no_match'), 'error');
     };
 
     recognition.onend = () => {
       if (!isListening) return;
-      // Browser stopped recognition — restart if still listening
       try {
         recognition.start();
       } catch {
-        // Only show error if enough time passed and no result
         const elapsed = Date.now() - listenStartTime;
         if (elapsed < 3000 && !gotResult) {
-          // Retry after a short delay
           setTimeout(() => {
             if (!isListening) return;
             try { startRecognition(); } catch { stopListening(); }
@@ -2874,21 +3265,16 @@ function initVoiceInput() {
     isListening = true;
     listenStartTime = Date.now();
     voiceBtn.classList.add('listening');
-    statusEl.style.display = 'block';
-    statusEl.textContent = t('voice_listening');
-    statusEl.classList.remove('voice-success', 'voice-error');
-    transcriptEl.style.display = 'none';
+    setVoiceStatus(t('voice_listening'));
+    setVoiceTranscript('');
 
     gotResult = false;
 
-    // Hard max timeout — give user 15 seconds to speak
     maxTimer = setTimeout(() => {
       if (isListening) {
         stopListening();
         if (!gotResult) {
-          statusEl.textContent = t('voice_no_match');
-          statusEl.classList.add('voice-error');
-          setTimeout(() => statusEl.classList.remove('voice-error'), 3000);
+          setVoiceStatus(t('voice_no_match'), 'error');
         }
       }
     }, 15000);
@@ -2966,6 +3352,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('hashchange', applyRoute);
 
   initAuthTabs();
+  initKeyboardAwareUI();
+  initHistoryFiltersUI();
+  registerServiceWorker();
 
   document.querySelectorAll('[data-view]').forEach(btn => {
     btn.addEventListener('click', () => navigate(btn.dataset.view));
@@ -3205,6 +3594,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // AI settings & analysis
   initAISettingsUI();
   initVoiceInput();
+  document.getElementById('voice-save-btn').addEventListener('click', saveVoiceDrafts);
+  document.getElementById('voice-cancel-btn').addEventListener('click', () => {
+    resetVoiceDrafts();
+    toast(t('voice_cancelled'), 'info');
+  });
   document.getElementById('save-ai-settings-btn').addEventListener('click', handleSaveAISettings);
   document.getElementById('ai-fab').addEventListener('click', openAIModal);
   document.getElementById('ai-modal-close').addEventListener('click', closeAIModal);
