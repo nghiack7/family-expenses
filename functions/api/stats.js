@@ -2,6 +2,8 @@
 // GET: monthly summary, by category, by person
 // Query params: month=YYYY-MM (default: current month)
 
+import { ensurePersonalFamilyMembership } from './_family-utils.js';
+
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -21,9 +23,7 @@ export async function onRequestGet(context) {
   const user = data.user;
   const url = new URL(request.url);
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
@@ -59,6 +59,10 @@ export async function onRequestGet(context) {
      FROM expenses
      WHERE family_id = ? AND expense_date >= ? AND expense_date <= ?`
   ).bind(familyId, from, to).first();
+
+  const allTimeCount = await env.DB.prepare(
+    `SELECT COUNT(*) as count FROM expenses WHERE family_id = ?`
+  ).bind(familyId).first();
 
   // By category
   const byCategory = await env.DB.prepare(
@@ -127,6 +131,7 @@ export async function onRequestGet(context) {
     month: { year, month, from, to },
     total: totalResult.total,
     count: totalResult.count,
+    all_time_count: allTimeCount.count,
     prev_total: prevTotal.total,
     by_category: byCategory.results,
     by_person: byPerson.results,

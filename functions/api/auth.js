@@ -1,6 +1,8 @@
 // POST /api/auth
 // Handles Google SSO, email/password registration, and email/password login
 
+import { ensurePersonalFamilyMembership } from './_family-utils.js';
+
 const GOOGLE_CLIENT_ID = '96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com';
 
 export async function onRequestPost(context) {
@@ -179,6 +181,7 @@ async function handleGoogleSSO(body, env, request) {
       ).bind(sub, name, picture || null, email).run();
 
       const userId = existing.id;
+      await ensurePersonalFamilyMembership(env, { sub: userId, name });
       return issueSession({ sub: userId, email, name, avatar: picture || null }, env, request);
     }
 
@@ -198,6 +201,7 @@ async function handleGoogleSSO(body, env, request) {
        VALUES (?, ?, ?, ?, 'google', ?)
        ON CONFLICT(id) DO UPDATE SET name=excluded.name, avatar=excluded.avatar, google_sub=excluded.google_sub`
     ).bind(sub, email, name, picture || null, sub).run();
+    await ensurePersonalFamilyMembership(env, { sub, name });
   } catch (err) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
@@ -250,6 +254,7 @@ async function handleEmailRegister(body, env, request) {
         await env.DB.prepare(
           `UPDATE users SET password_hash = ?, password_salt = ?, name = ? WHERE id = ?`
         ).bind(hash, salt, name, full.id).run();
+        await ensurePersonalFamilyMembership(env, { sub: full.id, name });
         return issueSession({ sub: full.id, email, name, avatar: null }, env, request);
       }
       return jsonError('Email already registered', 409);
@@ -267,6 +272,7 @@ async function handleEmailRegister(body, env, request) {
       `INSERT INTO users (id, email, name, avatar, auth_provider, password_hash, password_salt, username)
        VALUES (?, ?, ?, NULL, 'email', ?, ?, ?)`
     ).bind(userId, email, name, hash, salt, cleanUsername).run();
+    await ensurePersonalFamilyMembership(env, { sub: userId, name });
   } catch (err) {
     return jsonError(`Database error: ${err.message}`, 500);
   }
@@ -308,6 +314,8 @@ async function handleEmailLogin(body, env, request) {
   if (hash !== user.password_hash) {
     return jsonError('Invalid email or password', 401);
   }
+
+  await ensurePersonalFamilyMembership(env, { sub: user.id, name: user.name });
 
   return issueSession(
     { sub: user.id, email: user.email, name: user.name, avatar: user.avatar },

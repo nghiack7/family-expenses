@@ -154,8 +154,8 @@
             <section class="hero-panel dashboard-hero">
               <div class="hero-copy">
                 <div class="eyebrow">Overview</div>
-                <h2>Chi tiêu gia đình trong một nhịp nhìn.</h2>
-                <p>Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.</p>
+                <h2 id="dashboard-hero-title">Chi tiêu gia đình trong một nhịp nhìn.</h2>
+                <p id="dashboard-hero-body">Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.</p>
               </div>
               <div class="hero-toolbar">
                 <div class="view-mode-toggle">
@@ -173,6 +173,39 @@
                   </button>
                 </div>
               </div>
+            </section>
+
+            <section class="dashboard-onboarding" id="dashboard-onboarding" style="display:none">
+              <article class="card onboarding-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">First Run</div>
+                    <span class="card-title" id="onboarding-title">Bắt đầu trong 30 giây</span>
+                  </div>
+                </div>
+                <p class="onboarding-lead" id="onboarding-body">Bạn chưa có bill nào. Bắt đầu bằng 1 khoản chi thật đơn giản để app hiểu thói quen và mở ra toàn bộ dashboard.</p>
+                <div class="onboarding-grid">
+                  <div class="onboarding-step">
+                    <div class="onboarding-step-index">01</div>
+                    <h3 id="onboarding-step-1-title">Thêm khoản đầu tiên</h3>
+                    <p id="onboarding-step-1-body">Nhập tay một bill bất kỳ để có dữ liệu mở dashboard.</p>
+                  </div>
+                  <div class="onboarding-step">
+                    <div class="onboarding-step-index">02</div>
+                    <h3 id="onboarding-step-2-title">Hoặc đọc một loạt bằng giọng nói</h3>
+                    <p id="onboarding-step-2-body">Nói liền mạch, app sẽ tách thành draft để bạn sửa rồi lưu.</p>
+                  </div>
+                  <div class="onboarding-step">
+                    <div class="onboarding-step-index">03</div>
+                    <h3 id="onboarding-step-3-title">Mời người thân sau</h3>
+                    <p id="onboarding-step-3-body">Bạn có thể dùng một mình trước, rồi mời thêm thành viên khi cần.</p>
+                  </div>
+                </div>
+                <div class="onboarding-actions">
+                  <button class="btn btn-primary" id="onboarding-add-btn" type="button">Thêm chi tiêu đầu tiên</button>
+                  <button class="btn btn-secondary" id="onboarding-voice-btn" type="button">Mở nhập giọng nói</button>
+                </div>
+              </article>
             </section>
 
             <section class="stats-grid" id="stats-grid">
@@ -268,8 +301,8 @@
             <section class="hero-panel add-hero">
               <div class="hero-copy">
                 <div class="eyebrow">Capture</div>
-                <h2 data-i18n="add_expense">Thêm chi tiêu</h2>
-                <p>Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.</p>
+                <h2 id="add-hero-title" data-i18n="add_expense">Thêm chi tiêu</h2>
+                <p id="add-hero-body">Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.</p>
               </div>
               <div class="hero-pills">
                 <span class="hero-pill">Manual</span>
@@ -403,8 +436,8 @@
             <section class="hero-panel">
               <div class="hero-copy">
                 <div class="eyebrow">History</div>
-                <h2 data-i18n="expense_history">Lịch sử chi tiêu</h2>
-                <p>Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.</p>
+                <h2 id="history-hero-title" data-i18n="expense_history">Lịch sử chi tiêu</h2>
+                <p id="history-hero-body">Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.</p>
               </div>
             </section>
 
@@ -451,8 +484,8 @@
             <section class="hero-panel">
               <div class="hero-copy">
                 <div class="eyebrow">Family Ops</div>
-                <h2 data-i18n="family_settings">Cài đặt gia đình</h2>
-                <p>Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.</p>
+                <h2 id="family-hero-title" data-i18n="family_settings">Cài đặt gia đình</h2>
+                <p id="family-hero-body">Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.</p>
               </div>
             </section>
 

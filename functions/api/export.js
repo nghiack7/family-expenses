@@ -1,6 +1,11 @@
 // GET /api/export?from=YYYY-MM-DD&to=YYYY-MM-DD&category_id=&user_id=
 // Returns ALL expenses (no pagination) for export
 
+import {
+  ensurePersonalFamilyMembership,
+  getFamilyDisplayName,
+} from './_family-utils.js';
+
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -20,9 +25,7 @@ export async function onRequestGet(context) {
   const user = data.user;
   const url = new URL(request.url);
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
@@ -67,7 +70,7 @@ export async function onRequestGet(context) {
 
   return jsonResp({
     expenses: result.results,
-    family_name: family?.name || '',
+    family_name: getFamilyDisplayName(family?.name || '', user.name),
     currency: family?.currency || 'VND',
   });
 }

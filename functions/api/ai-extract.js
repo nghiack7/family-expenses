@@ -4,6 +4,8 @@
  * Uses AI to extract expense items
  */
 
+import { ensurePersonalFamilyMembership } from './_family-utils.js';
+
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB
 
 function buildExtractionPrompt(categories, currency) {
@@ -120,9 +122,7 @@ export async function onRequestPost(context) {
     }
 
     // Get user's family categories
-    const membership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
     if (!membership) {
       return Response.json({ error: 'Not in a family' }, { status: 404 });
     }

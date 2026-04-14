@@ -2,17 +2,15 @@
 // GET: get user's family info
 // POST: create a new family
 // PUT: invite a member by email
-
-const DEFAULT_CATEGORIES = [
-  { name: 'Food', icon: '🍜' },
-  { name: 'Transport', icon: '🚗' },
-  { name: 'Bills', icon: '💡' },
-  { name: 'Shopping', icon: '🛍️' },
-  { name: 'Healthcare', icon: '🏥' },
-  { name: 'Education', icon: '📚' },
-  { name: 'Entertainment', icon: '🎬' },
-  { name: 'Other', icon: '📦' },
-];
+import {
+  DEFAULT_CATEGORIES,
+  ensurePersonalFamilyMembership,
+  getFamilyDisplayName,
+  getFamilyMembership,
+  getPersonalFamilyTransitionState,
+  isPersonalFamilyName,
+  randomId,
+} from './_family-utils.js';
 
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -26,10 +24,6 @@ function jsonError(msg, status = 400) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-function randomId() {
-  return crypto.randomUUID();
 }
 
 // ── AES-GCM encryption for API keys ─────────────────────────────────────
@@ -84,28 +78,16 @@ export async function onRequestGet(context) {
   const { env, data } = context;
   const user = data.user;
 
-  const membership = await env.DB.prepare(
-    `SELECT fm.family_id, fm.role, f.name, f.created_by, f.created_at
-     FROM family_members fm
-     JOIN families f ON f.id = fm.family_id
-     WHERE fm.user_id = ?
-     LIMIT 1`
-  ).bind(user.sub).first();
-
-  if (!membership) {
-    // No family — check if user has pending invites
-    const userRow = await env.DB.prepare(`SELECT email FROM users WHERE id = ?`).bind(user.sub).first();
-    const myInvites = userRow ? await env.DB.prepare(
-      `SELECT fi.id, fi.family_id, fi.created_at, f.name as family_name, u.name as inviter_name
-       FROM family_invites fi
-       JOIN families f ON f.id = fi.family_id
-       JOIN users u ON u.id = fi.invited_by
-       WHERE fi.email = ? AND fi.status = 'pending'
-       ORDER BY fi.created_at DESC`
-    ).bind(userRow.email).all() : { results: [] };
-
-    return jsonResp({ family: null, my_pending_invites: myInvites.results });
-  }
+  const membership = await ensurePersonalFamilyMembership(env, user);
+  const userRow = await env.DB.prepare(`SELECT email FROM users WHERE id = ?`).bind(user.sub).first();
+  const myInvites = userRow ? await env.DB.prepare(
+    `SELECT fi.id, fi.family_id, fi.created_at, f.name as family_name, u.name as inviter_name
+     FROM family_invites fi
+     JOIN families f ON f.id = fi.family_id
+     JOIN users u ON u.id = fi.invited_by
+     WHERE fi.email = ? AND fi.status = 'pending'
+     ORDER BY fi.created_at DESC`
+  ).bind(userRow.email).all() : { results: [] };
 
   const members = await env.DB.prepare(
     `SELECT u.id, u.email, u.name, u.avatar, fm.role, fm.joined_at
@@ -119,22 +101,24 @@ export async function onRequestGet(context) {
      WHERE family_id = ? AND status = 'pending'`
   ).bind(membership.family_id).all();
 
-  // Get family currency
-  const familyRow = await env.DB.prepare(
-    `SELECT currency FROM families WHERE id = ?`
-  ).bind(membership.family_id).first();
+  const isPersonal = isPersonalFamilyName(membership.name);
 
   return jsonResp({
     family: {
       id: membership.family_id,
-      name: membership.name,
-      currency: familyRow?.currency || 'VND',
+      name: getFamilyDisplayName(membership.name, user.name),
+      currency: membership.currency || 'VND',
+      is_personal: isPersonal,
       created_by: membership.created_by,
       created_at: membership.created_at,
       role: membership.role,
       members: members.results,
       pending_invites: invites.results,
     },
+    my_pending_invites: myInvites.results.map(invite => ({
+      ...invite,
+      family_name: getFamilyDisplayName(invite.family_name, invite.inviter_name),
+    })),
   });
 }
 
@@ -142,15 +126,6 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { request, env, data } = context;
   const user = data.user;
-
-  // Check if user already belongs to a family
-  const existing = await env.DB.prepare(
-    `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
-
-  if (existing) {
-    return jsonError('You already belong to a family. Leave it first.', 409);
-  }
 
   let body;
   try {
@@ -161,6 +136,18 @@ export async function onRequestPost(context) {
 
   const name = (body.name || '').trim();
   if (!name) return jsonError('Family name is required', 400);
+
+  const existing = await getFamilyMembership(env, user.sub);
+  if (existing) {
+    if (existing.role === 'owner' && isPersonalFamilyName(existing.name)) {
+      await env.DB.prepare(
+        `UPDATE families SET name = ? WHERE id = ?`
+      ).bind(name, existing.family_id).run();
+
+      return jsonResp({ ok: true, family_id: existing.family_id, converted_from_personal: true }, 201);
+    }
+    return jsonError('You already belong to a family. Leave it first.', 409);
+  }
 
   const familyId = randomId();
 
@@ -204,9 +191,7 @@ export async function onRequestPut(context) {
     if (!input) return jsonError('Email or username required', 400);
 
     // Get user's family
-    const membership = await env.DB.prepare(
-      `SELECT family_id, role FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
 
     if (!membership) return jsonError('You are not in a family', 404);
 
@@ -256,7 +241,7 @@ export async function onRequestPut(context) {
       emailSent = await sendInviteEmail(env, {
         to: email,
         inviterName: user.name,
-        familyName: family?.name || 'a family',
+        familyName: getFamilyDisplayName(family?.name || 'a family', user.name),
         appUrl,
       });
     } catch { /* non-fatal */ }
@@ -303,9 +288,7 @@ export async function onRequestPut(context) {
     const currency = (body.currency || '').trim().toUpperCase();
     if (!currency || currency.length !== 3) return jsonError('Valid 3-letter currency code required', 400);
 
-    const membership = await env.DB.prepare(
-      `SELECT family_id, role FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
     if (!membership) return jsonError('Not in a family', 404);
     if (membership.role !== 'owner') return jsonError('Only the owner can change currency', 403);
 
@@ -359,16 +342,13 @@ export async function onRequestPut(context) {
 
     if (!invite) return jsonError('Invite not found or already handled', 404);
 
-    // Check if already in a family
-    const existingMembership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
-    if (existingMembership) return jsonError('You already belong to a family. Leave it first.', 409);
+    const existingMembership = await getFamilyMembership(env, user.sub);
 
-    await env.DB.batch([
-      env.DB.prepare(`INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`).bind(invite.family_id, user.sub),
-      env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(invite_id),
-    ]);
+    try {
+      await joinInvitedFamily(env, user.sub, invite.family_id, invite_id, existingMembership);
+    } catch (err) {
+      return jsonError(err.message, 409);
+    }
 
     return jsonResp({ ok: true });
   }
@@ -395,9 +375,7 @@ export async function onRequestPut(context) {
     const { invite_id } = body;
     if (!invite_id) return jsonError('invite_id required', 400);
 
-    const membership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
 
     if (!membership) return jsonError('Not in a family', 404);
 
@@ -418,24 +396,19 @@ export async function onRequestPut(context) {
 
     if (!invite) return jsonError('Invite not found or already used', 404);
 
-    // Check if already in a family
-    const existingMembership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
-    if (existingMembership) return jsonError('You already belong to a family. Leave it first.', 409);
+    const existingMembership = await getFamilyMembership(env, user.sub);
 
-    await env.DB.batch([
-      env.DB.prepare(`INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`).bind(invite.family_id, user.sub),
-      env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(invite.id),
-    ]);
+    try {
+      await joinInvitedFamily(env, user.sub, invite.family_id, invite.id, existingMembership);
+    } catch (err) {
+      return jsonError(err.message, 409);
+    }
 
     return jsonResp({ ok: true });
   }
 
   if (action === 'save_ai_settings') {
-    const membership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
     if (!membership) return jsonError('Not in a family', 404);
 
     const { provider, model, apiKey, income, savings } = body;
@@ -472,9 +445,7 @@ export async function onRequestPut(context) {
   }
 
   if (action === 'get_ai_settings') {
-    const membership = await env.DB.prepare(
-      `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-    ).bind(user.sub).first();
+    const membership = await ensurePersonalFamilyMembership(env, user);
     if (!membership) return jsonError('Not in a family', 404);
 
     const row = await env.DB.prepare(
@@ -552,4 +523,43 @@ async function sendInviteEmail(env, { to, inviterName, familyName, appUrl }) {
 
 function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function joinInvitedFamily(env, userId, targetFamilyId, inviteId, existingMembership) {
+  const statements = [];
+
+  if (existingMembership) {
+    if (existingMembership.family_id === targetFamilyId) {
+      await env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(inviteId).run();
+      return;
+    }
+
+    const transition = await getPersonalFamilyTransitionState(env, existingMembership.family_id, userId);
+    if (!transition.can_auto_leave) {
+      if (transition.reason === 'not_personal') {
+        throw new Error('You already belong to a family. Leave it first.');
+      }
+
+      const blockers = [];
+      if (transition.member_count > 1) blockers.push('more than one member');
+      if (transition.has_pending_invites) blockers.push('pending invites');
+      if (transition.has_expenses) blockers.push('saved expenses');
+      const detail = blockers.length > 0 ? ` (${blockers.join(', ')})` : '';
+      throw new Error(`Your personal space must be empty before joining another family${detail}.`);
+    }
+
+    statements.push(
+      env.DB.prepare(`DELETE FROM categories WHERE family_id = ?`).bind(existingMembership.family_id),
+      env.DB.prepare(`DELETE FROM family_members WHERE family_id = ? AND user_id = ?`).bind(existingMembership.family_id, userId),
+      env.DB.prepare(`DELETE FROM family_invites WHERE family_id = ?`).bind(existingMembership.family_id),
+      env.DB.prepare(`DELETE FROM families WHERE id = ?`).bind(existingMembership.family_id)
+    );
+  }
+
+  statements.push(
+    env.DB.prepare(`INSERT OR IGNORE INTO family_members (family_id, user_id, role) VALUES (?, ?, 'member')`).bind(targetFamilyId, userId),
+    env.DB.prepare(`UPDATE family_invites SET status = 'accepted' WHERE id = ?`).bind(inviteId)
+  );
+
+  await env.DB.batch(statements);
 }

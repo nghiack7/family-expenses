@@ -60,6 +60,20 @@ const translations = {
     no_members_yet: 'Chưa có thành viên',
     no_family_yet: 'Chưa có gia đình',
     go_family_settings: 'Vào <a href="#family">Cài đặt gia đình</a> để tạo hoặc tham gia',
+    dashboard_hero_family_title: 'Chi tiêu gia đình trong một nhịp nhìn.',
+    dashboard_hero_family_body: 'Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.',
+    dashboard_hero_personal_title: 'Chi tiêu của bạn trong một nhịp nhìn.',
+    dashboard_hero_personal_body: 'Bạn đang bắt đầu với không gian cá nhân. Cứ ghi lại vài khoản chi đầu tiên, dashboard sẽ tự lên nhịp và bạn có thể mời người thân sau.',
+    onboarding_title: 'Bắt đầu trong 30 giây',
+    onboarding_body: 'Bạn chưa có bill nào. Bắt đầu bằng 1 khoản chi thật đơn giản để app hiểu thói quen và mở ra toàn bộ dashboard.',
+    onboarding_step_1_title: 'Thêm khoản đầu tiên',
+    onboarding_step_1_body: 'Nhập tay một bill bất kỳ để có dữ liệu mở dashboard.',
+    onboarding_step_2_title: 'Hoặc đọc một loạt bằng giọng nói',
+    onboarding_step_2_body: 'Nói liền mạch, app sẽ tách thành draft để bạn sửa rồi lưu.',
+    onboarding_step_3_title: 'Mời người thân sau',
+    onboarding_step_3_body: 'Bạn có thể dùng một mình trước, rồi mời thêm thành viên khi cần.',
+    onboarding_add_cta: 'Thêm chi tiêu đầu tiên',
+    onboarding_voice_cta: 'Mở nhập giọng nói',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -80,6 +94,8 @@ const translations = {
     category_name_required: 'Cần nhập tên danh mục',
     category_added: 'Đã thêm danh mục',
     category_deleted: 'Đã xóa danh mục',
+    add_hero_family_body: 'Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.',
+    add_hero_personal_body: 'Bạn có thể bắt đầu rất nhẹ: nhập tay một khoản chi, hoặc đọc liền nhiều khoản bằng giọng nói để app dựng sẵn draft cho bạn xác nhận.',
 
     // History
     expense_history: 'Lịch sử chi tiêu',
@@ -94,9 +110,12 @@ const translations = {
     expense_deleted: 'Đã xóa chi tiêu',
     edit_expense: 'Sửa chi tiêu',
     expense_updated: 'Đã cập nhật chi tiêu!',
+    history_hero_family_body: 'Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.',
+    history_hero_personal_body: 'Toàn bộ khoản chi của bạn được gom vào một timeline sạch để rà lại nhanh theo ngày và danh mục.',
 
     // Family
     family_settings: 'Cài đặt gia đình',
+    workspace_personal_name: 'Không gian chi tiêu của bạn',
     your_profile: 'Hồ sơ của bạn',
     display_name: 'Tên hiển thị',
     username_hint: '3-30 ký tự, chữ cái, số, gạch dưới',
@@ -164,6 +183,8 @@ const translations = {
     leave_family_confirm: 'Bạn chắc chắn muốn rời gia đình?',
     left_family: 'Bạn đã rời gia đình',
     danger_zone: 'Vùng nguy hiểm',
+    family_hero_family_body: 'Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.',
+    family_hero_personal_body: 'Bạn đang dùng app ở chế độ cá nhân. Mọi dữ liệu vẫn nằm trong cùng model family, nhưng copy được làm nhẹ hơn để không tạo cảm giác phải lập gia đình mới dùng được.',
 
     // AI
     ai_settings: 'Cài đặt AI phân tích',
@@ -317,6 +338,20 @@ const translations = {
     no_members_yet: 'No members yet',
     no_family_yet: 'No family yet',
     go_family_settings: 'Go to <a href="#family">Family settings</a> to create or join one',
+    dashboard_hero_family_title: 'Household spending in one clean glance.',
+    dashboard_hero_family_body: 'The goal is reading speed, not decorative cards. You can see the month total, who spent most, and which category is pulling the budget off course.',
+    dashboard_hero_personal_title: 'Your spending in one clean glance.',
+    dashboard_hero_personal_body: 'You are starting in your personal space. Log a few expenses first, then invite family members later if you want to expand beyond solo use.',
+    onboarding_title: 'Start in 30 seconds',
+    onboarding_body: 'You do not have any bills yet. Add one simple expense first and the rest of the dashboard will come alive.',
+    onboarding_step_1_title: 'Add your first expense',
+    onboarding_step_1_body: 'Enter any real expense manually to unlock useful stats.',
+    onboarding_step_2_title: 'Or speak a batch out loud',
+    onboarding_step_2_body: 'Say multiple expenses in one go and review the generated drafts before saving.',
+    onboarding_step_3_title: 'Invite others later',
+    onboarding_step_3_body: 'You can start solo now and add family members once the habit sticks.',
+    onboarding_add_cta: 'Add first expense',
+    onboarding_voice_cta: 'Open voice input',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -335,6 +370,8 @@ const translations = {
     category_name_required: 'Category name required',
     category_added: 'Category added',
     category_deleted: 'Category deleted',
+    add_hero_family_body: 'The new flow prioritizes two input modes: fast manual entry, or one spoken batch that becomes editable drafts before anything is saved.',
+    add_hero_personal_body: 'Start light: add one expense manually, or speak a batch and let the app prepare drafts for you to confirm.',
     expense_history: 'Expense History',
     all_categories: 'All categories',
     all_members: 'All members',
@@ -347,7 +384,10 @@ const translations = {
     expense_deleted: 'Expense deleted',
     edit_expense: 'Edit Expense',
     expense_updated: 'Expense updated!',
+    history_hero_family_body: 'Every expense sits inside a clean timeline with quick filters for date, category, and spender.',
+    history_hero_personal_body: 'All of your spending is kept in one clean timeline so you can review it quickly by date and category.',
     family_settings: 'Family Settings',
+    workspace_personal_name: 'Your spending space',
     your_profile: 'Your Profile',
     display_name: 'Display Name',
     username_hint: '3-30 characters, letters, numbers, underscores only',
@@ -415,6 +455,8 @@ const translations = {
     leave_family_confirm: 'Are you sure you want to leave this family?',
     left_family: 'You left the family',
     danger_zone: 'Danger zone',
+    family_hero_family_body: 'Profile, members, invites, AI settings, and sensitive actions are grouped by context so the page stays readable.',
+    family_hero_personal_body: 'You are using the app in personal mode. The data still lives in the same family model, but the copy is softened so it does not feel like setup friction for solo users.',
     ai_settings: 'AI Analysis Settings',
     provider: 'Provider',
     model: 'Model',
@@ -553,6 +595,8 @@ function applyLanguage() {
   if (voiceSaveBtn) voiceSaveBtn.textContent = t('voice_save_all');
 
   updateHistoryFiltersSummary();
+  updateWorkspaceCopy();
+  renderDashboardOnboarding();
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -571,6 +615,51 @@ const state = {
   voiceDrafts: [],
   voiceTranscript: '',
 };
+
+function isPersonalWorkspace() {
+  return !!state.family?.is_personal;
+}
+
+function isFirstRun() {
+  if (typeof state.stats?.all_time_count === 'number') {
+    return state.stats.all_time_count === 0;
+  }
+  return Number(state.stats?.count || 0) === 0;
+}
+
+function setNodeText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function updateWorkspaceCopy() {
+  const personal = isPersonalWorkspace();
+
+  setNodeText('dashboard-hero-title', personal ? t('dashboard_hero_personal_title') : t('dashboard_hero_family_title'));
+  setNodeText('dashboard-hero-body', personal ? t('dashboard_hero_personal_body') : t('dashboard_hero_family_body'));
+  setNodeText('add-hero-body', personal ? t('add_hero_personal_body') : t('add_hero_family_body'));
+  setNodeText('history-hero-body', personal ? t('history_hero_personal_body') : t('history_hero_family_body'));
+  setNodeText('family-hero-title', personal ? t('workspace_personal_name') : t('family_settings'));
+  setNodeText('family-hero-body', personal ? t('family_hero_personal_body') : t('family_hero_family_body'));
+}
+
+function renderDashboardOnboarding() {
+  const panel = document.getElementById('dashboard-onboarding');
+  if (!panel) return;
+
+  setNodeText('onboarding-title', t('onboarding_title'));
+  setNodeText('onboarding-body', t('onboarding_body'));
+  setNodeText('onboarding-step-1-title', t('onboarding_step_1_title'));
+  setNodeText('onboarding-step-1-body', t('onboarding_step_1_body'));
+  setNodeText('onboarding-step-2-title', t('onboarding_step_2_title'));
+  setNodeText('onboarding-step-2-body', t('onboarding_step_2_body'));
+  setNodeText('onboarding-step-3-title', t('onboarding_step_3_title'));
+  setNodeText('onboarding-step-3-body', t('onboarding_step_3_body'));
+  setNodeText('onboarding-add-btn', t('onboarding_add_cta'));
+  setNodeText('onboarding-voice-btn', t('onboarding_voice_cta'));
+
+  panel.style.display = state.user && state.stats && isFirstRun() ? 'block' : 'none';
+}
 
 // ── Currency formatter ────────────────────────────────────────────────────
 let currencyFormatter = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
@@ -997,6 +1086,7 @@ function isAtCurrentPeriod() {
 
 async function loadDashboard() {
   const range = getDashboardDateRange();
+  updateWorkspaceCopy();
 
   document.getElementById('month-label').textContent = getDashboardLabel();
   document.getElementById('next-month').disabled = isAtCurrentPeriod();
@@ -1061,6 +1151,7 @@ async function loadDashboard() {
       const stats = {
         total: agg.total,
         count: agg.count,
+        all_time_count: monthlyStats.find(ms => ms && typeof ms.all_time_count === 'number')?.all_time_count || 0,
         prev_total: prevYearTotal,
         by_category: Object.values(agg.by_category).sort((a, b) => b.total - a.total),
         by_person: Object.values(agg.by_person).sort((a, b) => b.total - a.total),
@@ -1077,6 +1168,8 @@ async function loadDashboard() {
       state.stats = await api(`/api/stats?month=${range.monthParam}`);
       renderStats(state.stats, 'month');
     }
+
+    renderDashboardOnboarding();
 
     const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
     renderExpenseList(document.getElementById('recent-expenses'), expData.expenses);
@@ -1385,6 +1478,7 @@ function openEditExpenseModal(expense) {
 
 // ── Add Expense ────────────────────────────────────────────────────────────
 async function prepareAddExpense() {
+  updateWorkspaceCopy();
   const dateInput = document.getElementById('exp-date');
   if (!dateInput.value) dateInput.value = todayISO();
 
@@ -1469,6 +1563,7 @@ function renderCustomCategoriesList() {
 
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory(reset = false) {
+  updateWorkspaceCopy();
   if (reset) {
     state.historyOffset = 0;
     state.historyTotal = 0;
@@ -1697,6 +1792,53 @@ function populatePersonFilter() {
 }
 
 // ── Family ─────────────────────────────────────────────────────────────────
+function renderIncomingInvites(invites) {
+  const myInvitesSection = document.getElementById('my-invites-section');
+  const list = document.getElementById('my-invites-list');
+  if (!myInvitesSection || !list) return;
+
+  if (!invites || invites.length === 0) {
+    myInvitesSection.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  myInvitesSection.style.display = 'block';
+  list.innerHTML = invites.map(inv => `
+    <div class="invite-item" style="flex-wrap:wrap;gap:0.5rem">
+      <div style="flex:1;min-width:150px">
+        <div style="font-weight:600">${escHtml(inv.family_name)}</div>
+        <div style="font-size:0.8125rem;color:var(--text-muted)">${t('invite_from', inv.inviter_name, inv.family_name)}</div>
+      </div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-primary btn-sm accept-invite" data-id="${escHtml(inv.id)}">${t('accept')}</button>
+        <button class="btn btn-secondary btn-sm reject-invite" data-id="${escHtml(inv.id)}">${t('reject')}</button>
+      </div>
+    </div>`
+  ).join('');
+
+  list.querySelectorAll('.accept-invite').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'accept_invite', invite_id: btn.dataset.id }) });
+        toast(t('invite_accepted'), 'success');
+        await loadFamily();
+        loadDashboard();
+      } catch (err) { toast(t('failed', err.message), 'error'); }
+    });
+  });
+
+  list.querySelectorAll('.reject-invite').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'reject_invite', invite_id: btn.dataset.id }) });
+        toast(t('invite_rejected'), 'info');
+        await loadFamily();
+      } catch (err) { toast(t('failed', err.message), 'error'); }
+    });
+  });
+}
+
 async function loadFamily() {
   const noFam = document.getElementById('no-family-setup');
   const hasFam = document.getElementById('has-family');
@@ -1704,57 +1846,17 @@ async function loadFamily() {
   try {
     const data = await api('/api/family');
     state.family = data.family;
-
-    const myInvitesSection = document.getElementById('my-invites-section');
+    updateWorkspaceCopy();
+    const myInvites = data.my_pending_invites || [];
 
     if (!state.family) {
       noFam.style.display = 'block';
       hasFam.style.display = 'none';
-
-      // Show pending invites for this user
-      const myInvites = data.my_pending_invites || [];
-      if (myInvites.length > 0) {
-        myInvitesSection.style.display = 'block';
-        const list = document.getElementById('my-invites-list');
-        list.innerHTML = myInvites.map(inv => `
-          <div class="invite-item" style="flex-wrap:wrap;gap:0.5rem">
-            <div style="flex:1;min-width:150px">
-              <div style="font-weight:600">${escHtml(inv.family_name)}</div>
-              <div style="font-size:0.8125rem;color:var(--text-muted)">${t('invite_from', inv.inviter_name, inv.family_name)}</div>
-            </div>
-            <div style="display:flex;gap:0.5rem">
-              <button class="btn btn-primary btn-sm accept-invite" data-id="${escHtml(inv.id)}">${t('accept')}</button>
-              <button class="btn btn-secondary btn-sm reject-invite" data-id="${escHtml(inv.id)}">${t('reject')}</button>
-            </div>
-          </div>`
-        ).join('');
-
-        list.querySelectorAll('.accept-invite').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            try {
-              await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'accept_invite', invite_id: btn.dataset.id }) });
-              toast(t('invite_accepted'), 'success');
-              await loadFamily();
-              loadDashboard();
-            } catch (err) { toast(t('failed', err.message), 'error'); }
-          });
-        });
-        list.querySelectorAll('.reject-invite').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            try {
-              await api('/api/family', { method: 'PUT', body: JSON.stringify({ action: 'reject_invite', invite_id: btn.dataset.id }) });
-              toast(t('invite_rejected'), 'info');
-              await loadFamily();
-            } catch (err) { toast(t('failed', err.message), 'error'); }
-          });
-        });
-      } else {
-        myInvitesSection.style.display = 'none';
-      }
+      renderIncomingInvites(myInvites);
       return;
     }
 
-    myInvitesSection.style.display = 'none';
+    renderIncomingInvites(state.family.is_personal ? myInvites : []);
     noFam.style.display = 'none';
     hasFam.style.display = 'block';
 
@@ -1762,12 +1864,13 @@ async function loadFamily() {
     updateCurrencyFormatter(state.family.currency || 'VND');
     renderCurrencyUI();
 
-    document.getElementById('family-name-heading').textContent = state.family.name;
+    document.getElementById('family-name-heading').textContent = state.family.is_personal ? t('workspace_personal_name') : state.family.name;
 
     const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role || 'member';
     const roleBadge = document.getElementById('my-role-badge');
     roleBadge.textContent = myRole;
     roleBadge.className = `role-badge ${myRole}`;
+    document.getElementById('leave-family-btn').style.display = state.family.is_personal ? 'none' : '';
 
     document.getElementById('member-list').innerHTML = (state.family.members || []).map(m => {
       const avatarHtml = m.avatar
@@ -3586,6 +3689,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('new-family-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('create-family-btn').click();
+  });
+  document.getElementById('onboarding-add-btn').addEventListener('click', () => navigate('add-expense'));
+  document.getElementById('onboarding-voice-btn').addEventListener('click', () => {
+    navigate('add-expense');
+    setTimeout(() => {
+      const voiceBtn = document.getElementById('voice-btn');
+      voiceBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      voiceBtn?.focus();
+    }, 120);
   });
 
   // Profile & password

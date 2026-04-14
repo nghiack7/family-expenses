@@ -3,6 +3,8 @@
 // POST: add expense
 // DELETE: remove expense
 
+import { ensurePersonalFamilyMembership } from './_family-utils.js';
+
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -23,9 +25,7 @@ export async function onRequestGet(context) {
   const user = data.user;
   const url = new URL(request.url);
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
@@ -88,9 +88,7 @@ export async function onRequestPost(context) {
   const { request, env, data } = context;
   const user = data.user;
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
@@ -146,9 +144,7 @@ export async function onRequestPut(context) {
     return jsonError('expense_date required (YYYY-MM-DD)', 400);
   }
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id, role FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
@@ -184,9 +180,7 @@ export async function onRequestDelete(context) {
 
   if (!id) return jsonError('id required', 400);
 
-  const membership = await env.DB.prepare(
-    `SELECT family_id, role FROM family_members WHERE user_id = ? LIMIT 1`
-  ).bind(user.sub).first();
+  const membership = await ensurePersonalFamilyMembership(env, user);
 
   if (!membership) return jsonError('Not in a family', 404);
 
