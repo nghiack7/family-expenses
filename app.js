@@ -74,6 +74,37 @@ const translations = {
     onboarding_step_3_body: 'Bạn có thể dùng một mình trước, rồi mời thêm thành viên khi cần.',
     onboarding_add_cta: 'Thêm chi tiêu đầu tiên',
     onboarding_voice_cta: 'Mở nhập giọng nói',
+    budget_card_title: 'Ngân sách tháng',
+    budget_spent_label: 'Đã chi',
+    budget_limit_label: 'Ngân sách',
+    budget_remaining_label: 'Còn lại',
+    budget_status_on_track: 'Đúng nhịp',
+    budget_status_at_risk: 'Cần chú ý',
+    budget_status_over: 'Vượt trần',
+    budget_summary_on_track: 'Bạn đang dùng {0}% ngân sách tháng. Nhịp chi tiêu hiện vẫn an toàn.',
+    budget_summary_at_risk: 'Bạn đã dùng {0}% ngân sách tháng. Nên siết lại các khoản linh hoạt trước khi vượt trần.',
+    budget_summary_over: 'Bạn đã vượt ngân sách tháng {0}. Ưu tiên cắt ngay danh mục đang kéo lệch ngân sách.',
+    budget_no_limits: 'Chưa có ngân sách theo danh mục. Cài ở tab Gia đình để app cảnh báo sớm hơn.',
+    budget_no_plan_title: 'Chưa đặt ngân sách tháng',
+    budget_no_plan_body: 'Đặt một mức trần chi tiêu để app bắt đầu cảnh báo khi bạn đi lệch kế hoạch.',
+    budget_set_cta: 'Đặt ngân sách',
+    budget_settings: 'Ngân sách tháng',
+    budget_settings_desc: 'Đặt trần chi tiêu tổng và theo danh mục để app cảnh báo sớm trước khi ngân sách vỡ.',
+    monthly_budget_total: 'Ngân sách tổng mỗi tháng',
+    monthly_budget_placeholder: 'vd: 15000000',
+    category_budget_optional: 'Ngân sách theo danh mục',
+    category_budget_hint: 'Để trống nếu không muốn theo dõi danh mục đó.',
+    save_budget_settings: 'Lưu ngân sách',
+    budget_settings_saved: 'Đã lưu ngân sách tháng!',
+    budget_settings_saving: 'Đang lưu ngân sách...',
+    only_owner_budget: 'Chỉ chủ không gian mới chỉnh được ngân sách',
+    category_budget_invalid: 'Ngân sách danh mục phải lớn hơn hoặc bằng 0',
+    category_budget_over: 'Vượt {0}',
+    category_budget_left: 'Còn {0}',
+    category_budget_usage: 'Đã chi {0} / {1}',
+    category_budget_on_track: 'Ổn',
+    category_budget_at_risk: 'Sát trần',
+    category_budget_over_status: 'Vượt',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -352,6 +383,37 @@ const translations = {
     onboarding_step_3_body: 'You can start solo now and add family members once the habit sticks.',
     onboarding_add_cta: 'Add first expense',
     onboarding_voice_cta: 'Open voice input',
+    budget_card_title: 'Monthly budget',
+    budget_spent_label: 'Spent',
+    budget_limit_label: 'Budget',
+    budget_remaining_label: 'Remaining',
+    budget_status_on_track: 'On track',
+    budget_status_at_risk: 'At risk',
+    budget_status_over: 'Over budget',
+    budget_summary_on_track: 'You have used {0}% of this month\'s budget. Spending is still under control.',
+    budget_summary_at_risk: 'You have used {0}% of this month\'s budget. Tighten flexible spending before you cross the line.',
+    budget_summary_over: 'You are over this month\'s budget by {0}. Cut the categories that are pulling the plan off course.',
+    budget_no_limits: 'No category budgets yet. Add them in the Family tab so the app can warn you earlier.',
+    budget_no_plan_title: 'No monthly budget yet',
+    budget_no_plan_body: 'Set a spending ceiling and the app will start warning you before the month gets out of hand.',
+    budget_set_cta: 'Set budget',
+    budget_settings: 'Monthly budget',
+    budget_settings_desc: 'Set a total monthly ceiling and optional category limits so the app can warn you early.',
+    monthly_budget_total: 'Total monthly budget',
+    monthly_budget_placeholder: 'e.g. 15000000',
+    category_budget_optional: 'Category budgets',
+    category_budget_hint: 'Leave blank if you do not want to track that category.',
+    save_budget_settings: 'Save budget',
+    budget_settings_saved: 'Monthly budget saved!',
+    budget_settings_saving: 'Saving budget...',
+    only_owner_budget: 'Only the owner can change budgets',
+    category_budget_invalid: 'Category budget must be zero or higher',
+    category_budget_over: 'Over by {0}',
+    category_budget_left: '{0} left',
+    category_budget_usage: 'Spent {0} / {1}',
+    category_budget_on_track: 'OK',
+    category_budget_at_risk: 'Near limit',
+    category_budget_over_status: 'Over',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -597,6 +659,8 @@ function applyLanguage() {
   updateHistoryFiltersSummary();
   updateWorkspaceCopy();
   renderDashboardOnboarding();
+  renderBudgetOverview();
+  renderBudgetSettingsUI();
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -659,6 +723,228 @@ function renderDashboardOnboarding() {
   setNodeText('onboarding-voice-btn', t('onboarding_voice_cta'));
 
   panel.style.display = state.user && state.stats && isFirstRun() ? 'block' : 'none';
+}
+
+function getBudgetSettings() {
+  const budget = state.family?.budget_settings || {};
+  const monthlyTotal = Number(budget.monthly_total) || 0;
+  const categoryLimits = Object.fromEntries(
+    Object.entries(budget.category_limits || {})
+      .map(([categoryId, amount]) => [categoryId, Number(amount) || 0])
+      .filter(([, amount]) => amount > 0)
+  );
+  return {
+    monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+    category_limits: categoryLimits,
+  };
+}
+
+function getBudgetStatus(spent, limit) {
+  if (!limit || limit <= 0) {
+    return { key: 'on_track', className: '', ratio: 0 };
+  }
+
+  const ratio = spent / limit;
+  if (ratio >= 1) return { key: 'over', className: 'over', ratio };
+  if (ratio >= 0.8) return { key: 'at_risk', className: 'at-risk', ratio };
+  return { key: 'on_track', className: '', ratio };
+}
+
+function renderBudgetOverview() {
+  const section = document.getElementById('budget-overview');
+  if (!section) return;
+
+  if (!state.family || state.viewMode !== 'month' || !state.stats) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  const settings = getBudgetSettings();
+  const budgetTitle = document.getElementById('budget-card-title');
+  const statusPill = document.getElementById('budget-status-pill');
+  const spentEl = document.getElementById('budget-spent');
+  const limitEl = document.getElementById('budget-limit');
+  const remainingEl = document.getElementById('budget-remaining');
+  const summaryEl = document.getElementById('budget-summary-text');
+  const progressBar = document.getElementById('budget-progress-bar');
+  const categoryList = document.getElementById('budget-category-list');
+  const spent = Number(state.stats?.total || 0);
+
+  budgetTitle.textContent = t('budget_card_title');
+  setNodeText('budget-spent-label', t('budget_spent_label'));
+  setNodeText('budget-limit-label', t('budget_limit_label'));
+  setNodeText('budget-remaining-label', t('budget_remaining_label'));
+
+  if (!settings.monthly_total) {
+    statusPill.textContent = t('budget_status_on_track');
+    statusPill.className = 'budget-status-pill';
+    spentEl.textContent = formatMoney(spent);
+    limitEl.textContent = '—';
+    remainingEl.textContent = '—';
+    summaryEl.textContent = t('budget_no_plan_body');
+    progressBar.className = 'budget-progress-bar';
+    progressBar.style.width = '0%';
+    categoryList.innerHTML = `
+      <div class="budget-empty-note">
+        <strong>${t('budget_no_plan_title')}</strong><br />
+        ${t('budget_no_plan_body')}<br /><br />
+        <button class="btn btn-secondary btn-sm" id="budget-set-cta" type="button">${t('budget_set_cta')}</button>
+      </div>`;
+    document.getElementById('budget-set-cta')?.addEventListener('click', () => navigate('family'));
+    return;
+  }
+
+  const remaining = settings.monthly_total - spent;
+  const status = getBudgetStatus(spent, settings.monthly_total);
+  const percent = Math.max(0, Math.round(status.ratio * 100));
+  statusPill.textContent = t(`budget_status_${status.key}`);
+  statusPill.className = `budget-status-pill ${status.className}`.trim();
+  spentEl.textContent = formatMoney(spent);
+  limitEl.textContent = formatMoney(settings.monthly_total);
+  remainingEl.textContent = formatMoney(Math.max(remaining, 0));
+  progressBar.className = `budget-progress-bar ${status.className}`.trim();
+  progressBar.style.width = `${Math.min(percent, 100)}%`;
+
+  if (status.key === 'over') {
+    summaryEl.textContent = t('budget_summary_over', formatMoney(Math.abs(remaining)));
+  } else if (status.key === 'at_risk') {
+    summaryEl.textContent = t('budget_summary_at_risk', percent);
+  } else {
+    summaryEl.textContent = t('budget_summary_on_track', percent);
+  }
+
+  const categories = (state.stats?.by_category || [])
+    .filter(cat => settings.category_limits[cat.id] > 0)
+    .map(cat => {
+      const limit = settings.category_limits[cat.id];
+      const catSpent = Number(cat.total || 0);
+      const catStatus = getBudgetStatus(catSpent, limit);
+      return { ...cat, limit, catSpent, catStatus };
+    })
+    .sort((a, b) => {
+      const score = { over: 2, at_risk: 1, on_track: 0 };
+      return (score[b.catStatus.key] - score[a.catStatus.key]) || (b.catSpent / b.limit) - (a.catSpent / a.limit);
+    });
+
+  if (categories.length === 0) {
+    categoryList.innerHTML = `<div class="budget-empty-note">${t('budget_no_limits')}</div>`;
+    return;
+  }
+
+  categoryList.innerHTML = categories.slice(0, 4).map(cat => {
+    const ratioPct = Math.max(0, Math.min(100, Math.round((cat.catSpent / cat.limit) * 100)));
+    const tailText = cat.catStatus.key === 'over'
+      ? t('category_budget_over', formatMoney(cat.catSpent - cat.limit))
+      : t('category_budget_left', formatMoney(cat.limit - cat.catSpent));
+    return `
+      <div class="budget-category-row">
+        <div>
+          <div class="budget-category-head">
+            <span class="budget-category-name">${escHtml(cat.icon || '📦')} ${escHtml(cat.name)}</span>
+            <span class="budget-status-pill ${cat.catStatus.className}">${t(`category_budget_${cat.catStatus.key === 'over' ? 'over_status' : cat.catStatus.key}`)}</span>
+          </div>
+          <div class="budget-progress-track">
+            <div class="budget-progress-bar ${cat.catStatus.className}" style="width:${ratioPct}%"></div>
+          </div>
+        </div>
+        <div class="budget-category-meta">
+          <div>${t('category_budget_usage', formatMoney(cat.catSpent), formatMoney(cat.limit))}</div>
+          <div>${tailText}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderBudgetSettingsUI() {
+  const container = document.getElementById('budget-setting');
+  if (!container) return;
+  if (!state.family) { container.style.display = 'none'; return; }
+
+  const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role;
+  const isOwner = myRole === 'owner';
+  const settings = getBudgetSettings();
+
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="card-header">
+      <div>
+        <div class="card-kicker">Budget</div>
+        <span class="card-title">${t('budget_settings')}</span>
+      </div>
+    </div>
+    <div class="budget-settings-form">
+      <p class="form-hint">${t('budget_settings_desc')}</p>
+      <div class="form-group">
+        <label class="form-label" for="budget-monthly-total">${t('monthly_budget_total')}</label>
+        <input type="number" id="budget-monthly-total" min="0" step="1" ${isOwner ? '' : 'disabled'} placeholder="${t('monthly_budget_placeholder')}" value="${settings.monthly_total || ''}" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">${t('category_budget_optional')}</div>
+        <div class="form-hint">${t('category_budget_hint')}</div>
+      </div>
+      <div class="budget-categories-grid" id="budget-categories-grid"></div>
+      ${isOwner ? `<button class="btn btn-primary btn-full" id="save-budget-settings-btn">${t('save_budget_settings')}</button>` : `<div class="form-hint">${t('only_owner_budget')}</div>`}
+    </div>`;
+
+  const categoriesGrid = document.getElementById('budget-categories-grid');
+  categoriesGrid.innerHTML = state.categories.map(category => `
+    <div class="budget-category-setting">
+      <div class="budget-category-setting-name">${escHtml(category.icon || '📦')} ${escHtml(category.name)}</div>
+      <input
+        type="number"
+        min="0"
+        step="1"
+        ${isOwner ? '' : 'disabled'}
+        data-budget-category-id="${escHtml(category.id)}"
+        placeholder="0"
+        value="${settings.category_limits[category.id] || ''}"
+      />
+    </div>
+  `).join('');
+
+  if (!isOwner) return;
+
+  document.getElementById('save-budget-settings-btn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('save-budget-settings-btn');
+    const monthlyTotal = Number(document.getElementById('budget-monthly-total').value || 0);
+    const categoryLimits = {};
+
+    for (const input of categoriesGrid.querySelectorAll('[data-budget-category-id]')) {
+      const value = input.value.trim();
+      const num = Number(value || 0);
+      if (num < 0) {
+        toast(t('category_budget_invalid'), 'error');
+        input.focus();
+        return;
+      }
+      if (value && num > 0) {
+        categoryLimits[input.dataset.budgetCategoryId] = num;
+      }
+    }
+
+    btn.disabled = true;
+    btn.textContent = t('budget_settings_saving');
+    try {
+      const result = await api('/api/family', {
+        method: 'PUT',
+        body: JSON.stringify({
+          action: 'save_budget_settings',
+          monthly_total: monthlyTotal,
+          category_limits: categoryLimits,
+        }),
+      });
+      state.family.budget_settings = result.budget_settings;
+      toast(t('budget_settings_saved'), 'success');
+      renderBudgetSettingsUI();
+      renderBudgetOverview();
+    } catch (err) {
+      toast(t('failed', err.message), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('save_budget_settings');
+    }
+  });
 }
 
 // ── Currency formatter ────────────────────────────────────────────────────
@@ -1170,6 +1456,7 @@ async function loadDashboard() {
     }
 
     renderDashboardOnboarding();
+    renderBudgetOverview();
 
     const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
     renderExpenseList(document.getElementById('recent-expenses'), expData.expenses);
@@ -1501,6 +1788,7 @@ async function loadCategories() {
     const data = await api('/api/categories');
     state.categories = data.categories || [];
     renderCustomCategoriesList();
+    renderBudgetSettingsUI();
   } catch (err) {
     if (!err.message.includes('Not in a family')) {
       toast(t('failed_load_categories'), 'error');
@@ -1848,11 +2136,15 @@ async function loadFamily() {
     state.family = data.family;
     updateWorkspaceCopy();
     const myInvites = data.my_pending_invites || [];
+    if (state.family && state.categories.length === 0) {
+      await loadCategories();
+    }
 
     if (!state.family) {
       noFam.style.display = 'block';
       hasFam.style.display = 'none';
       renderIncomingInvites(myInvites);
+      renderBudgetSettingsUI();
       return;
     }
 
@@ -1863,6 +2155,8 @@ async function loadFamily() {
     // Apply family currency
     updateCurrencyFormatter(state.family.currency || 'VND');
     renderCurrencyUI();
+    renderBudgetSettingsUI();
+    renderBudgetOverview();
 
     document.getElementById('family-name-heading').textContent = state.family.is_personal ? t('workspace_personal_name') : state.family.name;
 

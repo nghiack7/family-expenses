@@ -26,6 +26,26 @@ function jsonError(msg, status = 400) {
   });
 }
 
+function parseBudgetSettings(raw) {
+  if (!raw) return { monthly_total: 0, category_limits: {} };
+  try {
+    const parsed = JSON.parse(raw);
+    const monthlyTotal = Number(parsed.monthly_total) || 0;
+    const categoryLimits = Object.fromEntries(
+      Object.entries(parsed.category_limits || {})
+        .map(([categoryId, amount]) => [categoryId, Number(amount) || 0])
+        .filter(([, amount]) => amount > 0)
+    );
+
+    return {
+      monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+      category_limits: categoryLimits,
+    };
+  } catch {
+    return { monthly_total: 0, category_limits: {} };
+  }
+}
+
 // ── AES-GCM encryption for API keys ─────────────────────────────────────
 
 async function getEncryptionKey(env) {
@@ -101,13 +121,18 @@ export async function onRequestGet(context) {
      WHERE family_id = ? AND status = 'pending'`
   ).bind(membership.family_id).all();
 
+  const familySettingsRow = await env.DB.prepare(
+    `SELECT currency, budget_settings FROM families WHERE id = ?`
+  ).bind(membership.family_id).first();
+
   const isPersonal = isPersonalFamilyName(membership.name);
 
   return jsonResp({
     family: {
       id: membership.family_id,
       name: getFamilyDisplayName(membership.name, user.name),
-      currency: membership.currency || 'VND',
+      currency: familySettingsRow?.currency || membership.currency || 'VND',
+      budget_settings: parseBudgetSettings(familySettingsRow?.budget_settings),
       is_personal: isPersonal,
       created_by: membership.created_by,
       created_at: membership.created_at,
@@ -405,6 +430,44 @@ export async function onRequestPut(context) {
     }
 
     return jsonResp({ ok: true });
+  }
+
+  if (action === 'save_budget_settings') {
+    const membership = await ensurePersonalFamilyMembership(env, user);
+    if (!membership) return jsonError('Not in a family', 404);
+    if (membership.role !== 'owner') return jsonError('Only the owner can update budgets', 403);
+
+    const monthlyTotal = Number(body.monthly_total) || 0;
+    if (monthlyTotal < 0) return jsonError('Monthly budget must be zero or positive', 400);
+
+    const categoryLimits = body.category_limits && typeof body.category_limits === 'object'
+      ? Object.fromEntries(
+          Object.entries(body.category_limits)
+            .map(([categoryId, amount]) => [categoryId, Number(amount) || 0])
+            .filter(([, amount]) => amount > 0)
+        )
+      : {};
+
+    const categoryIds = Object.keys(categoryLimits);
+    if (categoryIds.length > 0) {
+      const placeholders = categoryIds.map(() => '?').join(', ');
+      const query = `SELECT id FROM categories WHERE family_id = ? AND id IN (${placeholders})`;
+      const result = await env.DB.prepare(query).bind(membership.family_id, ...categoryIds).all();
+      const foundIds = new Set((result.results || []).map(row => row.id));
+      const invalidId = categoryIds.find(id => !foundIds.has(id));
+      if (invalidId) return jsonError('Invalid category budget target', 400);
+    }
+
+    const settings = JSON.stringify({
+      monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+      category_limits: categoryLimits,
+    });
+
+    await env.DB.prepare(
+      `UPDATE families SET budget_settings = ? WHERE id = ?`
+    ).bind(settings, membership.family_id).run();
+
+    return jsonResp({ ok: true, budget_settings: parseBudgetSettings(settings) });
   }
 
   if (action === 'save_ai_settings') {

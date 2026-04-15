@@ -227,6 +227,37 @@
               </article>
             </section>
 
+            <section class="budget-overview" id="budget-overview" style="display:none">
+              <article class="card budget-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Guardrails</div>
+                    <span class="card-title" id="budget-card-title">Ngân sách tháng</span>
+                  </div>
+                  <span class="budget-status-pill" id="budget-status-pill">On track</span>
+                </div>
+                <div class="budget-summary-grid">
+                  <div>
+                    <div class="budget-label" id="budget-spent-label">Đã chi</div>
+                    <div class="budget-value" id="budget-spent">—</div>
+                  </div>
+                  <div>
+                    <div class="budget-label" id="budget-limit-label">Ngân sách</div>
+                    <div class="budget-value" id="budget-limit">—</div>
+                  </div>
+                  <div>
+                    <div class="budget-label" id="budget-remaining-label">Còn lại</div>
+                    <div class="budget-value" id="budget-remaining">—</div>
+                  </div>
+                </div>
+                <div class="budget-progress-track">
+                  <div class="budget-progress-bar" id="budget-progress-bar"></div>
+                </div>
+                <p class="budget-summary-text" id="budget-summary-text"></p>
+                <div class="budget-category-list" id="budget-category-list"></div>
+              </article>
+            </section>
+
             <section class="dashboard-grid">
               <article class="card card-wide" id="daily-chart-card" style="display:none">
                 <div class="card-header">
@@ -612,6 +643,8 @@
                   </article>
 
                   <article class="card" id="currency-setting" style="display:none"></article>
+
+                  <article class="card" id="budget-setting" style="display:none"></article>
 
                   <article class="card">
                     <div class="card-header">
