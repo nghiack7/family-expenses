@@ -1,4 +1,4 @@
-const CACHE_NAME = 'family-expenses-shell-v2';
+const CACHE_NAME = 'family-expenses-shell-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -11,6 +11,8 @@ const APP_SHELL = [
   '/icons/apple-touch-icon.svg',
   '/icons/apple-touch-icon.png',
 ];
+
+const APP_SHELL_PATHS = new Set(APP_SHELL);
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -44,6 +46,21 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  if (APP_SHELL_PATHS.has(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok && response.type !== 'opaque') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }

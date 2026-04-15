@@ -3156,7 +3156,16 @@ function closeAIModal() {
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    let hasRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hasRefreshed) return;
+      hasRefreshed = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => registration.update())
+      .catch(() => {});
   });
 }
 
