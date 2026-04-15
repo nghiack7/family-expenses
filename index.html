@@ -167,7 +167,7 @@
                   <button class="btn btn-icon" id="prev-month" data-i18n-aria-label="previous_period" aria-label="Previous period">
                     <span class="material-symbols-outlined">west</span>
                   </button>
-                  <span class="month-label" id="month-label">Loading...</span>
+                  <span class="month-label" id="month-label" data-i18n="loading">Đang tải...</span>
                   <button class="btn btn-icon" id="next-month" data-i18n-aria-label="next_period" aria-label="Next period">
                     <span class="material-symbols-outlined">east</span>
                   </button>
@@ -212,13 +212,13 @@
               <article class="stat-card stat-card-primary">
                 <div class="stat-label" data-i18n="total_this_month">Tổng tháng này</div>
                 <div class="stat-value" id="stat-total">—</div>
-                <div class="stat-sub" id="stat-count">0 expenses</div>
+                <div class="stat-sub" id="stat-count" data-i18n="zero_expenses_label">0 khoản chi</div>
                 <div class="stat-change" id="stat-change"></div>
               </article>
               <article class="stat-card">
                 <div class="stat-label" data-i18n="daily_average">Trung bình ngày</div>
                 <div class="stat-value" id="stat-avg">—</div>
-                <div class="stat-sub" id="stat-days">0 days tracked</div>
+                <div class="stat-sub" id="stat-days" data-i18n="zero_days_tracked_label">0 ngày ghi nhận</div>
               </article>
               <article class="stat-card">
                 <div class="stat-label" data-i18n="biggest_category">Danh mục lớn nhất</div>
@@ -392,7 +392,7 @@
                       <div class="card-kicker" data-i18n="draft_review_kicker">Draft Review</div>
                       <span class="card-title" data-i18n="draft_review_title">Danh sách bill tạm</span>
                     </div>
-                    <div class="draft-summary" id="voice-draft-summary">0 item</div>
+                    <div class="draft-summary" id="voice-draft-summary" data-i18n="zero_items_label">0 mục</div>
                   </div>
                   <div class="draft-list" id="voice-draft-list"></div>
                   <div class="draft-actions" id="voice-draft-actions">

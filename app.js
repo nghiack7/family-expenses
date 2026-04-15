@@ -185,6 +185,10 @@ const translations = {
     people_kicker: 'Thành viên',
     latest_kicker: 'Mới nhất',
     radar_kicker: 'Radar',
+    loading: 'Đang tải...',
+    zero_expenses_label: '0 khoản chi',
+    zero_days_tracked_label: '0 ngày ghi nhận',
+    zero_items_label: '0 mục',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -612,6 +616,10 @@ const translations = {
     people_kicker: 'People',
     latest_kicker: 'Latest',
     radar_kicker: 'Radar',
+    loading: 'Loading...',
+    zero_expenses_label: '0 expenses',
+    zero_days_tracked_label: '0 days tracked',
+    zero_items_label: '0 items',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
