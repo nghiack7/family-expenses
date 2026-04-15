@@ -1084,6 +1084,98 @@ button:focus-visible {
   color: var(--danger);
 }
 
+.forecast-overview {
+  margin-bottom: 1rem;
+}
+
+.forecast-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.forecast-intro,
+.forecast-window-summary {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.forecast-window {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] .forecast-window {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.forecast-window-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.forecast-window-label {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.forecast-window-amount {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-align: right;
+}
+
+.forecast-window-amount.negative {
+  color: var(--danger);
+}
+
+.forecast-window-amount.positive {
+  color: var(--success);
+}
+
+.forecast-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.forecast-metric {
+  padding: 0.85rem 0.9rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] .forecast-metric {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.forecast-metric-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.forecast-metric-value {
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .card-title,
 .section-title {
   font-size: 1.2rem;
@@ -1884,7 +1976,8 @@ body.keyboard-open .ai-fab {
   .stats-grid,
   .family-grid,
   .onboarding-grid,
-  .budget-summary-grid {
+  .budget-summary-grid,
+  .forecast-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1938,6 +2031,10 @@ body.keyboard-open .ai-fab {
   }
 
   .budget-category-setting {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-metrics {
     grid-template-columns: 1fr;
   }
 

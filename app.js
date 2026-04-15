@@ -131,6 +131,23 @@ const translations = {
     recurring_confirm_failed: 'Không thể ghi nhận bill: {0}',
     recurring_due_meta: 'Kỳ tới: {0}',
     recurring_owner_meta: 'Người tạo: {0}',
+    forecast_card_title: 'Dự báo hụt tiền',
+    forecast_intro: 'Ước tính 7/30 ngày tới dựa trên bill lặp, ngân sách tháng và nhịp chi hiện tại.',
+    forecast_status_safe: 'Còn dư',
+    forecast_status_watch: 'Căng',
+    forecast_status_deficit: 'Sắp hụt',
+    forecast_window_days: '{0} ngày tới',
+    forecast_budget_runway: 'Runway ngân sách',
+    forecast_fixed_bills: 'Bill lặp',
+    forecast_spend_pace: 'Nhịp chi hiện tại',
+    forecast_buffer: 'Buffer còn lại',
+    forecast_no_budget_title: 'Chưa đủ dữ liệu để dự báo',
+    forecast_no_budget_body: 'Forecast cần ngân sách tháng để tính runway. Đặt trần chi tiêu trước, rồi app mới dự báo lúc nào bạn sắp hụt tiền.',
+    forecast_safe_summary: 'Còn dư {0}. {1} bill lặp sắp tới chiếm {2}, nhịp chi hiện tại vẫn nằm trong runway.',
+    forecast_watch_summary: 'Buffer chỉ còn {0}. {1} bill lặp sắp tới đang đẩy bạn sát trần.',
+    forecast_deficit_summary: 'Nếu giữ nhịp hiện tại, bạn có thể hụt khoảng {0} vào {1}.',
+    forecast_recurring_count: '{0} bill',
+    forecast_set_budget: 'Đặt ngân sách',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -466,6 +483,23 @@ const translations = {
     recurring_confirm_failed: 'Could not record recurring bill: {0}',
     recurring_due_meta: 'Next due: {0}',
     recurring_owner_meta: 'Owner: {0}',
+    forecast_card_title: 'Cashflow forecast',
+    forecast_intro: 'Estimated next 7 and 30 days using recurring bills, monthly budget, and current spending pace.',
+    forecast_status_safe: 'Safe',
+    forecast_status_watch: 'Tight',
+    forecast_status_deficit: 'Shortfall',
+    forecast_window_days: 'Next {0} days',
+    forecast_budget_runway: 'Budget runway',
+    forecast_fixed_bills: 'Recurring bills',
+    forecast_spend_pace: 'Current pace',
+    forecast_buffer: 'Remaining buffer',
+    forecast_no_budget_title: 'Forecast is not ready yet',
+    forecast_no_budget_body: 'The forecast needs a monthly budget to calculate runway. Set a ceiling first so the app can estimate when you may run short.',
+    forecast_safe_summary: '{0} of buffer remains. {1} upcoming recurring bills add up to {2}, and your current pace is still inside runway.',
+    forecast_watch_summary: 'Only {0} of buffer remains. {1} upcoming recurring bills are pushing you close to the limit.',
+    forecast_deficit_summary: 'If this pace holds, you may run short by about {0} on {1}.',
+    forecast_recurring_count: '{0} bills',
+    forecast_set_budget: 'Set budget',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -712,6 +746,7 @@ function applyLanguage() {
   updateWorkspaceCopy();
   renderDashboardOnboarding();
   renderBudgetOverview();
+  renderCashflowForecast();
   renderBudgetSettingsUI();
   renderRecurringManager();
   renderRecurringRadar();
@@ -810,6 +845,180 @@ function getBudgetStatus(spent, limit) {
   if (ratio >= 1) return { key: 'over', className: 'over', ratio };
   if (ratio >= 0.8) return { key: 'at_risk', className: 'at-risk', ratio };
   return { key: 'on_track', className: '', ratio };
+}
+
+function isCurrentMonthDashboard() {
+  if (state.viewMode !== 'month' || !state.currentMonth) return false;
+  const now = new Date();
+  return state.currentMonth.year === now.getFullYear() && state.currentMonth.month === now.getMonth() + 1;
+}
+
+function getForecastTone(statusKey) {
+  if (statusKey === 'deficit') return 'over';
+  if (statusKey === 'watch') return 'at-risk';
+  return '';
+}
+
+function buildCashflowForecastWindow(windowDays) {
+  if (!isCurrentMonthDashboard() || !state.stats || !state.family) return null;
+
+  const settings = getBudgetSettings();
+  const spent = Number(state.stats?.total || 0);
+  const today = todayISO();
+  const { year, month } = state.currentMonth;
+  const todayDay = Number(today.slice(8, 10)) || 1;
+  const monthDays = daysInMonth(year, month);
+  const averageDailySpend = spent / Math.max(todayDay, 1);
+
+  if (!settings.monthly_total) {
+    return { windowDays, needsBudget: true };
+  }
+
+  const remainingBudget = Math.max(0, settings.monthly_total - spent);
+  const daysUntilMonthEnd = monthDays - todayDay + 1;
+  const overflowDays = Math.max(0, windowDays - daysUntilMonthEnd);
+  const dailyBudgetAllowance = settings.monthly_total / monthDays;
+  const budgetRunway = remainingBudget + (overflowDays * dailyBudgetAllowance);
+  const windowEnd = addDaysISO(today, windowDays - 1);
+  const dueItems = (state.recurring || [])
+    .filter(item => Number(item.is_active) && item.next_due_date >= today && item.next_due_date <= windowEnd)
+    .sort((a, b) => a.next_due_date.localeCompare(b.next_due_date));
+  const fixedBills = dueItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const spendPace = averageDailySpend * windowDays;
+  const projectedOutflow = fixedBills + spendPace;
+  const buffer = budgetRunway - projectedOutflow;
+  const ratio = budgetRunway > 0 ? projectedOutflow / budgetRunway : 1;
+  const statusKey = buffer < 0 ? 'deficit' : ratio >= 0.85 ? 'watch' : 'safe';
+  const dueByDate = new Map();
+  dueItems.forEach(item => {
+    dueByDate.set(item.next_due_date, (dueByDate.get(item.next_due_date) || 0) + Number(item.amount || 0));
+  });
+
+  let rollingBuffer = remainingBudget;
+  let shortfallDate = '';
+  const monthPrefix = `${year}-${String(month).padStart(2, '0')}`;
+  for (let offset = 0; offset < windowDays; offset += 1) {
+    const cursor = addDaysISO(today, offset);
+    if (!cursor.startsWith(monthPrefix)) {
+      rollingBuffer += dailyBudgetAllowance;
+    }
+    rollingBuffer -= averageDailySpend;
+    rollingBuffer -= dueByDate.get(cursor) || 0;
+    if (rollingBuffer < 0) {
+      shortfallDate = cursor;
+      break;
+    }
+  }
+
+  return {
+    windowDays,
+    statusKey,
+    className: getForecastTone(statusKey),
+    budgetRunway,
+    fixedBills,
+    spendPace,
+    buffer,
+    dueCount: dueItems.length,
+    shortfallDate,
+  };
+}
+
+function forecastSummary(windowForecast) {
+  if (!windowForecast) return '';
+  if (windowForecast.needsBudget) return t('forecast_no_budget_body');
+  if (windowForecast.statusKey === 'deficit') {
+    return t(
+      'forecast_deficit_summary',
+      formatMoney(Math.abs(windowForecast.buffer)),
+      formatDate(windowForecast.shortfallDate || addDaysISO(todayISO(), windowForecast.windowDays - 1))
+    );
+  }
+  if (windowForecast.statusKey === 'watch') {
+    return t(
+      'forecast_watch_summary',
+      formatMoney(Math.max(windowForecast.buffer, 0)),
+      t('forecast_recurring_count', windowForecast.dueCount)
+    );
+  }
+  return t(
+    'forecast_safe_summary',
+    formatMoney(Math.max(windowForecast.buffer, 0)),
+    t('forecast_recurring_count', windowForecast.dueCount),
+    formatMoney(windowForecast.fixedBills)
+  );
+}
+
+function renderCashflowForecast() {
+  const section = document.getElementById('cashflow-forecast');
+  if (!section) return;
+
+  if (!isCurrentMonthDashboard() || !state.family || !state.stats) {
+    section.style.display = 'none';
+    return;
+  }
+
+  const forecasts = [buildCashflowForecastWindow(7), buildCashflowForecastWindow(30)].filter(Boolean);
+  if (!forecasts.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  setNodeText('forecast-card-title', t('forecast_card_title'));
+  setNodeText('forecast-intro', t('forecast_intro'));
+
+  const grid = document.getElementById('forecast-grid');
+  const pill = document.getElementById('forecast-status-pill');
+  if (forecasts.some(item => item.needsBudget)) {
+    pill.textContent = t('budget_status_on_track');
+    pill.className = 'budget-status-pill';
+    grid.innerHTML = `
+      <div class="budget-empty-note">
+        <strong>${t('forecast_no_budget_title')}</strong><br />
+        ${t('forecast_no_budget_body')}<br /><br />
+        <button class="btn btn-secondary btn-sm" id="forecast-set-budget-btn" type="button">${t('forecast_set_budget')}</button>
+      </div>`;
+    document.getElementById('forecast-set-budget-btn')?.addEventListener('click', () => navigate('family'));
+    return;
+  }
+
+  const worst = forecasts.find(item => item.statusKey === 'deficit')
+    || forecasts.find(item => item.statusKey === 'watch')
+    || forecasts[0];
+
+  pill.textContent = t(`forecast_status_${worst.statusKey}`);
+  pill.className = `budget-status-pill ${worst.className || ''}`.trim();
+
+  grid.innerHTML = forecasts.map(item => `
+    <div class="forecast-window">
+      <div class="forecast-window-head">
+        <div>
+          <div class="forecast-window-label">${t('forecast_window_days', item.windowDays)}</div>
+          <span class="budget-status-pill ${item.className || ''}">${t(`forecast_status_${item.statusKey}`)}</span>
+        </div>
+        <div class="forecast-window-amount ${item.buffer < 0 ? 'negative' : 'positive'}">${formatSignedMoney(item.buffer)}</div>
+      </div>
+      <div class="forecast-metrics">
+        <div class="forecast-metric">
+          <div class="forecast-metric-label">${t('forecast_budget_runway')}</div>
+          <div class="forecast-metric-value">${formatMoney(item.budgetRunway)}</div>
+        </div>
+        <div class="forecast-metric">
+          <div class="forecast-metric-label">${t('forecast_fixed_bills')}</div>
+          <div class="forecast-metric-value">${formatMoney(item.fixedBills)}</div>
+        </div>
+        <div class="forecast-metric">
+          <div class="forecast-metric-label">${t('forecast_spend_pace')}</div>
+          <div class="forecast-metric-value">${formatMoney(item.spendPace)}</div>
+        </div>
+        <div class="forecast-metric">
+          <div class="forecast-metric-label">${t('forecast_buffer')}</div>
+          <div class="forecast-metric-value">${formatSignedMoney(item.buffer)}</div>
+        </div>
+      </div>
+      <p class="forecast-window-summary">${forecastSummary(item)}</p>
+    </div>
+  `).join('');
 }
 
 function renderBudgetOverview() {
@@ -1000,6 +1209,7 @@ function renderBudgetSettingsUI() {
       toast(t('budget_settings_saved'), 'success');
       renderBudgetSettingsUI();
       renderBudgetOverview();
+      renderCashflowForecast();
     } catch (err) {
       toast(t('failed', err.message), 'error');
     } finally {
@@ -1109,7 +1319,9 @@ async function loadRecurring() {
     state.recurringRadar = data.radar || [];
     renderRecurringManager();
     renderRecurringRadar();
+    renderCashflowForecast();
   } catch (err) {
+    renderCashflowForecast();
     if (!err.message.includes('Not in a family')) {
       toast(t('failed', err.message), 'error');
     }
@@ -1244,6 +1456,24 @@ function formatDate(iso) {
   const locale = currentLang === 'vi' ? 'vi-VN' : 'en-US';
   const [y, m, d] = iso.split('-');
   return new Date(+y, +m - 1, +d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function addDaysISO(dateIso, days) {
+  const [year, month, day] = dateIso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function formatSignedMoney(amount) {
+  const rounded = Math.round(amount || 0);
+  if (rounded === 0) return formatMoney(0);
+  const prefix = rounded > 0 ? '+' : '-';
+  return `${prefix}${formatMoney(Math.abs(rounded))}`;
 }
 
 // ── Invite token handler ──────────────────────────────────────────────────
@@ -1650,11 +1880,16 @@ async function loadDashboard() {
 
     renderDashboardOnboarding();
     renderBudgetOverview();
+    renderCashflowForecast();
 
     const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
     renderExpenseList(document.getElementById('recent-expenses'), expData.expenses);
-    loadRecurring();
+    await loadRecurring();
   } catch (err) {
+    const budgetSection = document.getElementById('budget-overview');
+    const forecastSection = document.getElementById('cashflow-forecast');
+    if (budgetSection) budgetSection.style.display = 'none';
+    if (forecastSection) forecastSection.style.display = 'none';
     if (err.message.includes('Not in a family')) {
       renderNeedFamily('recent-expenses');
       renderNeedFamily('category-bars');
@@ -1862,7 +2097,12 @@ function refreshStatsBackground() {
   if (state.viewMode === 'month' && state.currentMonth) {
     const monthParam = `${state.currentMonth.year}-${String(state.currentMonth.month).padStart(2, '0')}`;
     api(`/api/stats?month=${monthParam}`)
-      .then(s => { state.stats = s; renderStats(s, 'month'); })
+      .then(s => {
+        state.stats = s;
+        renderStats(s, 'month');
+        renderBudgetOverview();
+        renderCashflowForecast();
+      })
       .catch(() => {});
   } else {
     loadDashboard();
@@ -2357,6 +2597,7 @@ async function loadFamily() {
     renderCurrencyUI();
     renderBudgetSettingsUI();
     renderBudgetOverview();
+    renderCashflowForecast();
 
     document.getElementById('family-name-heading').textContent = state.family.is_personal ? t('workspace_personal_name') : state.family.name;
 
