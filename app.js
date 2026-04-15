@@ -105,6 +105,32 @@ const translations = {
     category_budget_on_track: 'Ổn',
     category_budget_at_risk: 'Sát trần',
     category_budget_over_status: 'Vượt',
+    recurring_radar_title: 'Bill lặp & subscriptions',
+    recurring_manager_title: 'Bill lặp & subscriptions',
+    recurring_desc_label: 'Tên bill',
+    recurring_amount_label: 'Số tiền',
+    recurring_category_label: 'Danh mục',
+    recurring_cadence_label: 'Chu kỳ',
+    recurring_next_due_label: 'Kỳ tiếp theo',
+    recurring_save: 'Lưu bill lặp',
+    recurring_saving: 'Đang lưu bill...',
+    recurring_saved: 'Đã lưu bill lặp!',
+    recurring_empty: 'Chưa có bill lặp nào. Tạo bill điện, internet, Netflix, tiền nhà... để app nhắc bạn đúng lúc.',
+    recurring_radar_empty: 'Không có bill nào đến hạn sớm. Radar đang yên.',
+    recurring_confirm_due: 'Ghi nhận kỳ này',
+    recurring_delete: 'Xóa bill lặp',
+    recurring_deleted: 'Đã xóa bill lặp',
+    recurring_due_overdue: 'Quá hạn',
+    recurring_due_soon: 'Sắp đến hạn',
+    recurring_due_scheduled: 'Đã lên lịch',
+    recurring_weekly: 'Hàng tuần',
+    recurring_monthly: 'Hàng tháng',
+    recurring_yearly: 'Hàng năm',
+    recurring_invalid: 'Cần nhập đủ bill, số tiền, danh mục và ngày đến hạn',
+    recurring_confirmed: 'Đã ghi nhận bill kỳ này',
+    recurring_confirm_failed: 'Không thể ghi nhận bill: {0}',
+    recurring_due_meta: 'Kỳ tới: {0}',
+    recurring_owner_meta: 'Người tạo: {0}',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -414,6 +440,32 @@ const translations = {
     category_budget_on_track: 'OK',
     category_budget_at_risk: 'Near limit',
     category_budget_over_status: 'Over',
+    recurring_radar_title: 'Recurring bills & subscriptions',
+    recurring_manager_title: 'Recurring bills & subscriptions',
+    recurring_desc_label: 'Bill name',
+    recurring_amount_label: 'Amount',
+    recurring_category_label: 'Category',
+    recurring_cadence_label: 'Cadence',
+    recurring_next_due_label: 'Next due',
+    recurring_save: 'Save recurring bill',
+    recurring_saving: 'Saving recurring bill...',
+    recurring_saved: 'Recurring bill saved!',
+    recurring_empty: 'No recurring bills yet. Add rent, internet, Netflix, tuition, or other fixed bills so the app can remind you on time.',
+    recurring_radar_empty: 'No bills are due soon. Radar is clear.',
+    recurring_confirm_due: 'Record this cycle',
+    recurring_delete: 'Delete recurring bill',
+    recurring_deleted: 'Recurring bill deleted',
+    recurring_due_overdue: 'Overdue',
+    recurring_due_soon: 'Due soon',
+    recurring_due_scheduled: 'Scheduled',
+    recurring_weekly: 'Weekly',
+    recurring_monthly: 'Monthly',
+    recurring_yearly: 'Yearly',
+    recurring_invalid: 'Description, amount, category, and next due date are required',
+    recurring_confirmed: 'This cycle has been recorded',
+    recurring_confirm_failed: 'Could not record recurring bill: {0}',
+    recurring_due_meta: 'Next due: {0}',
+    recurring_owner_meta: 'Owner: {0}',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -661,6 +713,8 @@ function applyLanguage() {
   renderDashboardOnboarding();
   renderBudgetOverview();
   renderBudgetSettingsUI();
+  renderRecurringManager();
+  renderRecurringRadar();
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -678,6 +732,8 @@ const state = {
   currency: 'VND',   // family currency
   voiceDrafts: [],
   voiceTranscript: '',
+  recurring: [],
+  recurringRadar: [],
 };
 
 function isPersonalWorkspace() {
@@ -694,6 +750,12 @@ function isFirstRun() {
 function setNodeText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function recurringCadenceLabel(cadence) {
+  if (cadence === 'weekly') return t('recurring_weekly');
+  if (cadence === 'yearly') return t('recurring_yearly');
+  return t('recurring_monthly');
 }
 
 function updateWorkspaceCopy() {
@@ -945,6 +1007,137 @@ function renderBudgetSettingsUI() {
       btn.textContent = t('save_budget_settings');
     }
   });
+}
+
+function populateRecurringCategorySelect() {
+  const select = document.getElementById('recurring-category');
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value="">' + t('select_category') + '</option>';
+  state.categories.forEach(category => {
+    const option = document.createElement('option');
+    option.value = category.id;
+    option.textContent = `${category.icon || '📦'} ${category.name}`;
+    if (category.id === current) option.selected = true;
+    select.appendChild(option);
+  });
+}
+
+function renderRecurringManager() {
+  const listEl = document.getElementById('recurring-list');
+  if (!listEl) return;
+
+  setNodeText('recurring-manager-title', t('recurring_manager_title'));
+  setNodeText('recurring-desc-label', t('recurring_desc_label'));
+  setNodeText('recurring-amount-label', t('recurring_amount_label'));
+  setNodeText('recurring-category-label', t('recurring_category_label'));
+  setNodeText('recurring-cadence-label', t('recurring_cadence_label'));
+  setNodeText('recurring-next-due-label', t('recurring_next_due_label'));
+  setNodeText('save-recurring-btn', t('recurring_save'));
+
+  if (!state.recurring.length) {
+    listEl.innerHTML = `<div class="budget-empty-note">${t('recurring_empty')}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = state.recurring.map(item => `
+    <div class="recurring-item">
+      <div class="recurring-item-head">
+        <div>
+          <div class="recurring-item-title">${escHtml(item.description)}</div>
+          <div class="recurring-item-meta">
+            ${formatMoney(item.amount)} • ${escHtml(item.category_icon || '📦')} ${escHtml(item.category_name)} • ${recurringCadenceLabel(item.cadence)}
+          </div>
+        </div>
+        <span class="recurring-status ${escHtml(item.due_status)}">${t(`recurring_due_${item.due_status}`)}</span>
+      </div>
+      <div class="recurring-item-meta">${t('recurring_due_meta', formatDate(item.next_due_date))}</div>
+      <div class="recurring-item-actions">
+        <button class="btn btn-secondary btn-sm recurring-confirm-btn" data-id="${escHtml(item.id)}">${t('recurring_confirm_due')}</button>
+        <button class="btn btn-icon btn-sm recurring-delete-btn" data-id="${escHtml(item.id)}" title="${t('recurring_delete')}">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.recurring-confirm-btn').forEach(btn => {
+    btn.addEventListener('click', () => confirmRecurringDue(btn.dataset.id));
+  });
+  listEl.querySelectorAll('.recurring-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteRecurring(btn.dataset.id));
+  });
+}
+
+function renderRecurringRadar() {
+  const listEl = document.getElementById('recurring-radar-list');
+  if (!listEl) return;
+
+  setNodeText('recurring-radar-title', t('recurring_radar_title'));
+
+  if (!state.recurringRadar.length) {
+    listEl.innerHTML = `<div class="budget-empty-note">${t('recurring_radar_empty')}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = state.recurringRadar.map(item => `
+    <div class="recurring-item">
+      <div class="recurring-item-head">
+        <div>
+          <div class="recurring-item-title">${escHtml(item.description)}</div>
+          <div class="recurring-item-meta">${formatMoney(item.amount)} • ${escHtml(item.category_icon || '📦')} ${escHtml(item.category_name)}</div>
+        </div>
+        <span class="recurring-status ${escHtml(item.due_status)}">${t(`recurring_due_${item.due_status}`)}</span>
+      </div>
+      <div class="recurring-item-meta">
+        ${t('recurring_due_meta', formatDate(item.next_due_date))} • ${t('recurring_owner_meta', item.user_name)}
+      </div>
+      <div class="recurring-item-actions">
+        <button class="btn btn-primary btn-sm recurring-confirm-btn" data-id="${escHtml(item.id)}">${t('recurring_confirm_due')}</button>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.recurring-confirm-btn').forEach(btn => {
+    btn.addEventListener('click', () => confirmRecurringDue(btn.dataset.id));
+  });
+}
+
+async function loadRecurring() {
+  if (!state.user) return;
+  try {
+    const data = await api('/api/recurring');
+    state.recurring = data.recurring || [];
+    state.recurringRadar = data.radar || [];
+    renderRecurringManager();
+    renderRecurringRadar();
+  } catch (err) {
+    if (!err.message.includes('Not in a family')) {
+      toast(t('failed', err.message), 'error');
+    }
+  }
+}
+
+async function confirmRecurringDue(id) {
+  try {
+    await api('/api/recurring', {
+      method: 'PUT',
+      body: JSON.stringify({ action: 'confirm_due', id }),
+    });
+    toast(t('recurring_confirmed'), 'success');
+    await loadRecurring();
+    loadDashboard();
+  } catch (err) {
+    toast(t('recurring_confirm_failed', err.message), 'error');
+  }
+}
+
+async function deleteRecurring(id) {
+  try {
+    await api(`/api/recurring?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    toast(t('recurring_deleted'), 'success');
+    await loadRecurring();
+  } catch (err) {
+    toast(t('failed', err.message), 'error');
+  }
 }
 
 // ── Currency formatter ────────────────────────────────────────────────────
@@ -1460,6 +1653,7 @@ async function loadDashboard() {
 
     const expData = await api(`/api/expenses?from=${range.from}&to=${range.to}&limit=10`);
     renderExpenseList(document.getElementById('recent-expenses'), expData.expenses);
+    loadRecurring();
   } catch (err) {
     if (err.message.includes('Not in a family')) {
       renderNeedFamily('recent-expenses');
@@ -1779,8 +1973,13 @@ async function prepareAddExpense() {
 
   await loadCategories();
   populateCategorySelects();
+  populateRecurringCategorySelect();
   renderVoiceDrafts();
   setVoiceTranscript(state.voiceTranscript);
+  if (!document.getElementById('recurring-next-due').value) {
+    document.getElementById('recurring-next-due').value = todayISO();
+  }
+  loadRecurring();
 }
 
 async function loadCategories() {
@@ -1789,6 +1988,7 @@ async function loadCategories() {
     state.categories = data.categories || [];
     renderCustomCategoriesList();
     renderBudgetSettingsUI();
+    populateRecurringCategorySelect();
   } catch (err) {
     if (!err.message.includes('Not in a family')) {
       toast(t('failed_load_categories'), 'error');
@@ -3992,6 +4192,46 @@ document.addEventListener('DOMContentLoaded', () => {
       voiceBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       voiceBtn?.focus();
     }, 120);
+  });
+  document.getElementById('save-recurring-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('save-recurring-btn');
+    const description = document.getElementById('recurring-desc').value.trim();
+    const amount = Number(document.getElementById('recurring-amount').value);
+    const categoryId = document.getElementById('recurring-category').value;
+    const cadence = document.getElementById('recurring-cadence').value;
+    const nextDueDate = document.getElementById('recurring-next-due').value;
+
+    if (!description || !amount || !categoryId || !nextDueDate) {
+      toast(t('recurring_invalid'), 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = t('recurring_saving');
+    try {
+      await api('/api/recurring', {
+        method: 'POST',
+        body: JSON.stringify({
+          description,
+          amount,
+          category_id: categoryId,
+          cadence,
+          next_due_date: nextDueDate,
+        }),
+      });
+      document.getElementById('recurring-desc').value = '';
+      document.getElementById('recurring-amount').value = '';
+      document.getElementById('recurring-category').value = '';
+      document.getElementById('recurring-cadence').value = 'monthly';
+      document.getElementById('recurring-next-due').value = todayISO();
+      toast(t('recurring_saved'), 'success');
+      await loadRecurring();
+    } catch (err) {
+      toast(t('failed', err.message), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('recurring_save');
+    }
   });
 
   // Profile & password

@@ -1017,6 +1017,73 @@ button:focus-visible {
   text-align: center;
 }
 
+.recurring-form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recurring-item {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] .recurring-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.recurring-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recurring-item-title {
+  font-weight: 700;
+}
+
+.recurring-item-meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.recurring-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recurring-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(44, 122, 88, 0.12);
+  color: var(--success);
+}
+
+.recurring-status.due_soon {
+  background: rgba(217, 145, 37, 0.12);
+  color: var(--warning);
+}
+
+.recurring-status.overdue {
+  background: rgba(191, 78, 54, 0.12);
+  color: var(--danger);
+}
+
 .card-title,
 .section-title {
   font-size: 1.2rem;

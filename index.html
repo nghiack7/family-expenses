@@ -325,6 +325,18 @@
                   <div class="spinner"></div>
                 </div>
               </article>
+
+              <article class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker">Radar</div>
+                    <span class="card-title" id="recurring-radar-title">Bill lặp & subscriptions</span>
+                  </div>
+                </div>
+                <div class="expense-list" id="recurring-radar-list">
+                  <div class="spinner"></div>
+                </div>
+              </article>
             </section>
           </div>
 
@@ -458,6 +470,49 @@
                     <button class="btn btn-secondary" id="add-cat-btn">Add</button>
                   </div>
                   <div id="custom-categories-list"></div>
+                </article>
+
+                <article class="card">
+                  <div class="card-header">
+                    <div>
+                      <div class="card-kicker">Recurring</div>
+                      <span class="card-title" id="recurring-manager-title">Bill lặp & subscriptions</span>
+                    </div>
+                  </div>
+                  <div class="recurring-form" id="recurring-form">
+                    <div class="form-group">
+                      <label class="form-label" for="recurring-desc" id="recurring-desc-label">Tên bill</label>
+                      <input type="text" id="recurring-desc" maxlength="160" placeholder="Netflix, tiền nhà, học phí..." />
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="recurring-amount" id="recurring-amount-label">Số tiền</label>
+                        <input type="number" id="recurring-amount" min="1" step="1" placeholder="150000" />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="recurring-category" id="recurring-category-label">Danh mục</label>
+                        <select id="recurring-category"></select>
+                      </div>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="recurring-cadence" id="recurring-cadence-label">Chu kỳ</label>
+                        <select id="recurring-cadence">
+                          <option value="monthly">Hàng tháng</option>
+                          <option value="weekly">Hàng tuần</option>
+                          <option value="yearly">Hàng năm</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="recurring-next-due" id="recurring-next-due-label">Kỳ tiếp theo</label>
+                        <input type="date" id="recurring-next-due" />
+                      </div>
+                    </div>
+                    <button class="btn btn-secondary btn-full" id="save-recurring-btn" type="button">Lưu bill lặp</button>
+                  </div>
+                  <div class="expense-list" id="recurring-list">
+                    <div class="spinner"></div>
+                  </div>
                 </article>
               </div>
             </section>
