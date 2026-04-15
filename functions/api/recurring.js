@@ -56,11 +56,14 @@ export async function onRequestGet(context) {
 
   const recurring = await env.DB.prepare(
     `SELECT r.id, r.description, r.amount, r.cadence, r.next_due_date, r.is_active,
-            r.category_id, c.name as category_name, c.icon as category_icon,
-            u.id as user_id, u.name as user_name
+            r.category_id,
+            COALESCE(c.name, 'Unknown category') as category_name,
+            COALESCE(c.icon, '📦') as category_icon,
+            u.id as user_id,
+            COALESCE(u.name, 'Unknown member') as user_name
      FROM recurring_expenses r
-     JOIN categories c ON c.id = r.category_id
-     JOIN users u ON u.id = r.user_id
+     LEFT JOIN categories c ON c.id = r.category_id
+     LEFT JOIN users u ON u.id = r.user_id
      WHERE r.family_id = ?
      ORDER BY r.is_active DESC, r.next_due_date ASC, r.created_at DESC`
   ).bind(membership.family_id).all();

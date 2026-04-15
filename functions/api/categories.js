@@ -100,6 +100,12 @@ export async function onRequestDelete(context) {
 
   if (inUse.cnt > 0) return jsonError('Category has expenses, cannot delete', 409);
 
+  const recurringUse = await env.DB.prepare(
+    `SELECT COUNT(*) as cnt FROM recurring_expenses WHERE category_id = ?`
+  ).bind(id).first();
+
+  if (recurringUse.cnt > 0) return jsonError('Category is used by recurring bills, cannot delete', 409);
+
   await env.DB.prepare(`DELETE FROM categories WHERE id = ?`).bind(id).run();
 
   return jsonResp({ ok: true });

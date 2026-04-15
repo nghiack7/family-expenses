@@ -89,7 +89,7 @@ const translations = {
     budget_no_plan_body: 'Đặt một mức trần chi tiêu để app bắt đầu cảnh báo khi bạn đi lệch kế hoạch.',
     budget_set_cta: 'Đặt ngân sách',
     budget_settings: 'Ngân sách tháng',
-    budget_settings_desc: 'Đặt trần chi tiêu tổng và theo danh mục để app cảnh báo sớm trước khi ngân sách vỡ.',
+    budget_settings_desc: 'Đặt trần chi tiêu, thu nhập tháng và limit theo danh mục để app cảnh báo sớm trước khi ngân sách hoặc sức chịu đựng bị vỡ.',
     monthly_budget_total: 'Ngân sách tổng mỗi tháng',
     monthly_budget_placeholder: 'vd: 15000000',
     category_budget_optional: 'Ngân sách theo danh mục',
@@ -131,23 +131,28 @@ const translations = {
     recurring_confirm_failed: 'Không thể ghi nhận bill: {0}',
     recurring_due_meta: 'Kỳ tới: {0}',
     recurring_owner_meta: 'Người tạo: {0}',
+    recurring_load_failed: 'Không tải được bill lặp lúc này. Thử lại một lần nữa.',
+    recurring_retry: 'Tải lại',
     forecast_card_title: 'Dự báo hụt tiền',
-    forecast_intro: 'Ước tính 7/30 ngày tới dựa trên bill lặp, ngân sách tháng và nhịp chi hiện tại.',
+    forecast_intro: 'Ước tính 7/30 ngày tới dựa trên bill lặp, thu nhập tháng, ngân sách tháng và nhịp chi hiện tại.',
     forecast_status_safe: 'Còn dư',
     forecast_status_watch: 'Căng',
     forecast_status_deficit: 'Sắp hụt',
     forecast_window_days: '{0} ngày tới',
     forecast_budget_runway: 'Runway ngân sách',
+    forecast_income_runway: 'Runway thu nhập',
     forecast_fixed_bills: 'Bill lặp',
     forecast_spend_pace: 'Nhịp chi hiện tại',
     forecast_buffer: 'Buffer còn lại',
     forecast_no_budget_title: 'Chưa đủ dữ liệu để dự báo',
-    forecast_no_budget_body: 'Forecast cần ngân sách tháng để tính runway. Đặt trần chi tiêu trước, rồi app mới dự báo lúc nào bạn sắp hụt tiền.',
+    forecast_no_budget_body: 'Forecast cần ít nhất một trong hai: thu nhập tháng hoặc ngân sách tháng. Nhập một mốc vận hành trước, rồi app mới dự báo lúc nào bạn sắp hụt tiền.',
     forecast_safe_summary: 'Còn dư {0}. {1} bill lặp sắp tới chiếm {2}, nhịp chi hiện tại vẫn nằm trong runway.',
     forecast_watch_summary: 'Buffer chỉ còn {0}. {1} bill lặp sắp tới đang đẩy bạn sát trần.',
     forecast_deficit_summary: 'Nếu giữ nhịp hiện tại, bạn có thể hụt khoảng {0} vào {1}.',
     forecast_recurring_count: '{0} bill',
     forecast_set_budget: 'Đặt ngân sách',
+    budget_income_hint: 'Thu nhập tháng giúp app biết 25 triệu là bình thường hay đang vượt sức chịu đựng.',
+    monthly_income_invalid: 'Thu nhập tháng phải lớn hơn hoặc bằng 0',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -441,7 +446,7 @@ const translations = {
     budget_no_plan_body: 'Set a spending ceiling and the app will start warning you before the month gets out of hand.',
     budget_set_cta: 'Set budget',
     budget_settings: 'Monthly budget',
-    budget_settings_desc: 'Set a total monthly ceiling and optional category limits so the app can warn you early.',
+    budget_settings_desc: 'Set a monthly ceiling, monthly income, and optional category limits so the app can warn you before the plan or carrying capacity breaks.',
     monthly_budget_total: 'Total monthly budget',
     monthly_budget_placeholder: 'e.g. 15000000',
     category_budget_optional: 'Category budgets',
@@ -483,23 +488,28 @@ const translations = {
     recurring_confirm_failed: 'Could not record recurring bill: {0}',
     recurring_due_meta: 'Next due: {0}',
     recurring_owner_meta: 'Owner: {0}',
+    recurring_load_failed: 'Could not load recurring bills right now. Try again.',
+    recurring_retry: 'Retry',
     forecast_card_title: 'Cashflow forecast',
-    forecast_intro: 'Estimated next 7 and 30 days using recurring bills, monthly budget, and current spending pace.',
+    forecast_intro: 'Estimated next 7 and 30 days using recurring bills, monthly income, monthly budget, and current spending pace.',
     forecast_status_safe: 'Safe',
     forecast_status_watch: 'Tight',
     forecast_status_deficit: 'Shortfall',
     forecast_window_days: 'Next {0} days',
     forecast_budget_runway: 'Budget runway',
+    forecast_income_runway: 'Income runway',
     forecast_fixed_bills: 'Recurring bills',
     forecast_spend_pace: 'Current pace',
     forecast_buffer: 'Remaining buffer',
     forecast_no_budget_title: 'Forecast is not ready yet',
-    forecast_no_budget_body: 'The forecast needs a monthly budget to calculate runway. Set a ceiling first so the app can estimate when you may run short.',
+    forecast_no_budget_body: 'The forecast needs at least one operating reference: monthly income or monthly budget. Set one first so the app can estimate when you may run short.',
     forecast_safe_summary: '{0} of buffer remains. {1} upcoming recurring bills add up to {2}, and your current pace is still inside runway.',
     forecast_watch_summary: 'Only {0} of buffer remains. {1} upcoming recurring bills are pushing you close to the limit.',
     forecast_deficit_summary: 'If this pace holds, you may run short by about {0} on {1}.',
     forecast_recurring_count: '{0} bills',
     forecast_set_budget: 'Set budget',
+    budget_income_hint: 'Monthly income tells the app whether 25M spend is normal or already beyond what the household can carry.',
+    monthly_income_invalid: 'Monthly income must be zero or higher',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -825,6 +835,7 @@ function renderDashboardOnboarding() {
 function getBudgetSettings() {
   const budget = state.family?.budget_settings || {};
   const monthlyTotal = Number(budget.monthly_total) || 0;
+  const monthlyIncome = Number(budget.monthly_income) || 0;
   const categoryLimits = Object.fromEntries(
     Object.entries(budget.category_limits || {})
       .map(([categoryId, amount]) => [categoryId, Number(amount) || 0])
@@ -832,6 +843,7 @@ function getBudgetSettings() {
   );
   return {
     monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+    monthly_income: monthlyIncome > 0 ? monthlyIncome : 0,
     category_limits: categoryLimits,
   };
 }
@@ -859,6 +871,12 @@ function getForecastTone(statusKey) {
   return '';
 }
 
+function formatOptionalMoney(amount) {
+  if (amount > 0) return formatMoney(amount);
+  if (amount < 0) return formatSignedMoney(amount);
+  return '—';
+}
+
 function buildCashflowForecastWindow(windowDays) {
   if (!isCurrentMonthDashboard() || !state.stats || !state.family) return null;
 
@@ -870,15 +888,22 @@ function buildCashflowForecastWindow(windowDays) {
   const monthDays = daysInMonth(year, month);
   const averageDailySpend = spent / Math.max(todayDay, 1);
 
-  if (!settings.monthly_total) {
+  if (!settings.monthly_total && !settings.monthly_income) {
     return { windowDays, needsBudget: true };
   }
 
   const remainingBudget = Math.max(0, settings.monthly_total - spent);
+  const remainingIncome = settings.monthly_income - spent;
   const daysUntilMonthEnd = monthDays - todayDay + 1;
   const overflowDays = Math.max(0, windowDays - daysUntilMonthEnd);
   const dailyBudgetAllowance = settings.monthly_total / monthDays;
-  const budgetRunway = remainingBudget + (overflowDays * dailyBudgetAllowance);
+  const dailyIncomeAllowance = settings.monthly_income / monthDays;
+  const budgetRunway = settings.monthly_total > 0
+    ? remainingBudget + (overflowDays * dailyBudgetAllowance)
+    : 0;
+  const incomeRunway = settings.monthly_income > 0
+    ? remainingIncome + (overflowDays * dailyIncomeAllowance)
+    : 0;
   const windowEnd = addDaysISO(today, windowDays - 1);
   const dueItems = (state.recurring || [])
     .filter(item => Number(item.is_active) && item.next_due_date >= today && item.next_due_date <= windowEnd)
@@ -886,21 +911,30 @@ function buildCashflowForecastWindow(windowDays) {
   const fixedBills = dueItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const spendPace = averageDailySpend * windowDays;
   const projectedOutflow = fixedBills + spendPace;
-  const buffer = budgetRunway - projectedOutflow;
-  const ratio = budgetRunway > 0 ? projectedOutflow / budgetRunway : 1;
+  const availableRunways = [];
+  if (settings.monthly_total > 0) availableRunways.push(budgetRunway);
+  if (settings.monthly_income > 0) availableRunways.push(incomeRunway);
+  const operatingRunway = availableRunways.length ? Math.min(...availableRunways) : 0;
+  const buffer = operatingRunway - projectedOutflow;
+  const ratio = operatingRunway > 0 ? projectedOutflow / operatingRunway : 1;
   const statusKey = buffer < 0 ? 'deficit' : ratio >= 0.85 ? 'watch' : 'safe';
   const dueByDate = new Map();
   dueItems.forEach(item => {
     dueByDate.set(item.next_due_date, (dueByDate.get(item.next_due_date) || 0) + Number(item.amount || 0));
   });
 
-  let rollingBuffer = remainingBudget;
+  let rollingBuffer = settings.monthly_total > 0 && settings.monthly_income > 0
+    ? Math.min(remainingBudget, remainingIncome)
+    : (settings.monthly_total > 0 ? remainingBudget : remainingIncome);
   let shortfallDate = '';
   const monthPrefix = `${year}-${String(month).padStart(2, '0')}`;
   for (let offset = 0; offset < windowDays; offset += 1) {
     const cursor = addDaysISO(today, offset);
     if (!cursor.startsWith(monthPrefix)) {
-      rollingBuffer += dailyBudgetAllowance;
+      const overflowRunways = [];
+      if (settings.monthly_total > 0) overflowRunways.push(dailyBudgetAllowance);
+      if (settings.monthly_income > 0) overflowRunways.push(dailyIncomeAllowance);
+      rollingBuffer += overflowRunways.length ? Math.min(...overflowRunways) : 0;
     }
     rollingBuffer -= averageDailySpend;
     rollingBuffer -= dueByDate.get(cursor) || 0;
@@ -915,6 +949,8 @@ function buildCashflowForecastWindow(windowDays) {
     statusKey,
     className: getForecastTone(statusKey),
     budgetRunway,
+    incomeRunway,
+    operatingRunway,
     fixedBills,
     spendPace,
     buffer,
@@ -1001,7 +1037,11 @@ function renderCashflowForecast() {
       <div class="forecast-metrics">
         <div class="forecast-metric">
           <div class="forecast-metric-label">${t('forecast_budget_runway')}</div>
-          <div class="forecast-metric-value">${formatMoney(item.budgetRunway)}</div>
+          <div class="forecast-metric-value">${formatOptionalMoney(item.budgetRunway)}</div>
+        </div>
+        <div class="forecast-metric">
+          <div class="forecast-metric-label">${t('forecast_income_runway')}</div>
+          <div class="forecast-metric-value">${formatOptionalMoney(item.incomeRunway)}</div>
         </div>
         <div class="forecast-metric">
           <div class="forecast-metric-label">${t('forecast_fixed_bills')}</div>
@@ -1151,6 +1191,11 @@ function renderBudgetSettingsUI() {
         <input type="number" id="budget-monthly-total" min="0" step="1" ${isOwner ? '' : 'disabled'} placeholder="${t('monthly_budget_placeholder')}" value="${settings.monthly_total || ''}" />
       </div>
       <div class="form-group">
+        <label class="form-label" for="budget-monthly-income">${t('monthly_income')}</label>
+        <input type="number" id="budget-monthly-income" min="0" step="1" ${isOwner ? '' : 'disabled'} placeholder="${t('monthly_budget_placeholder')}" value="${settings.monthly_income || ''}" />
+        <div class="form-hint">${t('budget_income_hint')}</div>
+      </div>
+      <div class="form-group">
         <div class="form-label">${t('category_budget_optional')}</div>
         <div class="form-hint">${t('category_budget_hint')}</div>
       </div>
@@ -1179,7 +1224,14 @@ function renderBudgetSettingsUI() {
   document.getElementById('save-budget-settings-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('save-budget-settings-btn');
     const monthlyTotal = Number(document.getElementById('budget-monthly-total').value || 0);
+    const monthlyIncome = Number(document.getElementById('budget-monthly-income').value || 0);
     const categoryLimits = {};
+
+    if (monthlyIncome < 0) {
+      toast(t('monthly_income_invalid'), 'error');
+      document.getElementById('budget-monthly-income').focus();
+      return;
+    }
 
     for (const input of categoriesGrid.querySelectorAll('[data-budget-category-id]')) {
       const value = input.value.trim();
@@ -1202,6 +1254,7 @@ function renderBudgetSettingsUI() {
         body: JSON.stringify({
           action: 'save_budget_settings',
           monthly_total: monthlyTotal,
+          monthly_income: monthlyIncome,
           category_limits: categoryLimits,
         }),
       });
@@ -1311,6 +1364,21 @@ function renderRecurringRadar() {
   });
 }
 
+function renderRecurringLoadError() {
+  const content = `
+    <div class="budget-empty-note">
+      ${t('recurring_load_failed')}<br /><br />
+      <button class="btn btn-secondary btn-sm recurring-retry-btn" type="button">${t('recurring_retry')}</button>
+    </div>`;
+  const manager = document.getElementById('recurring-list');
+  const radar = document.getElementById('recurring-radar-list');
+  if (manager) manager.innerHTML = content;
+  if (radar) radar.innerHTML = content;
+  document.querySelectorAll('.recurring-retry-btn').forEach(btn => {
+    btn.addEventListener('click', () => loadRecurring());
+  });
+}
+
 async function loadRecurring() {
   if (!state.user) return;
   try {
@@ -1321,6 +1389,9 @@ async function loadRecurring() {
     renderRecurringRadar();
     renderCashflowForecast();
   } catch (err) {
+    state.recurring = [];
+    state.recurringRadar = [];
+    renderRecurringLoadError();
     renderCashflowForecast();
     if (!err.message.includes('Not in a family')) {
       toast(t('failed', err.message), 'error');

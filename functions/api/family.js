@@ -27,10 +27,11 @@ function jsonError(msg, status = 400) {
 }
 
 function parseBudgetSettings(raw) {
-  if (!raw) return { monthly_total: 0, category_limits: {} };
+  if (!raw) return { monthly_total: 0, monthly_income: 0, category_limits: {} };
   try {
     const parsed = JSON.parse(raw);
     const monthlyTotal = Number(parsed.monthly_total) || 0;
+    const monthlyIncome = Number(parsed.monthly_income) || 0;
     const categoryLimits = Object.fromEntries(
       Object.entries(parsed.category_limits || {})
         .map(([categoryId, amount]) => [categoryId, Number(amount) || 0])
@@ -39,10 +40,11 @@ function parseBudgetSettings(raw) {
 
     return {
       monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+      monthly_income: monthlyIncome > 0 ? monthlyIncome : 0,
       category_limits: categoryLimits,
     };
   } catch {
-    return { monthly_total: 0, category_limits: {} };
+    return { monthly_total: 0, monthly_income: 0, category_limits: {} };
   }
 }
 
@@ -438,7 +440,9 @@ export async function onRequestPut(context) {
     if (membership.role !== 'owner') return jsonError('Only the owner can update budgets', 403);
 
     const monthlyTotal = Number(body.monthly_total) || 0;
+    const monthlyIncome = Number(body.monthly_income) || 0;
     if (monthlyTotal < 0) return jsonError('Monthly budget must be zero or positive', 400);
+    if (monthlyIncome < 0) return jsonError('Monthly income must be zero or positive', 400);
 
     const categoryLimits = body.category_limits && typeof body.category_limits === 'object'
       ? Object.fromEntries(
@@ -460,6 +464,7 @@ export async function onRequestPut(context) {
 
     const settings = JSON.stringify({
       monthly_total: monthlyTotal > 0 ? monthlyTotal : 0,
+      monthly_income: monthlyIncome > 0 ? monthlyIncome : 0,
       category_limits: categoryLimits,
     });
 
