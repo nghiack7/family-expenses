@@ -1358,16 +1358,26 @@ button:focus-visible {
 
 .ai-fab {
   position: fixed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   right: 1.5rem;
   bottom: 6.6rem;
   z-index: 120;
   width: 64px;
   height: 64px;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), #f0ad7d);
   color: #fff;
   box-shadow: var(--shadow-md);
+  line-height: 1;
+  appearance: none;
+}
+
+.ai-fab .material-symbols-outlined {
+  font-size: 1.5rem;
 }
 
 .ai-modal-overlay {
