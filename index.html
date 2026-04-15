@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Family Expenses" />
-  <title>Family Expenses</title>
+  <title data-i18n="app_title">Family Expenses</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="/icons/app-icon.svg" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -25,32 +25,32 @@
     <div id="login-page" class="login-page" style="display:none">
       <div class="login-shell">
         <section class="login-story">
-          <div class="eyebrow">Family Expenses</div>
+          <div class="eyebrow" data-i18n="login_story_eyebrow">Family Expenses</div>
           <h1 data-i18n="login_title">Chi tiêu gia đình</h1>
           <p data-i18n="login_subtitle">Quản lý chi tiêu, biết tiền đi đâu mỗi ngày.</p>
           <div class="login-story-grid">
             <article class="login-story-card">
               <span class="material-symbols-outlined">dashboard</span>
-              <strong>Tổng quan rõ ràng</strong>
-              <span>Xem tháng này, danh mục lớn nhất và biến động ngay trên một màn hình.</span>
+              <strong data-i18n="login_story_card_overview_title">Tổng quan rõ ràng</strong>
+              <span data-i18n="login_story_card_overview_body">Xem tháng này, danh mục lớn nhất và biến động ngay trên một màn hình.</span>
             </article>
             <article class="login-story-card">
               <span class="material-symbols-outlined">keyboard_voice</span>
-              <strong>Nhập nhanh bằng giọng nói</strong>
-              <span>Nói một lần, app tách thành nhiều draft để bạn sửa trước khi lưu.</span>
+              <strong data-i18n="login_story_card_voice_title">Nhập nhanh bằng giọng nói</strong>
+              <span data-i18n="login_story_card_voice_body">Nói một lần, app tách thành nhiều draft để bạn sửa trước khi lưu.</span>
             </article>
             <article class="login-story-card">
               <span class="material-symbols-outlined">family_restroom</span>
-              <strong>Dùng chung cho cả nhà</strong>
-              <span>Theo dõi người chi, danh mục và lịch sử trong cùng một không gian.</span>
+              <strong data-i18n="login_story_card_family_title">Dùng chung cho cả nhà</strong>
+              <span data-i18n="login_story_card_family_body">Theo dõi người chi, danh mục và lịch sử trong cùng một không gian.</span>
             </article>
           </div>
         </section>
 
         <section class="login-card">
-          <div class="login-card-badge">Household Ledger</div>
-          <h2>Welcome back</h2>
-          <p class="login-card-copy">Đăng nhập để tiếp tục quản lý chi tiêu gia đình với giao diện mới gọn và dễ dùng hơn.</p>
+          <div class="login-card-badge" data-i18n="login_card_badge">Household Ledger</div>
+          <h2 data-i18n="login_card_welcome">Welcome back</h2>
+          <p class="login-card-copy" data-i18n="login_card_copy">Đăng nhập để tiếp tục quản lý chi tiêu gia đình với giao diện mới gọn và dễ dùng hơn.</p>
 
           <div class="google-btn-wrapper">
             <div id="google-signin-btn"></div>
@@ -61,19 +61,19 @@
           <form id="email-auth-form">
             <div class="form-group" id="auth-name-group" style="display:none">
               <label class="form-label" for="auth-name" data-i18n="full_name">Họ và tên</label>
-              <input type="text" id="auth-name" placeholder="Nguyen Van A" autocomplete="name" />
+              <input type="text" id="auth-name" data-i18n="auth_name_placeholder" placeholder="Nguyen Van A" autocomplete="name" />
             </div>
             <div class="form-group" id="auth-username-group" style="display:none">
               <label class="form-label" for="auth-username" data-i18n="username">Tên đăng nhập <span class="subtle-inline" data-i18n="username_optional">(không bắt buộc)</span></label>
-              <input type="text" id="auth-username" placeholder="e.g. nghia_nguyen" autocomplete="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30" />
+              <input type="text" id="auth-username" data-i18n="auth_username_placeholder" placeholder="e.g. nghia_nguyen" autocomplete="username" pattern="[a-zA-Z0-9_]+" minlength="3" maxlength="30" />
             </div>
             <div class="form-group">
               <label class="form-label" for="auth-email" id="auth-email-label" data-i18n="email">Email</label>
-              <input type="text" id="auth-email" placeholder="you@example.com" required autocomplete="email" />
+              <input type="text" id="auth-email" data-i18n="auth_email_placeholder" placeholder="you@example.com" required autocomplete="email" />
             </div>
             <div class="form-group">
               <label class="form-label" for="auth-password" data-i18n="password">Mật khẩu</label>
-              <input type="password" id="auth-password" placeholder="Ít nhất 8 ký tự" required autocomplete="current-password" minlength="8" />
+              <input type="password" id="auth-password" data-i18n="password_placeholder" placeholder="Ít nhất 8 ký tự" required autocomplete="current-password" minlength="8" />
             </div>
             <div id="email-auth-error" class="form-error" style="display:none"></div>
             <button type="submit" class="btn btn-primary btn-full" id="email-auth-btn" data-i18n="sign_in">Đăng nhập</button>
@@ -99,8 +99,8 @@
                 <span class="material-symbols-outlined">savings</span>
               </div>
               <div>
-                <span>Household</span>
-                <strong>Flow</strong>
+                <span data-i18n="nav_brand_prefix">Household</span>
+                <strong data-i18n="nav_brand_suffix">Flow</strong>
               </div>
             </div>
 
@@ -126,8 +126,8 @@
 
           <div class="sidebar-bottom">
             <div class="nav-actions">
-              <button class="lang-toggle" id="lang-toggle" title="Switch language">EN</button>
-              <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+              <button class="lang-toggle" id="lang-toggle" data-i18n-title="lang_toggle_title" title="Switch language">EN</button>
+              <button class="theme-toggle" id="theme-toggle" data-i18n-title="theme_toggle_title" title="Toggle theme">
                 <span class="material-symbols-outlined">dark_mode</span>
               </button>
             </div>
@@ -141,8 +141,8 @@
         <main class="main app-main">
           <header class="topbar">
             <div>
-              <div class="eyebrow">Family Operating System</div>
-              <h1 class="topbar-title">Money with context, not clutter.</h1>
+              <div class="eyebrow" data-i18n="topbar_eyebrow">Family Operating System</div>
+              <h1 class="topbar-title" data-i18n="topbar_title">Money with context, not clutter.</h1>
             </div>
             <div class="topbar-actions">
               <button class="btn btn-secondary btn-sm" data-view="history" data-i18n="see_all">Xem tất cả</button>
@@ -153,7 +153,7 @@
           <div id="view-dashboard" class="view">
             <section class="hero-panel dashboard-hero">
               <div class="hero-copy">
-                <div class="eyebrow">Overview</div>
+                <div class="eyebrow" data-i18n="dashboard_eyebrow">Overview</div>
                 <h2 id="dashboard-hero-title">Chi tiêu gia đình trong một nhịp nhìn.</h2>
                 <p id="dashboard-hero-body">Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.</p>
               </div>
@@ -164,11 +164,11 @@
                   <button class="view-mode-btn" data-mode="year" id="mode-year">Năm</button>
                 </div>
                 <div class="month-nav">
-                  <button class="btn btn-icon" id="prev-month" aria-label="Previous period">
+                  <button class="btn btn-icon" id="prev-month" data-i18n-aria-label="previous_period" aria-label="Previous period">
                     <span class="material-symbols-outlined">west</span>
                   </button>
                   <span class="month-label" id="month-label">Loading...</span>
-                  <button class="btn btn-icon" id="next-month" aria-label="Next period">
+                  <button class="btn btn-icon" id="next-month" data-i18n-aria-label="next_period" aria-label="Next period">
                     <span class="material-symbols-outlined">east</span>
                   </button>
                 </div>
@@ -179,7 +179,7 @@
               <article class="card onboarding-card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">First Run</div>
+                    <div class="card-kicker" data-i18n="onboarding_kicker">First Run</div>
                     <span class="card-title" id="onboarding-title">Bắt đầu trong 30 giây</span>
                   </div>
                 </div>
@@ -231,7 +231,7 @@
               <article class="card budget-card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Guardrails</div>
+                    <div class="card-kicker" data-i18n="budget_kicker">Guardrails</div>
                     <span class="card-title" id="budget-card-title">Ngân sách tháng</span>
                   </div>
                   <span class="budget-status-pill" id="budget-status-pill">On track</span>
@@ -262,7 +262,7 @@
               <article class="card forecast-card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Forecast</div>
+                    <div class="card-kicker" data-i18n="forecast_kicker">Forecast</div>
                     <span class="card-title" id="forecast-card-title">Cashflow forecast</span>
                   </div>
                   <span class="budget-status-pill" id="forecast-status-pill">Safe</span>
@@ -276,7 +276,7 @@
               <article class="card card-wide" id="daily-chart-card" style="display:none">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Pattern</div>
+                    <div class="card-kicker" data-i18n="chart_pattern_kicker">Pattern</div>
                     <span class="card-title" id="chart-title" data-i18n="daily_spending">Chi tiêu hàng ngày</span>
                   </div>
                   <div class="chart-granularity" id="chart-granularity" style="display:none">
@@ -294,7 +294,7 @@
                 <article class="card chart-card-half" id="category-donut-card" style="display:none">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Mix</div>
+                      <div class="card-kicker" data-i18n="chart_mix_kicker">Mix</div>
                       <span class="card-title" data-i18n="by_category">Theo danh mục</span>
                     </div>
                   </div>
@@ -307,7 +307,7 @@
                 <article class="card chart-card-half">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Ranking</div>
+                      <div class="card-kicker" data-i18n="chart_ranking_kicker">Ranking</div>
                       <span class="card-title" data-i18n="by_category">Theo danh mục</span>
                     </div>
                   </div>
@@ -320,7 +320,7 @@
               <article class="card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">People</div>
+                    <div class="card-kicker" data-i18n="people_kicker">People</div>
                     <span class="card-title" data-i18n="by_person">Theo thành viên</span>
                   </div>
                 </div>
@@ -330,7 +330,7 @@
               <article class="card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Latest</div>
+                    <div class="card-kicker" data-i18n="latest_kicker">Latest</div>
                     <span class="card-title" data-i18n="recent_expenses">Chi tiêu gần đây</span>
                   </div>
                   <button class="btn btn-secondary btn-sm" data-view="history" data-i18n="see_all">Xem tất cả</button>
@@ -343,7 +343,7 @@
               <article class="card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Radar</div>
+                    <div class="card-kicker" data-i18n="radar_kicker">Radar</div>
                     <span class="card-title" id="recurring-radar-title">Bill lặp & subscriptions</span>
                   </div>
                 </div>
@@ -357,14 +357,14 @@
           <div id="view-add-expense" class="view">
             <section class="hero-panel add-hero">
               <div class="hero-copy">
-                <div class="eyebrow">Capture</div>
+                <div class="eyebrow" data-i18n="add_eyebrow">Capture</div>
                 <h2 id="add-hero-title" data-i18n="add_expense">Thêm chi tiêu</h2>
                 <p id="add-hero-body">Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.</p>
               </div>
               <div class="hero-pills">
-                <span class="hero-pill">Manual</span>
-                <span class="hero-pill">Voice batch</span>
-                <span class="hero-pill">Receipt AI</span>
+                <span class="hero-pill" data-i18n="hero_pill_manual">Manual</span>
+                <span class="hero-pill" data-i18n="hero_pill_voice_batch">Voice batch</span>
+                <span class="hero-pill" data-i18n="hero_pill_receipt_ai">Receipt AI</span>
               </div>
             </section>
 
@@ -373,15 +373,15 @@
                 <article class="card voice-card voice-card-featured">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Voice Batch</div>
-                      <span class="card-title">Nói một lần, tạo nhiều draft</span>
+                      <div class="card-kicker" data-i18n="voice_batch_kicker">Voice Batch</div>
+                      <span class="card-title" data-i18n="voice_batch_title">Nói một lần, tạo nhiều draft</span>
                     </div>
                     <button type="button" class="btn btn-voice" id="voice-btn">
                       <span class="material-symbols-outlined">graphic_eq</span>
                       <span data-i18n="voice_input">Nhập bằng giọng nói</span>
                     </button>
                   </div>
-                  <p class="voice-helper">Ví dụ: “đi chợ 100k cafe 50k mua đồ chơi cho con 5k”. App sẽ tách thành từng khoản, đoán danh mục, để bạn sửa rồi mới lưu.</p>
+                  <p class="voice-helper" data-i18n="voice_batch_helper">Ví dụ: “đi chợ 100k cafe 50k mua đồ chơi cho con 5k”. App sẽ tách thành từng khoản, đoán danh mục, để bạn sửa rồi mới lưu.</p>
                   <div id="voice-status" class="voice-status" style="display:none"></div>
                   <div id="voice-transcript" class="voice-transcript" style="display:none"></div>
                 </article>
@@ -389,8 +389,8 @@
                 <article class="card draft-card" id="voice-draft-panel" style="display:none">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Draft Review</div>
-                      <span class="card-title">Danh sách bill tạm</span>
+                      <div class="card-kicker" data-i18n="draft_review_kicker">Draft Review</div>
+                      <span class="card-title" data-i18n="draft_review_title">Danh sách bill tạm</span>
                     </div>
                     <div class="draft-summary" id="voice-draft-summary">0 item</div>
                   </div>
@@ -404,8 +404,8 @@
                 <article class="card ai-extract-card">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Receipt</div>
-                      <span class="card-title">Quét hóa đơn bằng AI</span>
+                      <div class="card-kicker" data-i18n="receipt_kicker">Receipt</div>
+                      <span class="card-title" data-i18n="receipt_title">Quét hóa đơn bằng AI</span>
                     </div>
                   </div>
                   <button type="button" class="btn btn-secondary btn-full" id="ai-extract-btn">
@@ -421,14 +421,14 @@
                 <article class="card form-card">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Manual Entry</div>
-                      <span class="card-title">Thêm thủ công</span>
+                      <div class="card-kicker" data-i18n="manual_entry_kicker">Manual Entry</div>
+                      <span class="card-title" data-i18n="manual_entry_title">Thêm thủ công</span>
                     </div>
                   </div>
                   <form id="add-expense-form">
                     <div class="form-group">
                       <label class="form-label" for="exp-amount" data-i18n="amount_label">Số tiền (VND) *</label>
-                      <input type="text" id="exp-amount" name="amount" inputmode="numeric" placeholder="vd: 150,000" required autocomplete="off" />
+                      <input type="text" id="exp-amount" name="amount" inputmode="numeric" data-i18n="amount_placeholder" placeholder="vd: 150,000" required autocomplete="off" />
                       <div class="amount-shortcuts">
                         <button type="button" class="amt-btn" data-append="000">+000</button>
                         <button type="button" class="amt-btn" data-set="10000">10K</button>
@@ -444,7 +444,7 @@
 
                     <div class="form-group">
                       <label class="form-label" for="exp-desc" data-i18n="description">Mô tả</label>
-                      <input type="text" id="exp-desc" name="description" placeholder="vd: Ăn trưa Phở 24" maxlength="200" />
+                      <input type="text" id="exp-desc" name="description" data-i18n="desc_placeholder" placeholder="vd: Ăn trưa Phở 24" maxlength="200" />
                     </div>
 
                     <div class="form-row">
@@ -474,14 +474,14 @@
                 <article class="card">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Custom Taxonomy</div>
+                      <div class="card-kicker" data-i18n="custom_taxonomy_kicker">Custom Taxonomy</div>
                       <span class="card-title" data-i18n="custom_categories">Danh mục tùy chỉnh</span>
                     </div>
                   </div>
                   <div class="input-row input-row-compact">
-                    <input type="text" id="new-cat-name" placeholder="Tên danh mục" maxlength="50" />
+                    <input type="text" id="new-cat-name" data-i18n="category_name" placeholder="Tên danh mục" maxlength="50" />
                     <input type="text" id="new-cat-icon" placeholder="🏷️" class="icon-input" maxlength="4" />
-                    <button class="btn btn-secondary" id="add-cat-btn">Add</button>
+                    <button class="btn btn-secondary" id="add-cat-btn" data-i18n="add_label">Add</button>
                   </div>
                   <div id="custom-categories-list"></div>
                 </article>
@@ -489,19 +489,19 @@
                 <article class="card">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Recurring</div>
+                      <div class="card-kicker" data-i18n="recurring_kicker">Recurring</div>
                       <span class="card-title" id="recurring-manager-title">Bill lặp & subscriptions</span>
                     </div>
                   </div>
                   <div class="recurring-form" id="recurring-form">
                     <div class="form-group">
                       <label class="form-label" for="recurring-desc" id="recurring-desc-label">Tên bill</label>
-                      <input type="text" id="recurring-desc" maxlength="160" placeholder="Netflix, tiền nhà, học phí..." />
+                      <input type="text" id="recurring-desc" data-i18n="recurring_desc_placeholder" maxlength="160" placeholder="Netflix, tiền nhà, học phí..." />
                     </div>
                     <div class="form-row">
                       <div class="form-group">
                         <label class="form-label" for="recurring-amount" id="recurring-amount-label">Số tiền</label>
-                        <input type="number" id="recurring-amount" min="1" step="1" placeholder="150000" />
+                        <input type="number" id="recurring-amount" data-i18n="recurring_amount_placeholder" min="1" step="1" placeholder="150000" />
                       </div>
                       <div class="form-group">
                         <label class="form-label" for="recurring-category" id="recurring-category-label">Danh mục</label>
@@ -512,9 +512,9 @@
                       <div class="form-group">
                         <label class="form-label" for="recurring-cadence" id="recurring-cadence-label">Chu kỳ</label>
                         <select id="recurring-cadence">
-                          <option value="monthly">Hàng tháng</option>
-                          <option value="weekly">Hàng tuần</option>
-                          <option value="yearly">Hàng năm</option>
+                          <option value="monthly" data-i18n="recurring_monthly">Hàng tháng</option>
+                          <option value="weekly" data-i18n="recurring_weekly">Hàng tuần</option>
+                          <option value="yearly" data-i18n="recurring_yearly">Hàng năm</option>
                         </select>
                       </div>
                       <div class="form-group">
@@ -535,7 +535,7 @@
           <div id="view-history" class="view">
             <section class="hero-panel">
               <div class="hero-copy">
-                <div class="eyebrow">History</div>
+                <div class="eyebrow" data-i18n="history_eyebrow">History</div>
                 <h2 id="history-hero-title" data-i18n="expense_history">Lịch sử chi tiêu</h2>
                 <p id="history-hero-body">Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.</p>
               </div>
@@ -561,10 +561,10 @@
                       <option value="">Tất cả thành viên</option>
                     </select>
                     <button class="btn btn-secondary btn-sm" id="filter-apply" data-i18n="filter">Lọc</button>
-                    <button class="btn btn-icon btn-sm" id="filter-reset" title="Reset">
+                    <button class="btn btn-icon btn-sm" id="filter-reset" data-i18n-title="reset_title" title="Reset">
                       <span class="material-symbols-outlined">restart_alt</span>
                     </button>
-                    <button class="btn btn-secondary btn-sm" id="export-excel-btn" title="Export Excel" data-i18n="export_excel">
+                    <button class="btn btn-secondary btn-sm" id="export-excel-btn" data-i18n-title="export_excel" title="Export Excel" data-i18n="export_excel">
                       <span class="material-symbols-outlined">download</span>
                       Excel
                     </button>
@@ -583,7 +583,7 @@
           <div id="view-family" class="view">
             <section class="hero-panel">
               <div class="hero-copy">
-                <div class="eyebrow">Family Ops</div>
+                <div class="eyebrow" data-i18n="family_ops_eyebrow">Family Ops</div>
                 <h2 id="family-hero-title" data-i18n="family_settings">Cài đặt gia đình</h2>
                 <p id="family-hero-body">Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.</p>
               </div>
@@ -593,7 +593,7 @@
               <article class="card" id="profile-card">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Profile</div>
+                    <div class="card-kicker" data-i18n="profile_kicker">Profile</div>
                     <span class="card-title" data-i18n="your_profile">Hồ sơ của bạn</span>
                   </div>
                 </div>
@@ -610,13 +610,13 @@
                 <div class="form-group">
                   <label class="form-label" data-i18n="username">Tên đăng nhập</label>
                   <div class="input-row" id="profile-username-row">
-                    <input type="text" id="profile-username" placeholder="Đặt tên đăng nhập" maxlength="30" />
+                    <input type="text" id="profile-username" data-i18n="username_placeholder" placeholder="Đặt tên đăng nhập" maxlength="30" />
                     <button class="btn btn-primary" id="save-username-btn" data-i18n="save">Lưu</button>
                   </div>
                   <div class="form-hint" id="username-hint" data-i18n="username_hint">3-30 ký tự, chỉ cho phép chữ cái, số và dấu gạch dưới</div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Email</label>
+                  <label class="form-label" data-i18n="email_label">Email</label>
                   <input type="text" id="profile-email" disabled />
                 </div>
                 <div class="form-group">
@@ -631,22 +631,22 @@
               <article class="card" id="password-card" style="display:none">
                 <div class="card-header">
                   <div>
-                    <div class="card-kicker">Security</div>
+                    <div class="card-kicker" data-i18n="security_kicker">Security</div>
                     <span class="card-title" data-i18n="change_password">Đổi mật khẩu</span>
                   </div>
                 </div>
                 <div id="password-form-content">
                   <div class="form-group">
                     <label class="form-label" for="current-password" data-i18n="current_password">Mật khẩu hiện tại</label>
-                    <input type="password" id="current-password" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" />
+                    <input type="password" id="current-password" data-i18n="current_password_placeholder" placeholder="Nhập mật khẩu hiện tại" autocomplete="current-password" />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="new-password" data-i18n="new_password">Mật khẩu mới</label>
-                    <input type="password" id="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" autocomplete="new-password" />
+                    <input type="password" id="new-password" data-i18n="new_password_placeholder" placeholder="Ít nhất 8 ký tự" minlength="8" autocomplete="new-password" />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="confirm-password" data-i18n="confirm_password">Xác nhận mật khẩu mới</label>
-                    <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" />
+                    <input type="password" id="confirm-password" data-i18n="confirm_password_placeholder" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password" />
                   </div>
                   <div id="password-error" class="form-error" style="display:none"></div>
                   <button class="btn btn-primary btn-full" id="change-password-btn" data-i18n="change_password">Đổi mật khẩu</button>
@@ -660,7 +660,7 @@
                 <article class="card">
                   <div class="card-header">
                     <div>
-                      <div class="card-kicker">Inbox</div>
+                      <div class="card-kicker" data-i18n="inbox_kicker">Inbox</div>
                       <span class="card-title" data-i18n="you_have_invites">Bạn có lời mời tham gia gia đình</span>
                     </div>
                   </div>
@@ -674,7 +674,7 @@
                   <h2 data-i18n="create_family_title">Tạo nhóm gia đình</h2>
                   <p data-i18n="create_family_desc">Tạo nhóm gia đình để cùng theo dõi chi tiêu.</p>
                   <div class="input-row">
-                    <input type="text" id="new-family-name" placeholder="Tên gia đình, vd: Nhà Nguyễn" maxlength="100" />
+                    <input type="text" id="new-family-name" data-i18n="family_name_placeholder" placeholder="Tên gia đình, vd: Nhà Nguyễn" maxlength="100" />
                     <button class="btn btn-primary" id="create-family-btn" data-i18n="create">Tạo</button>
                   </div>
                 </article>
@@ -685,10 +685,10 @@
                   <article class="card">
                     <div class="card-header">
                       <div>
-                        <div class="card-kicker">Workspace</div>
+                        <div class="card-kicker" data-i18n="workspace_kicker">Workspace</div>
                         <span class="card-title" id="family-name-heading">—</span>
                       </div>
-                      <span class="role-badge owner" id="my-role-badge">owner</span>
+                      <span class="role-badge owner" id="my-role-badge" data-i18n="owner">owner</span>
                     </div>
                     <div class="section-title section-title-small" data-i18n="members">Thành viên</div>
                     <div class="member-list" id="member-list"></div>
@@ -697,12 +697,12 @@
                   <article class="card">
                     <div class="card-header">
                       <div>
-                        <div class="card-kicker">Invite</div>
+                        <div class="card-kicker" data-i18n="invite_kicker">Invite</div>
                         <span class="card-title" data-i18n="invite_member">Mời thành viên</span>
                       </div>
                     </div>
                     <div class="input-row">
-                      <input type="text" id="invite-email" placeholder="Email hoặc tên đăng nhập" />
+                      <input type="text" id="invite-email" data-i18n="invite_placeholder" placeholder="Email hoặc tên đăng nhập" />
                       <button class="btn btn-primary" id="invite-btn" data-i18n="invite">Mời</button>
                     </div>
                     <div id="pending-invites-section" class="pending-wrap" style="margin-top:1rem;display:none">
@@ -718,7 +718,7 @@
                   <article class="card">
                     <div class="card-header">
                       <div>
-                        <div class="card-kicker">AI</div>
+                        <div class="card-kicker" data-i18n="ai_kicker">AI</div>
                         <span class="card-title" data-i18n="ai_settings">Cài đặt phân tích AI</span>
                       </div>
                     </div>
@@ -737,17 +737,17 @@
                     </div>
                     <div class="form-group">
                       <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key</label>
-                      <input type="password" id="ai-api-key" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
+                      <input type="password" id="ai-api-key" data-i18n="api_key_placeholder" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
                       <div class="form-hint" data-i18n="api_key_hint">Được mã hóa và lưu trữ an toàn. Mỗi nhà cung cấp lưu 1 key riêng.</div>
                     </div>
                     <div class="form-row">
                       <div class="form-group">
                         <label class="form-label" for="ai-income" data-i18n="monthly_income">Thu nhập hàng tháng (tùy chọn)</label>
-                        <input type="number" id="ai-income" placeholder="vd: 30000000" min="0" />
+                        <input type="number" id="ai-income" data-i18n="income_placeholder" placeholder="vd: 30000000" min="0" />
                       </div>
                       <div class="form-group">
                         <label class="form-label" for="ai-savings" data-i18n="current_savings">Tiết kiệm hiện tại (tùy chọn)</label>
-                        <input type="number" id="ai-savings" placeholder="vd: 100000000" min="0" />
+                        <input type="number" id="ai-savings" data-i18n="savings_placeholder" placeholder="vd: 100000000" min="0" />
                       </div>
                     </div>
                     <button class="btn btn-primary btn-full" id="save-ai-settings-btn" data-i18n="save_ai_settings">Lưu cài đặt AI</button>
@@ -785,7 +785,7 @@
     </div>
   </div>
 
-  <button class="ai-fab" id="ai-fab" title="Ask AI about your finances" style="display:none">
+  <button class="ai-fab" id="ai-fab" data-i18n-title="ai_fab_title" title="Ask AI about your finances" style="display:none">
     <span class="material-symbols-outlined">lightbulb</span>
   </button>
 
@@ -811,9 +811,9 @@
       </div>
       <div class="ai-modal-footer">
         <div class="input-row">
-          <input type="text" id="ai-question" placeholder="vd: 'Với thu nhập 30tr, tôi có chi tiêu quá nhiều không?'" />
+          <input type="text" id="ai-question" data-i18n="ai_question_placeholder" placeholder="vd: 'Với thu nhập 30tr, tôi có chi tiêu quá nhiều không?'" />
           <button class="btn btn-primary" id="ai-analyze-btn2" data-i18n="ask">Hỏi</button>
-          <button class="btn btn-secondary" id="ai-analyze-btn" title="General analysis" data-i18n="analyze">Phân tích</button>
+          <button class="btn btn-secondary" id="ai-analyze-btn" data-i18n-title="ai_general_analysis_title" title="General analysis" data-i18n="analyze">Phân tích</button>
         </div>
       </div>
     </div>

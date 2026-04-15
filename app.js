@@ -14,8 +14,19 @@ const translations = {
     sign_out: 'Đăng xuất',
 
     // Login
+    app_title: 'Chi tiêu gia đình',
     login_title: 'Chi tiêu gia đình',
     login_subtitle: 'Quản lý chi tiêu, biết tiền đi đâu mỗi ngày.',
+    login_story_eyebrow: 'Chi tiêu gia đình',
+    login_story_card_overview_title: 'Tổng quan rõ ràng',
+    login_story_card_overview_body: 'Xem tháng này, danh mục lớn nhất và biến động ngay trên một màn hình.',
+    login_story_card_voice_title: 'Nhập nhanh bằng giọng nói',
+    login_story_card_voice_body: 'Nói một lần, app tách thành nhiều draft để bạn sửa trước khi lưu.',
+    login_story_card_family_title: 'Dùng chung cho cả nhà',
+    login_story_card_family_body: 'Theo dõi người chi, danh mục và lịch sử trong cùng một không gian.',
+    login_card_badge: 'Sổ quỹ gia đình',
+    login_card_welcome: 'Chào mừng trở lại',
+    login_card_copy: 'Đăng nhập để tiếp tục quản lý chi tiêu gia đình với giao diện mới gọn và dễ dùng hơn.',
     or_continue_email: 'hoặc đăng nhập bằng email',
     full_name: 'Họ và tên',
     username: 'Tên đăng nhập',
@@ -24,6 +35,9 @@ const translations = {
     email_or_username: 'Email hoặc tên đăng nhập',
     password: 'Mật khẩu',
     password_placeholder: 'Ít nhất 8 ký tự',
+    auth_name_placeholder: 'Nguyen Van A',
+    auth_username_placeholder: 'vd: nghia_nguyen',
+    auth_email_placeholder: 'you@example.com',
     sign_in: 'Đăng nhập',
     create_account: 'Tạo tài khoản',
     no_account: 'Chưa có tài khoản? Đăng ký',
@@ -60,6 +74,16 @@ const translations = {
     no_members_yet: 'Chưa có thành viên',
     no_family_yet: 'Chưa có gia đình',
     go_family_settings: 'Vào <a href="#family">Cài đặt gia đình</a> để tạo hoặc tham gia',
+    nav_brand_prefix: 'Nhà',
+    nav_brand_suffix: 'Flow',
+    lang_toggle_title: 'Chuyển ngôn ngữ',
+    theme_toggle_title: 'Đổi giao diện',
+    topbar_eyebrow: 'Hệ điều hành tài chính gia đình',
+    topbar_title: 'Tiền có ngữ cảnh, không có rác giao diện.',
+    dashboard_eyebrow: 'Tổng quan',
+    previous_period: 'Kỳ trước',
+    next_period: 'Kỳ sau',
+    onboarding_kicker: 'Bắt đầu',
     dashboard_hero_family_title: 'Chi tiêu gia đình trong một nhịp nhìn.',
     dashboard_hero_family_body: 'Trọng tâm là tốc độ đọc số liệu, không phải đống card vô nghĩa. Bạn biết ngay tháng này đã chi bao nhiêu, ai chi nhiều và danh mục nào đang kéo ngân sách đi lệch.',
     dashboard_hero_personal_title: 'Chi tiêu của bạn trong một nhịp nhìn.',
@@ -74,6 +98,7 @@ const translations = {
     onboarding_step_3_body: 'Bạn có thể dùng một mình trước, rồi mời thêm thành viên khi cần.',
     onboarding_add_cta: 'Thêm chi tiêu đầu tiên',
     onboarding_voice_cta: 'Mở nhập giọng nói',
+    budget_kicker: 'Lan can',
     budget_card_title: 'Ngân sách tháng',
     budget_spent_label: 'Đã chi',
     budget_limit_label: 'Ngân sách',
@@ -153,6 +178,13 @@ const translations = {
     forecast_set_budget: 'Đặt ngân sách',
     budget_income_hint: 'Thu nhập tháng giúp app biết 25 triệu là bình thường hay đang vượt sức chịu đựng.',
     monthly_income_invalid: 'Thu nhập tháng phải lớn hơn hoặc bằng 0',
+    forecast_kicker: 'Dự báo',
+    chart_pattern_kicker: 'Nhịp',
+    chart_mix_kicker: 'Tỷ trọng',
+    chart_ranking_kicker: 'Xếp hạng',
+    people_kicker: 'Thành viên',
+    latest_kicker: 'Mới nhất',
+    radar_kicker: 'Radar',
 
     // Add expense
     add_expense: 'Thêm chi tiêu',
@@ -173,10 +205,29 @@ const translations = {
     category_name_required: 'Cần nhập tên danh mục',
     category_added: 'Đã thêm danh mục',
     category_deleted: 'Đã xóa danh mục',
+    add_eyebrow: 'Ghi nhận',
+    hero_pill_manual: 'Thủ công',
+    hero_pill_voice_batch: 'Batch giọng nói',
+    hero_pill_receipt_ai: 'AI hóa đơn',
+    voice_batch_kicker: 'Batch giọng nói',
+    voice_batch_title: 'Nói một lần, tạo nhiều draft',
+    voice_batch_helper: 'Ví dụ: “đi chợ 100k cafe 50k mua đồ chơi cho con 5k”. App sẽ tách thành từng khoản, đoán danh mục, để bạn sửa rồi mới lưu.',
+    draft_review_kicker: 'Soát draft',
+    draft_review_title: 'Danh sách bill tạm',
+    receipt_kicker: 'Hóa đơn',
+    receipt_title: 'Quét hóa đơn bằng AI',
+    manual_entry_kicker: 'Nhập tay',
+    manual_entry_title: 'Thêm thủ công',
+    custom_taxonomy_kicker: 'Danh mục riêng',
+    recurring_kicker: 'Định kỳ',
+    add_label: 'Thêm',
+    recurring_desc_placeholder: 'Netflix, tiền nhà, học phí...',
+    recurring_amount_placeholder: '150000',
     add_hero_family_body: 'Thiết kế mới ưu tiên hai cách nhập: thủ công thật nhanh, hoặc đọc một loạt chi tiêu bằng giọng nói để app tách thành draft cho bạn rà soát trước khi lưu.',
     add_hero_personal_body: 'Bạn có thể bắt đầu rất nhẹ: nhập tay một khoản chi, hoặc đọc liền nhiều khoản bằng giọng nói để app dựng sẵn draft cho bạn xác nhận.',
 
     // History
+    history_eyebrow: 'Lịch sử',
     expense_history: 'Lịch sử chi tiêu',
     all_categories: 'Tất cả danh mục',
     all_members: 'Tất cả thành viên',
@@ -191,13 +242,18 @@ const translations = {
     expense_updated: 'Đã cập nhật chi tiêu!',
     history_hero_family_body: 'Mọi khoản chi đều được đặt trong một timeline sạch, lọc nhanh theo ngày, danh mục và người chi.',
     history_hero_personal_body: 'Toàn bộ khoản chi của bạn được gom vào một timeline sạch để rà lại nhanh theo ngày và danh mục.',
+    reset: 'Đặt lại',
+    reset_title: 'Đặt lại bộ lọc',
 
     // Family
     family_settings: 'Cài đặt gia đình',
+    family_ops_eyebrow: 'Điều hành gia đình',
     workspace_personal_name: 'Không gian chi tiêu của bạn',
     your_profile: 'Hồ sơ của bạn',
+    profile_kicker: 'Hồ sơ',
     display_name: 'Tên hiển thị',
     username_hint: '3-30 ký tự, chữ cái, số, gạch dưới',
+    username_placeholder: 'Đặt tên đăng nhập',
     username_saved: 'Đã lưu tên đăng nhập!',
     username_cleared: 'Đã xóa tên đăng nhập',
     username_invalid: 'Tên đăng nhập phải 3-30 ký tự, chỉ chữ/số/gạch dưới',
@@ -206,6 +262,7 @@ const translations = {
     link_google: 'Liên kết Google',
     link_google_success: 'Đã liên kết tài khoản Google!',
     google_linked: 'Đã liên kết Google',
+    email_label: 'Email',
     copy_invite_link: 'Sao chép link mời',
     invite_link_copied: 'Đã sao chép link mời!',
     invite_link_join: 'Bạn được mời vào gia đình! Đang tham gia...',
@@ -230,6 +287,8 @@ const translations = {
     changing_password: 'Đang đổi...',
     password_set_success: 'Đã đặt mật khẩu!',
     google_auth_notice: 'Đăng nhập bằng Google. Không quản lý mật khẩu được.',
+    security_kicker: 'Bảo mật',
+    inbox_kicker: 'Hộp thư',
     create_family_title: 'Tạo nhóm gia đình',
     create_family_desc: 'Thiết lập gia đình để theo dõi chi tiêu chung.',
     family_name_placeholder: 'Tên gia đình, vd: Nhà Nguyễn',
@@ -237,7 +296,9 @@ const translations = {
     family_name_required: 'Cần nhập tên gia đình',
     family_created: 'Đã tạo gia đình!',
     members: 'Thành viên',
+    workspace_kicker: 'Không gian',
     invite_member: 'Mời thành viên',
+    invite_kicker: 'Lời mời',
     invite_placeholder: 'Email hoặc tên đăng nhập',
     invite: 'Mời',
     pending_invites: 'Lời mời đang chờ',
@@ -264,9 +325,14 @@ const translations = {
     danger_zone: 'Vùng nguy hiểm',
     family_hero_family_body: 'Hồ sơ, thành viên, lời mời, AI settings và vùng thao tác nhạy cảm đều được nhóm lại theo ngữ cảnh để đỡ rối mắt.',
     family_hero_personal_body: 'Bạn đang dùng app ở chế độ cá nhân. Mọi dữ liệu vẫn nằm trong cùng model family, nhưng copy được làm nhẹ hơn để không tạo cảm giác phải lập gia đình mới dùng được.',
+    owner: 'Chủ',
+    member: 'Thành viên',
+    delete_category: 'Xóa danh mục',
+    cancel_invite: 'Hủy lời mời',
 
     // AI
     ai_settings: 'Cài đặt AI phân tích',
+    ai_kicker: 'AI',
     provider: 'Nhà cung cấp',
     model: 'Mô hình',
     api_key: 'API Key',
@@ -274,6 +340,8 @@ const translations = {
     api_key_hint: 'Được mã hóa và lưu an toàn. Mỗi nhà cung cấp lưu 1 key riêng.',
     monthly_income: 'Thu nhập hàng tháng (tùy chọn)',
     current_savings: 'Tiết kiệm hiện tại (tùy chọn)',
+    income_placeholder: 'vd: 30000000',
+    savings_placeholder: 'vd: 100000000',
     save_ai_settings: 'Lưu cài đặt AI',
     api_key_required: 'Cần nhập API key',
     ai_settings_saved: 'Đã lưu cài đặt AI!',
@@ -284,6 +352,8 @@ const translations = {
     ask: 'Hỏi',
     ai_advisor: 'Tư vấn tài chính AI',
     ai_powered_by: 'Hỗ trợ bởi AI bạn đã cấu hình',
+    ai_fab_title: 'Hỏi AI về tài chính của bạn',
+    ai_general_analysis_title: 'Phân tích tổng quát',
     ai_empty_hint: 'Đặt câu hỏi hoặc bấm <strong>Phân tích</strong> để xem đánh giá chi tiêu',
     ai_question_placeholder: 'vd: "Với 30 triệu thu nhập, tôi chi tiêu quá nhiều không?"',
     ai_healthy: 'Tốt',
@@ -368,11 +438,22 @@ const translations = {
     cannot_delete: 'Không thể xóa: {0}',
   },
   en: {
+    app_title: 'Family Expenses',
     dashboard: 'Dashboard',
     add: 'Add',
     history: 'History',
     family: 'Family',
     sign_out: 'Sign out',
+    login_story_eyebrow: 'Family Expenses',
+    login_story_card_overview_title: 'Clear overview',
+    login_story_card_overview_body: 'See this month, the biggest category, and spending shifts on one screen.',
+    login_story_card_voice_title: 'Fast voice capture',
+    login_story_card_voice_body: 'Say it once and the app splits it into drafts for review before saving.',
+    login_story_card_family_title: 'Shared for the household',
+    login_story_card_family_body: 'Track spender, category, and history in one shared space.',
+    login_card_badge: 'Household Ledger',
+    login_card_welcome: 'Welcome back',
+    login_card_copy: 'Sign in to continue managing household spending with the cleaner new interface.',
     login_title: 'Family Expenses',
     login_subtitle: 'Track expenses, know where your money goes every day.',
     or_continue_email: 'or continue with email',
@@ -383,9 +464,12 @@ const translations = {
     email_or_username: 'Email or Username',
     password: 'Password',
     password_placeholder: 'At least 8 characters',
+    auth_name_placeholder: 'Nguyen Van A',
+    auth_username_placeholder: 'e.g. nghia_nguyen',
+    auth_email_placeholder: 'you@example.com',
     sign_in: 'Sign In',
     create_account: 'Create Account',
-    no_account: "Don't have an account? Register",
+    no_account: 'Don\'t have an account? Register',
     have_account: 'Already have an account? Sign In',
     currency_hint: 'Currency can be set in Family Settings',
     creating_account: 'Creating account...',
@@ -417,6 +501,16 @@ const translations = {
     no_members_yet: 'No members yet',
     no_family_yet: 'No family yet',
     go_family_settings: 'Go to <a href="#family">Family settings</a> to create or join one',
+    nav_brand_prefix: 'Household',
+    nav_brand_suffix: 'Flow',
+    lang_toggle_title: 'Switch language',
+    theme_toggle_title: 'Toggle theme',
+    topbar_eyebrow: 'Family operating system',
+    topbar_title: 'Money with context, not clutter.',
+    dashboard_eyebrow: 'Overview',
+    previous_period: 'Previous period',
+    next_period: 'Next period',
+    onboarding_kicker: 'First run',
     dashboard_hero_family_title: 'Household spending in one clean glance.',
     dashboard_hero_family_body: 'The goal is reading speed, not decorative cards. You can see the month total, who spent most, and which category is pulling the budget off course.',
     dashboard_hero_personal_title: 'Your spending in one clean glance.',
@@ -431,6 +525,7 @@ const translations = {
     onboarding_step_3_body: 'You can start solo now and add family members once the habit sticks.',
     onboarding_add_cta: 'Add first expense',
     onboarding_voice_cta: 'Open voice input',
+    budget_kicker: 'Guardrails',
     budget_card_title: 'Monthly budget',
     budget_spent_label: 'Spent',
     budget_limit_label: 'Budget',
@@ -510,6 +605,13 @@ const translations = {
     forecast_set_budget: 'Set budget',
     budget_income_hint: 'Monthly income tells the app whether 25M spend is normal or already beyond what the household can carry.',
     monthly_income_invalid: 'Monthly income must be zero or higher',
+    forecast_kicker: 'Forecast',
+    chart_pattern_kicker: 'Pattern',
+    chart_mix_kicker: 'Mix',
+    chart_ranking_kicker: 'Ranking',
+    people_kicker: 'People',
+    latest_kicker: 'Latest',
+    radar_kicker: 'Radar',
     add_expense: 'Add Expense',
     amount_label: 'Amount ({0}) *',
     amount_placeholder: 'e.g. 150000',
@@ -528,8 +630,27 @@ const translations = {
     category_name_required: 'Category name required',
     category_added: 'Category added',
     category_deleted: 'Category deleted',
+    add_eyebrow: 'Capture',
+    hero_pill_manual: 'Manual',
+    hero_pill_voice_batch: 'Voice batch',
+    hero_pill_receipt_ai: 'Receipt AI',
+    voice_batch_kicker: 'Voice batch',
+    voice_batch_title: 'Speak once, create many drafts',
+    voice_batch_helper: 'Example: "groceries 100k coffee 50k toys for the kid 5k". The app splits it into items, guesses categories, and lets you review before saving.',
+    draft_review_kicker: 'Draft review',
+    draft_review_title: 'Draft bill list',
+    receipt_kicker: 'Receipt',
+    receipt_title: 'Scan receipt with AI',
+    manual_entry_kicker: 'Manual entry',
+    manual_entry_title: 'Add manually',
+    custom_taxonomy_kicker: 'Custom taxonomy',
+    recurring_kicker: 'Recurring',
+    add_label: 'Add',
+    recurring_desc_placeholder: 'Netflix, rent, tuition...',
+    recurring_amount_placeholder: '150000',
     add_hero_family_body: 'The new flow prioritizes two input modes: fast manual entry, or one spoken batch that becomes editable drafts before anything is saved.',
     add_hero_personal_body: 'Start light: add one expense manually, or speak a batch and let the app prepare drafts for you to confirm.',
+    history_eyebrow: 'History',
     expense_history: 'Expense History',
     all_categories: 'All categories',
     all_members: 'All members',
@@ -544,11 +665,17 @@ const translations = {
     expense_updated: 'Expense updated!',
     history_hero_family_body: 'Every expense sits inside a clean timeline with quick filters for date, category, and spender.',
     history_hero_personal_body: 'All of your spending is kept in one clean timeline so you can review it quickly by date and category.',
+    reset: 'Reset',
+    reset_title: 'Reset filters',
+    family_ops_eyebrow: 'Family ops',
     family_settings: 'Family Settings',
     workspace_personal_name: 'Your spending space',
     your_profile: 'Your Profile',
+    profile_kicker: 'Profile',
     display_name: 'Display Name',
+    email_label: 'Email',
     username_hint: '3-30 characters, letters, numbers, underscores only',
+    username_placeholder: 'Set a username',
     username_saved: 'Username saved!',
     username_cleared: 'Username cleared',
     username_invalid: 'Username must be 3-30 chars, letters/numbers/underscores only',
@@ -559,7 +686,7 @@ const translations = {
     google_linked: 'Google linked',
     copy_invite_link: 'Copy invite link',
     invite_link_copied: 'Invite link copied!',
-    invite_link_join: "You've been invited to a family! Joining...",
+    invite_link_join: 'You\'ve been invited to a family! Joining...',
     invite_link_joined: 'Joined the family via invite link!',
     invite_link_invalid: 'Invite link is invalid or expired',
     name_edit_used: 'Name has already been changed (one-time edit used)',
@@ -581,14 +708,18 @@ const translations = {
     changing_password: 'Changing...',
     password_set_success: 'Password set successfully!',
     google_auth_notice: 'Signed in with Google. Password management is not available.',
+    security_kicker: 'Security',
+    inbox_kicker: 'Inbox',
     create_family_title: 'Create your family group',
     create_family_desc: 'Set up a family to track shared expenses together.',
-    family_name_placeholder: "Family name, e.g. The Nguyens",
+    family_name_placeholder: 'Family name, e.g. The Nguyens',
     create: 'Create',
     family_name_required: 'Family name required',
     family_created: 'Family created!',
     members: 'Members',
+    workspace_kicker: 'Workspace',
     invite_member: 'Invite member',
+    invite_kicker: 'Invite',
     invite_placeholder: 'Email or username',
     invite: 'Invite',
     pending_invites: 'Pending invites',
@@ -601,8 +732,8 @@ const translations = {
     pending: 'Pending',
     invite_cancelled: 'Invite cancelled',
     email_required: 'Email required',
-    invite_sent: "Invite email sent! They'll join automatically on sign-in.",
-    invite_no_email: "Invited! Email couldn't be sent — share this link: {0}",
+    invite_sent: 'Invite email sent! They\'ll join automatically on sign-in.',
+    invite_no_email: 'Invited! Email couldn\'t be sent — share this link: {0}',
     currency: 'Currency',
     only_owner_currency: 'Only the owner can change currency',
     currency_unchanged: 'Currency unchanged',
@@ -615,7 +746,12 @@ const translations = {
     danger_zone: 'Danger zone',
     family_hero_family_body: 'Profile, members, invites, AI settings, and sensitive actions are grouped by context so the page stays readable.',
     family_hero_personal_body: 'You are using the app in personal mode. The data still lives in the same family model, but the copy is softened so it does not feel like setup friction for solo users.',
+    owner: 'Owner',
+    member: 'Member',
+    delete_category: 'Delete category',
+    cancel_invite: 'Cancel invite',
     ai_settings: 'AI Analysis Settings',
+    ai_kicker: 'AI',
     provider: 'Provider',
     model: 'Model',
     api_key: 'API Key',
@@ -623,6 +759,8 @@ const translations = {
     api_key_hint: 'Encrypted and stored securely. Each provider has its own key.',
     monthly_income: 'Monthly Income (optional)',
     current_savings: 'Current Savings (optional)',
+    income_placeholder: 'e.g. 30000000',
+    savings_placeholder: 'e.g. 100000000',
     save_ai_settings: 'Save AI Settings',
     api_key_required: 'API key is required',
     ai_settings_saved: 'AI settings saved!',
@@ -633,8 +771,10 @@ const translations = {
     ask: 'Ask',
     ai_advisor: 'AI Financial Advisor',
     ai_powered_by: 'Powered by your configured AI provider',
+    ai_fab_title: 'Ask AI about your finances',
+    ai_general_analysis_title: 'General analysis',
     ai_empty_hint: 'Ask a question or click <strong>Analyze</strong> for a spending review',
-    ai_question_placeholder: "e.g. 'With 30M income, am I spending too much?'",
+    ai_question_placeholder: 'e.g. "With 30M income, am I spending too much?"',
     ai_healthy: 'Healthy',
     ai_fair: 'Fair',
     ai_needs_attention: 'Needs Attention',
@@ -728,6 +868,8 @@ function setLang(lang) {
 
 function applyLanguage() {
   const dateLocale = currentLang === 'vi' ? 'vi-VN' : 'en-US';
+  document.documentElement.lang = currentLang;
+  document.title = t('app_title');
 
   // Update static HTML text
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -738,6 +880,14 @@ function applyLanguage() {
     } else {
       el.innerHTML = val;
     }
+  });
+
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
   });
 
   // Update period label format
@@ -1180,7 +1330,7 @@ function renderBudgetSettingsUI() {
   container.innerHTML = `
     <div class="card-header">
       <div>
-        <div class="card-kicker">Budget</div>
+        <div class="card-kicker">${t('budget_kicker')}</div>
         <span class="card-title">${t('budget_settings')}</span>
       </div>
     </div>
@@ -2342,7 +2492,7 @@ function renderCustomCategoriesList() {
     `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
       <span>${escHtml(c.icon || '📦')}</span>
       <span style="flex:1">${escHtml(c.name)}</span>
-      <button class="btn btn-icon btn-sm delete-cat" data-id="${escHtml(c.id)}" title="Delete category">🗑</button>
+      <button class="btn btn-icon btn-sm delete-cat" data-id="${escHtml(c.id)}" title="${escHtml(t('delete_category'))}">🗑</button>
     </div>`
   ).join('');
 
@@ -2674,7 +2824,7 @@ async function loadFamily() {
 
     const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role || 'member';
     const roleBadge = document.getElementById('my-role-badge');
-    roleBadge.textContent = myRole;
+    roleBadge.textContent = t(myRole);
     roleBadge.className = `role-badge ${myRole}`;
     document.getElementById('leave-family-btn').style.display = state.family.is_personal ? 'none' : '';
 
@@ -2689,7 +2839,7 @@ async function loadFamily() {
             <div class="member-name">${escHtml(m.name)}</div>
             <div class="member-email">${escHtml(m.email)}</div>
           </div>
-          <span class="role-badge ${escHtml(m.role)}">${escHtml(m.role)}</span>
+          <span class="role-badge ${escHtml(m.role)}">${escHtml(t(m.role))}</span>
         </div>`;
     }).join('');
 
@@ -2708,7 +2858,7 @@ async function loadFamily() {
           </div>
           <div style="display:flex;gap:0.25rem">
             ${inv.invite_token ? `<button class="btn btn-secondary btn-sm copy-invite-link" data-link="${escHtml(appOrigin)}#invite/${escHtml(inv.invite_token)}" title="${t('copy_invite_link')}">📋</button>` : ''}
-            <button class="btn btn-icon btn-sm cancel-invite" data-id="${escHtml(inv.id)}" title="Cancel invite">✕</button>
+            <button class="btn btn-icon btn-sm cancel-invite" data-id="${escHtml(inv.id)}" title="${escHtml(t('cancel_invite'))}">✕</button>
           </div>
         </div>`
       ).join('');
