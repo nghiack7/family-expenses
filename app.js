@@ -922,7 +922,7 @@ function applyLanguage() {
 
 // ── State ──────────────────────────────────────────────────────────────────
 const state = {
-  user: null,         // { sub, email, name, avatar }
+  user: null,         // { id, sub, email, name, avatar }
   family: null,       // family object from API
   categories: [],     // flat list
   currentMonth: null, // { year, month }
@@ -938,6 +938,25 @@ const state = {
   recurring: [],
   recurringRadar: [],
 };
+
+function normalizeUser(user) {
+  if (!user) return null;
+  const userId = user.id || user.sub || null;
+  return userId ? { ...user, id: userId, sub: userId } : { ...user };
+}
+
+function setCurrentUser(user) {
+  state.user = normalizeUser(user);
+  if (state.user) {
+    sessionStorage.setItem('user', JSON.stringify(state.user));
+  } else {
+    sessionStorage.removeItem('user');
+  }
+}
+
+function getCurrentUserId() {
+  return state.user?.id || state.user?.sub || null;
+}
 
 function isPersonalWorkspace() {
   return !!state.family?.is_personal;
@@ -1330,7 +1349,7 @@ function renderBudgetSettingsUI() {
   if (!container) return;
   if (!state.family) { container.style.display = 'none'; return; }
 
-  const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role;
+  const myRole = (state.family.members || []).find(m => m.id === getCurrentUserId())?.role;
   const isOwner = myRole === 'owner';
   const settings = getBudgetSettings();
 
@@ -1807,9 +1826,8 @@ async function handleGoogleCredential(response) {
       method: 'POST',
       body: JSON.stringify({ credential: response.credential }),
     });
-    state.user = data.user;
     // Cache user info in sessionStorage so we survive page refresh without re-auth
-    sessionStorage.setItem('user', JSON.stringify(data.user));
+    setCurrentUser(data.user);
     showApp();
     toast(t('welcome', state.user.name), 'success');
   } catch (err) {
@@ -1824,8 +1842,7 @@ async function handleLinkGoogle(response) {
       method: 'PUT',
       body: JSON.stringify({ action: 'link_google', credential: response.credential }),
     });
-    state.user = data.user;
-    sessionStorage.setItem('user', JSON.stringify(data.user));
+    setCurrentUser(data.user);
     renderNavUser();
     initProfileUI();
     toast(t('link_google_success'), 'success');
@@ -1918,8 +1935,7 @@ function initAuthTabs() {
         method: 'POST',
         body: JSON.stringify(body),
       });
-      state.user = data.user;
-      sessionStorage.setItem('user', JSON.stringify(data.user));
+      setCurrentUser(data.user);
       showApp();
       toast(isRegisterMode ? t('account_created', state.user.name) : t('welcome_back', state.user.name), 'success');
     } catch (err) {
@@ -1936,10 +1952,9 @@ async function logout() {
   try {
     await api('/api/auth', { method: 'DELETE' });
   } catch { /* ignore network errors on logout */ }
-  state.user = null;
+  setCurrentUser(null);
   state.family = null;
   state.categories = [];
-  sessionStorage.removeItem('user');
   showLogin();
 }
 
@@ -2830,7 +2845,7 @@ async function loadFamily() {
 
     document.getElementById('family-name-heading').textContent = state.family.is_personal ? t('workspace_personal_name') : state.family.name;
 
-    const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role || 'member';
+    const myRole = (state.family.members || []).find(m => m.id === getCurrentUserId())?.role || 'member';
     const roleBadge = document.getElementById('my-role-badge');
     roleBadge.textContent = t(myRole);
     roleBadge.className = `role-badge ${myRole}`;
@@ -2914,7 +2929,7 @@ function renderCurrencyUI() {
   if (!container) return;
   if (!state.family) { container.style.display = 'none'; return; }
 
-  const myRole = (state.family.members || []).find(m => m.id === state.user.sub)?.role;
+  const myRole = (state.family.members || []).find(m => m.id === getCurrentUserId())?.role;
   const isOwner = myRole === 'owner';
   const currency = state.family.currency || 'VND';
 
@@ -3011,7 +3026,7 @@ function initProfileUI() {
           });
           state.user.username = val;
           state.user.username_edited = 1;
-          sessionStorage.setItem('user', JSON.stringify(state.user));
+          setCurrentUser(state.user);
           usernameInput.disabled = true;
           saveUsernameBtn.style.display = 'none';
           usernameHint.textContent = t('username_saved');
@@ -3093,7 +3108,7 @@ function initProfileUI() {
       });
       state.user.name = newName;
       state.user.name_edited = 1;
-      sessionStorage.setItem('user', JSON.stringify(state.user));
+      setCurrentUser(state.user);
       renderNavUser();
       nameInput.disabled = true;
       saveBtn.style.display = 'none';
@@ -3165,7 +3180,7 @@ async function handleChangePassword() {
     document.getElementById('new-password').value = '';
     document.getElementById('confirm-password').value = '';
     state.user.has_password = true;
-    sessionStorage.setItem('user', JSON.stringify(state.user));
+    setCurrentUser(state.user);
     initProfileUI();
     toast(t('password_set_success'), 'success');
   } catch (err) {
@@ -4368,7 +4383,7 @@ async function init() {
   const cachedUser = sessionStorage.getItem('user');
   if (cachedUser) {
     try {
-      state.user = JSON.parse(cachedUser);
+      state.user = normalizeUser(JSON.parse(cachedUser));
     } catch {
       sessionStorage.removeItem('user');
     }
@@ -4386,8 +4401,7 @@ async function init() {
       applyLanguage();
     } catch (err) {
       // Session expired or invalid
-      state.user = null;
-      sessionStorage.removeItem('user');
+      setCurrentUser(null);
       showLogin();
       initGoogleSignIn();
     }
