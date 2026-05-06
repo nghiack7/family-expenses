@@ -4285,15 +4285,38 @@ function initVoiceInput() {
   let isListening = false;
   let recognition = null;
   let maxTimer = null;
-  let gotResult = false;
   let listenStartTime = 0;
+  let finalTranscript = '';
+  let interimTranscript = '';
+  let processed = false;
 
-  function stopListening() {
+  function processOnce() {
+    if (processed) return;
+    processed = true;
+    const text = (finalTranscript + ' ' + interimTranscript).trim();
+    if (text) {
+      processVoiceResult(text);
+    } else {
+      setVoiceStatus(t('voice_no_match'), 'error');
+    }
+  }
+
+  function teardownRecognition() {
+    if (recognition) {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try { recognition.stop(); } catch {}
+      recognition = null;
+    }
+  }
+
+  function stopListening({ process = true } = {}) {
     isListening = false;
     if (maxTimer) { clearTimeout(maxTimer); maxTimer = null; }
     voiceBtn.classList.remove('listening');
-    if (recognition) { try { recognition.stop(); } catch {} }
-    recognition = null;
+    teardownRecognition();
+    if (process) processOnce();
   }
 
   function startRecognition() {
@@ -4304,38 +4327,39 @@ function initVoiceInput() {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
-      const result = event.results[event.results.length - 1];
-      const text = result[0].transcript;
-      gotResult = true;
-      setVoiceTranscript(text);
-
-      if (result.isFinal) {
-        stopListening();
-        processVoiceResult(text);
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0].transcript;
+        if (result.isFinal) {
+          finalTranscript += (finalTranscript ? ' ' : '') + transcript.trim();
+        } else {
+          interim += transcript;
+        }
       }
+      interimTranscript = interim;
+      setVoiceTranscript((finalTranscript + ' ' + interimTranscript).trim());
     };
 
     recognition.onerror = (event) => {
       if (event.error === 'no-speech' || event.error === 'aborted' || event.error === 'audio-capture') {
         return;
       }
-      const elapsed = Date.now() - listenStartTime;
-      if (elapsed < 3000) {
-        return;
-      }
       stopListening();
-      setVoiceStatus(t('voice_no_match'), 'error');
     };
 
     recognition.onend = () => {
       if (!isListening) return;
+      // Engine ended on its own (silence / pause). Restart to keep continuous listening
+      // until the user stops manually or the max timer fires.
       try {
         recognition.start();
       } catch {
         const elapsed = Date.now() - listenStartTime;
-        if (elapsed < 3000 && !gotResult) {
+        if (elapsed < 3000 && !finalTranscript && !interimTranscript) {
           setTimeout(() => {
             if (!isListening) return;
+            teardownRecognition();
             try { startRecognition(); } catch { stopListening(); }
           }, 300);
         } else {
@@ -4359,15 +4383,12 @@ function initVoiceInput() {
     setVoiceStatus(t('voice_listening'));
     setVoiceTranscript('');
 
-    gotResult = false;
+    finalTranscript = '';
+    interimTranscript = '';
+    processed = false;
 
     maxTimer = setTimeout(() => {
-      if (isListening) {
-        stopListening();
-        if (!gotResult) {
-          setVoiceStatus(t('voice_no_match'), 'error');
-        }
-      }
+      if (isListening) stopListening();
     }, 15000);
 
     startRecognition();
