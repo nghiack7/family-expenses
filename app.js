@@ -2842,11 +2842,29 @@ async function loadHistory(reset = false) {
 }
 
 // ── Export to Excel ───────────────────────────────────────────────────────
+const XLSX_CDN = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+let xlsxLoaderPromise = null;
+function ensureXLSX() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (xlsxLoaderPromise) return xlsxLoaderPromise;
+  xlsxLoaderPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = XLSX_CDN;
+    s.async = true;
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => {
+      xlsxLoaderPromise = null;
+      reject(new Error('Failed to load XLSX'));
+    };
+    document.head.appendChild(s);
+  });
+  return xlsxLoaderPromise;
+}
+
 async function exportToExcel() {
   const from = document.getElementById('filter-from').value;
   const to = document.getElementById('filter-to').value;
 
-  // Default: current year if no dates selected
   const now = new Date();
   const exportFrom = from || `${now.getFullYear()}-01-01`;
   const exportTo = to || todayISO();
@@ -2857,6 +2875,7 @@ async function exportToExcel() {
   btn.textContent = t('exporting');
 
   try {
+    await ensureXLSX();
     const params = new URLSearchParams({ from: exportFrom, to: exportTo });
     const categoryId = document.getElementById('filter-category').value;
     const personId = document.getElementById('filter-person').value;

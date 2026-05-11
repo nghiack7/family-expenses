@@ -1,0 +1,19 @@
+/icons/*
+  Cache-Control: public, max-age=2592000, immutable
+
+/style.css
+  Cache-Control: public, max-age=600, must-revalidate
+
+/app.js
+  Cache-Control: public, max-age=600, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: microphone=(self), camera=(self), geolocation=()
