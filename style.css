@@ -1,31 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: #f3efe6;
-  --bg-alt: #ede5d7;
-  --bg-strong: #e1d5c1;
-  --surface: rgba(255, 251, 245, 0.82);
-  --surface-strong: #fff9f1;
-  --surface-ink: #fffdf9;
+  /* Warm canvas — calming, not-fintech */
+  --bg: #F4EFE5;
+  --bg-alt: #ECE5D6;
+  --bg-strong: #E1D5C1;
+  --bg-card: #FBF7EF;
+  --surface: rgba(255, 255, 255, 0.94);
+  --surface-strong: #FFFDF9;
+  --surface-ink: #FFFFFF;
   --surface-dark: #133127;
-  --surface-dark-soft: #1c4335;
-  --border: rgba(19, 49, 39, 0.1);
+  --surface-dark-soft: #1C4335;
+  --line: rgba(19, 49, 39, 0.09);
+  --line-2: rgba(19, 49, 39, 0.14);
+  --border: rgba(19, 49, 39, 0.09);
   --border-strong: rgba(19, 49, 39, 0.16);
-  --text: #16231d;
-  --text-secondary: #42514a;
-  --text-muted: #6f7d76;
-  --text-on-dark: #f5efe4;
-  --primary: #133127;
-  --primary-strong: #0b241c;
-  --primary-soft: #d9e6dc;
-  --accent: #c46d3a;
-  --accent-soft: rgba(196, 109, 58, 0.12);
-  --success: #2c7a58;
-  --danger: #bf4e36;
-  --warning: #9b6a18;
-  --info: #305d7d;
+  --ink: #1E2A22;
+  --ink-2: #42514A;
+  --ink-3: #6F7D76;
+  --text: #1E2A22;
+  --text-secondary: #42514A;
+  --text-muted: #6F7D76;
+  --text-on-dark: #F5EFE4;
+  /* Forest green primary — calm, money-y */
+  --moss: #3F6F4A;
+  --moss-2: #5C8A66;
+  --moss-ink: #2A5236;
+  --primary: #3F6F4A;
+  --primary-strong: #2A5236;
+  --primary-soft: rgba(63, 111, 74, 0.12);
+  /* Terracotta accent — warm, family */
+  --clay: #C56A3D;
+  --clay-soft: rgba(197, 106, 61, 0.14);
+  --accent: #C56A3D;
+  --accent-soft: rgba(197, 106, 61, 0.14);
+  /* Mustard for highlights */
+  --gold: #E2B14E;
+  --gold-soft: rgba(226, 177, 78, 0.16);
+  /* Cool blue for AI / info */
+  --sky: #5784B0;
+  --sky-soft: rgba(87, 132, 176, 0.12);
+  --success: #3F6F4A;
+  --danger: #C25340;
+  --warning: #B07A24;
+  --info: #5784B0;
   --shadow-xs: 0 1px 2px rgba(15, 33, 26, 0.05);
-  --shadow-sm: 0 8px 24px rgba(16, 35, 28, 0.08);
+  --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.02), 0 10px 24px -18px rgba(16, 35, 28, 0.22);
   --shadow-md: 0 20px 60px rgba(16, 35, 28, 0.12);
   --shadow-lg: 0 32px 90px rgba(10, 27, 21, 0.16);
   --radius-sm: 14px;
@@ -34,32 +54,50 @@
   --radius-pill: 999px;
   --transition: 180ms ease;
   --max-content: 1440px;
+  --sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --serif: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 [data-theme="dark"] {
-  --bg: #09120f;
-  --bg-alt: #0d1d18;
+  --bg: #09120F;
+  --bg-alt: #0D1D18;
   --bg-strong: #122620;
+  --bg-card: #11221C;
   --surface: rgba(14, 27, 22, 0.82);
-  --surface-strong: #12231d;
-  --surface-ink: #182d25;
-  --surface-dark: #07120e;
+  --surface-strong: #12231D;
+  --surface-ink: #182D25;
+  --surface-dark: #07120E;
   --surface-dark-soft: #123126;
+  --line: rgba(237, 229, 215, 0.08);
+  --line-2: rgba(237, 229, 215, 0.14);
   --border: rgba(237, 229, 215, 0.08);
   --border-strong: rgba(237, 229, 215, 0.14);
-  --text: #f3eadc;
-  --text-secondary: #d7cebf;
-  --text-muted: #98a49d;
-  --text-on-dark: #f8f3eb;
-  --primary: #dce7dd;
-  --primary-strong: #f7f2e8;
+  --ink: #F3EADC;
+  --ink-2: #D7CEBF;
+  --ink-3: #98A49D;
+  --text: #F3EADC;
+  --text-secondary: #D7CEBF;
+  --text-muted: #98A49D;
+  --text-on-dark: #F8F3EB;
+  --moss: #94C2A0;
+  --moss-2: #76A985;
+  --moss-ink: #B7DAC0;
+  --primary: #DCE7DD;
+  --primary-strong: #F7F2E8;
   --primary-soft: rgba(220, 231, 221, 0.12);
-  --accent: #f09d6c;
+  --clay: #F09D6C;
+  --clay-soft: rgba(240, 157, 108, 0.18);
+  --accent: #F09D6C;
   --accent-soft: rgba(240, 157, 108, 0.16);
-  --success: #73c79d;
-  --danger: #ff8f7a;
-  --warning: #f3c67b;
-  --info: #8dc5f4;
+  --gold: #F3C67B;
+  --gold-soft: rgba(243, 198, 123, 0.18);
+  --sky: #8DC5F4;
+  --sky-soft: rgba(141, 197, 244, 0.16);
+  --success: #73C79D;
+  --danger: #FF8F7A;
+  --warning: #F3C67B;
+  --info: #8DC5F4;
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.28);
   --shadow-md: 0 20px 60px rgba(0, 0, 0, 0.32);
@@ -84,7 +122,7 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   color: var(--text);
-  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-family: var(--sans);
   background:
     radial-gradient(circle at top left, rgba(196, 109, 58, 0.18), transparent 28%),
     radial-gradient(circle at top right, rgba(19, 49, 39, 0.16), transparent 24%),
@@ -165,10 +203,11 @@ button:focus-visible {
 .eyebrow,
 .card-kicker {
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--accent);
+  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--clay);
 }
 
 .subtle-inline {
@@ -294,9 +333,10 @@ button:focus-visible {
 .hero-copy h2,
 .login-card h2,
 .setup-card h2 {
-  font-family: 'Fraunces', Georgia, serif;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
 }
 
 .login-story h1 {
@@ -470,9 +510,10 @@ button:focus-visible {
 
 .nav-brand strong {
   display: block;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: var(--serif);
+  font-weight: 400;
   font-size: 1.55rem;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .sidebar-nav-group {
@@ -762,10 +803,13 @@ button:focus-visible {
 }
 
 .stat-value {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(1.8rem, 2.8vw, 2.7rem);
-  letter-spacing: -0.04em;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 3vw, 2.85rem);
+  letter-spacing: -0.02em;
   line-height: 1;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-sub,
@@ -880,9 +924,12 @@ button:focus-visible {
 }
 
 .budget-value {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(1.2rem, 2vw, 1.7rem);
-  letter-spacing: -0.03em;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  letter-spacing: -0.02em;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .budget-progress-track {
@@ -1132,11 +1179,14 @@ button:focus-visible {
 }
 
 .forecast-window-amount {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(1.5rem, 2.2vw, 2rem);
-  letter-spacing: -0.04em;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.55rem, 2.2vw, 2.1rem);
+  letter-spacing: -0.02em;
   line-height: 1;
   text-align: right;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .forecast-window-amount.negative {
