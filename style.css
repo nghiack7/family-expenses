@@ -2288,3 +2288,427 @@ body.keyboard-open .ai-fab {
     width: 100%;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Hùn design language v2 — h-* atom utility library.
+   Namespaced with .h- prefix so they compose alongside existing
+   class names without conflicting. Reusable inside any view.
+   ───────────────────────────────────────────────────────────── */
+
+.h-screen {
+  width: 100%;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.h-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.h-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.h-spacer {
+  flex: 1;
+}
+
+.h-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.h-title-xl {
+  font-family: var(--serif);
+  font-size: 2.75rem;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.h-title-lg {
+  font-family: var(--serif);
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.h-num {
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.h-amount {
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.h-card {
+  background: var(--surface);
+  border-radius: 22px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 10px 24px -18px rgba(0, 0, 0, 0.18);
+  padding: 1rem;
+}
+
+.h-card-flat {
+  background: var(--surface);
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  padding: 0.875rem;
+}
+
+.h-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-2);
+}
+
+.h-divider {
+  height: 1px;
+  background: var(--line);
+}
+
+.h-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.h-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--moss);
+}
+
+.h-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+
+.h-cat.food { background: rgba(226, 177, 78, 0.18); color: #8A6320; }
+.h-cat.kid  { background: rgba(197, 106, 61, 0.16); color: #8C3F1A; }
+.h-cat.home { background: rgba(63, 111, 74, 0.14); color: var(--moss-ink); }
+.h-cat.tx   { background: rgba(87, 132, 176, 0.16); color: #2F4E72; }
+.h-cat.fun  { background: rgba(180, 90, 160, 0.14); color: #6F2E5C; }
+.h-cat.bill { background: rgba(120, 110, 95, 0.14); color: #3F3A33; }
+
+[data-theme="dark"] .h-cat.food { color: var(--gold); }
+[data-theme="dark"] .h-cat.kid  { color: var(--clay); }
+[data-theme="dark"] .h-cat.home { color: var(--moss); }
+[data-theme="dark"] .h-cat.tx   { color: var(--sky); }
+[data-theme="dark"] .h-cat.fun  { color: #DCA0CB; }
+[data-theme="dark"] .h-cat.bill { color: var(--ink-2); }
+
+/* Voice pulse-ring — wraps any 56-76px circular element with position:relative */
+@keyframes h-pulse-ring {
+  0%   { transform: scale(0.95); opacity: 0.7; }
+  70%  { transform: scale(1.4);  opacity: 0;   }
+  100% { transform: scale(1.4);  opacity: 0;   }
+}
+
+.h-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--moss);
+  opacity: 0.25;
+  animation: h-pulse-ring 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes h-sound-wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1);   }
+}
+
+.h-bar-wave {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  gap: 3px;
+}
+
+.h-bar-wave > b {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--moss);
+  animation: h-sound-wave 0.9s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.h-dots {
+  background-image: radial-gradient(rgba(63, 111, 74, 0.18) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+
+.h-receipt {
+  background: repeating-linear-gradient(180deg, #FDFAF3 0 24px, #F7F1E2 24px 25px);
+  border-radius: 14px;
+  padding: 0.875rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--ink-2);
+}
+
+.h-hero-vn {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--clay);
+}
+
+.h-placeholder {
+  background-image: repeating-linear-gradient(135deg, var(--line) 0 6px, transparent 6px 12px);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--ink-3);
+}
+
+.h-nudge {
+  background: rgba(63, 111, 74, 0.08);
+  border: 1px solid rgba(63, 111, 74, 0.18);
+  border-radius: 22px;
+  padding: 0.875rem 1rem;
+  color: var(--moss-ink);
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+}
+
+.h-nudge .h-nudge-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background: var(--moss);
+  color: white;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.h-nudge .h-nudge-body {
+  flex: 1;
+  font-size: 0.825rem;
+  line-height: 1.45;
+}
+
+[data-theme="dark"] .h-nudge {
+  background: rgba(148, 194, 160, 0.12);
+  border-color: rgba(148, 194, 160, 0.28);
+  color: var(--moss-ink);
+}
+
+.h-approval {
+  background: rgba(197, 106, 61, 0.08);
+  border: 1px dashed var(--clay);
+  border-radius: 22px;
+  padding: 0.875rem 1rem;
+}
+
+[data-theme="dark"] .h-approval {
+  background: rgba(240, 157, 108, 0.12);
+}
+
+.lazy-options {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.lazy-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.lazy-option:hover {
+  transform: translateY(-1px);
+}
+
+.lazy-option-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.lazy-option-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.lazy-option-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lazy-option-sub {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.lazy-option-hint {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--ink-3);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lazy-option[data-tone="moss"] {
+  background: rgba(63, 111, 74, 0.08);
+  border-color: rgba(63, 111, 74, 0.22);
+}
+.lazy-option[data-tone="moss"] .lazy-option-icon { background: var(--surface); color: var(--moss); }
+
+.lazy-option[data-tone="clay"] {
+  background: rgba(197, 106, 61, 0.08);
+  border-color: rgba(197, 106, 61, 0.22);
+}
+.lazy-option[data-tone="clay"] .lazy-option-icon { background: var(--surface); color: var(--clay); }
+
+.lazy-option[data-tone="sky"] {
+  background: rgba(87, 132, 176, 0.08);
+  border-color: rgba(87, 132, 176, 0.22);
+}
+.lazy-option[data-tone="sky"] .lazy-option-icon { background: var(--surface); color: var(--sky); }
+
+.greeting-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.greeting-hero .greeting-line {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.greeting-hero .greeting-name {
+  color: var(--moss);
+}
+
+.digest-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.digest-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+}
+
+.digest-line + .digest-line {
+  border-top: 1px solid var(--line);
+}
+
+.digest-num {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  color: var(--moss);
+  line-height: 1;
+  width: 1.5rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.digest-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  flex: 1;
+  color: var(--text);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Mobile bottom-nav: lift the centre add-expense button into a
+   moss circular FAB (Hùn lazy-fab pattern). Existing markup
+   stays put — pure CSS treatment of the existing button.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .bottom-nav-item[data-view="add-expense"] {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    margin: -22px auto 0;
+    padding: 0;
+    border-radius: 28px;
+    background: var(--moss);
+    color: #FFFFFF;
+    box-shadow: 0 8px 24px -6px rgba(63, 111, 74, 0.5),
+      0 0 0 5px var(--bg-card);
+    align-self: center;
+    justify-self: center;
+  }
+
+  .bottom-nav-item[data-view="add-expense"] > span:not(.bnav-icon) {
+    display: none;
+  }
+
+  .bottom-nav-item[data-view="add-expense"] .bnav-icon {
+    color: #FFFFFF;
+  }
+
+  .bottom-nav-item[data-view="add-expense"].active {
+    background: var(--moss-2);
+  }
+
+  [data-theme="dark"] .bottom-nav-item[data-view="add-expense"] {
+    box-shadow: 0 8px 24px -6px rgba(148, 194, 160, 0.45),
+      0 0 0 5px var(--bg-card);
+  }
+}
+
