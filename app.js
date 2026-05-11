@@ -109,6 +109,18 @@ const translations = {
     digest_reason_bills: 'điện nước và hoá đơn cố định',
     digest_reason_transport: 'xăng xe và đi lại',
     digest_reason_generic: 'thói quen mua thường ngày',
+    continue_with_facebook: 'Tiếp tục với Facebook',
+    facebook_sdk_loading: 'Facebook đang tải, thử lại sau 2 giây nhé.',
+    facebook_login_failed: 'Đăng nhập Facebook thất bại: {0}',
+    magic_link_trigger: 'Quên mật khẩu? Gửi link đăng nhập qua email',
+    magic_link_email_label: 'Email của bạn',
+    magic_link_email_placeholder: 'you@example.com',
+    magic_link_send: 'Gửi link đăng nhập',
+    magic_link_cancel: 'Hủy',
+    magic_link_need_email: 'Nhập email trước nhé.',
+    magic_link_sending: 'Đang gửi link...',
+    magic_link_sent: 'Đã gửi link vào hộp thư của bạn. Mở email rồi bấm vào link là vào app, không cần mật khẩu.',
+    magic_link_failed: 'Không gửi được link: {0}',
     dashboard_eyebrow: 'Tổng quan',
     previous_period: 'Kỳ trước',
     next_period: 'Kỳ sau',
@@ -569,6 +581,18 @@ const translations = {
     digest_reason_bills: 'utilities and fixed bills',
     digest_reason_transport: 'fuel and rides',
     digest_reason_generic: 'everyday spending',
+    continue_with_facebook: 'Continue with Facebook',
+    facebook_sdk_loading: 'Facebook is still loading, try again in 2 seconds.',
+    facebook_login_failed: 'Facebook sign-in failed: {0}',
+    magic_link_trigger: 'Forgot password? Email me a sign-in link',
+    magic_link_email_label: 'Your email',
+    magic_link_email_placeholder: 'you@example.com',
+    magic_link_send: 'Email me the link',
+    magic_link_cancel: 'Cancel',
+    magic_link_need_email: 'Enter your email first.',
+    magic_link_sending: 'Sending the link...',
+    magic_link_sent: 'Link sent to your inbox. Open the email and tap the link to sign in — no password needed.',
+    magic_link_failed: 'Could not send link: {0}',
     dashboard_eyebrow: 'Overview',
     previous_period: 'Previous period',
     next_period: 'Next period',
@@ -4687,8 +4711,13 @@ async function init() {
       initGoogleSignIn();
     }
   } else {
+    if (await consumeMagicLinkFromURL()) {
+      return;
+    }
     showLogin();
     initGoogleSignIn();
+    initFacebookSignIn();
+    initMagicLink();
   }
 }
 
@@ -4716,6 +4745,150 @@ function initGoogleSignIn() {
     document.getElementById('google-signin-btn'),
     { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
   );
+}
+
+// ── Facebook Sign-In ───────────────────────────────────────────────────────
+function initFacebookSignIn() {
+  const appId = window.FACEBOOK_APP_ID || '';
+  const btn = document.getElementById('facebook-signin-btn');
+  if (!btn) return;
+  if (!appId) {
+    btn.style.display = 'none';
+    return;
+  }
+  if (!window.__fbSdkLoaded) {
+    window.fbAsyncInit = function () {
+      window.FB.init({ appId, cookie: false, xfbml: false, version: 'v19.0' });
+      window.__fbSdkLoaded = true;
+    };
+    const s = document.createElement('script');
+    s.src = 'https://connect.facebook.net/en_US/sdk.js';
+    s.async = true;
+    s.defer = true;
+    s.crossOrigin = 'anonymous';
+    document.head.appendChild(s);
+  }
+  btn.addEventListener('click', onFacebookLoginClick);
+}
+
+function onFacebookLoginClick() {
+  const btn = document.getElementById('facebook-signin-btn');
+  if (!window.FB) {
+    toast(t('facebook_sdk_loading') || 'Facebook đang tải, thử lại sau 2 giây.', 'info');
+    return;
+  }
+  btn.disabled = true;
+  window.FB.login(
+    function (response) {
+      btn.disabled = false;
+      if (response.status !== 'connected' || !response.authResponse?.accessToken) {
+        return;
+      }
+      handleFacebookAuthResponse(response.authResponse.accessToken).catch(err => {
+        toast(t('facebook_login_failed', err.message) || `Đăng nhập Facebook thất bại: ${err.message}`, 'error');
+      });
+    },
+    { scope: 'public_profile,email' }
+  );
+}
+
+async function handleFacebookAuthResponse(accessToken) {
+  const res = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ action: 'facebook', accessToken }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  await afterAuthSuccess(data);
+}
+
+async function afterAuthSuccess(data) {
+  if (!data || !data.user) throw new Error('Invalid auth response');
+  setCurrentUser(data.user);
+  showApp();
+  toast(t('welcome', state.user.name), 'success');
+}
+
+// ── Email magic link ──────────────────────────────────────────────────────
+function initMagicLink() {
+  const trigger = document.getElementById('magic-link-trigger');
+  const form = document.getElementById('magic-link-form');
+  const submitBtn = document.getElementById('magic-link-btn');
+  const emailInput = document.getElementById('magic-link-email');
+  const statusEl = document.getElementById('magic-link-status');
+  const cancelBtn = document.getElementById('magic-link-cancel');
+  if (!trigger || !form || !submitBtn || !emailInput) return;
+
+  trigger.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    form.style.display = '';
+    trigger.style.display = 'none';
+    emailInput.focus();
+  });
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      form.style.display = 'none';
+      trigger.style.display = '';
+      if (statusEl) statusEl.textContent = '';
+    });
+  }
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const email = (emailInput.value || '').trim().toLowerCase();
+    if (!email) {
+      if (statusEl) statusEl.textContent = t('magic_link_need_email') || 'Nhập email trước nhé.';
+      return;
+    }
+    submitBtn.disabled = true;
+    if (statusEl) statusEl.textContent = t('magic_link_sending') || 'Đang gửi link...';
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'magic_link_request', email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (statusEl) statusEl.textContent = t('magic_link_sent') || `Đã gửi link vào ${email}. Mở email và bấm vào link để vào app.`;
+    } catch (err) {
+      if (statusEl) statusEl.textContent = (t('magic_link_failed', err.message) || `Không gửi được: ${err.message}`);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+async function consumeMagicLinkFromURL() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get('magic_token');
+  const email = url.searchParams.get('magic_email');
+  if (!token || !email) return false;
+
+  url.searchParams.delete('magic_token');
+  url.searchParams.delete('magic_email');
+  window.history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'magic_link_verify', token, email }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    await afterAuthSuccess(data);
+    return true;
+  } catch (err) {
+    toast(t('magic_link_failed', err.message) || 'Magic link không hợp lệ', 'error');
+    return false;
+  }
 }
 
 // ── Event listeners ────────────────────────────────────────────────────────

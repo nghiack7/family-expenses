@@ -23,6 +23,15 @@ export async function onRequestPost(context) {
   if (action === 'login') {
     return handleEmailLogin(body, env, request);
   }
+  if (action === 'facebook') {
+    return handleFacebookSSO(body, env, request);
+  }
+  if (action === 'magic_link_request') {
+    return handleMagicLinkRequest(body, env, request);
+  }
+  if (action === 'magic_link_verify') {
+    return handleMagicLinkVerify(body, env, request);
+  }
   // Default: Google SSO
   return handleGoogleSSO(body, env, request);
 }
@@ -278,6 +287,241 @@ async function handleEmailRegister(body, env, request) {
   }
 
   return issueSession({ sub: userId, email, name, avatar: null }, env, request);
+}
+
+// ── Facebook SSO ──────────────────────────────────────────────────────────────
+
+async function handleFacebookSSO(body, env, request) {
+  const { accessToken } = body;
+  if (!accessToken) return jsonError('Missing Facebook access token', 400);
+
+  const appId = env.FACEBOOK_APP_ID;
+  const appSecret = env.FACEBOOK_APP_SECRET;
+  if (!appId || !appSecret) {
+    return jsonError('Facebook login is not configured on this deployment', 503);
+  }
+
+  // Validate the user-issued token belongs to OUR app (prevents token confusion)
+  let debug;
+  try {
+    const debugRes = await fetch(
+      `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(accessToken)}&access_token=${encodeURIComponent(appId)}%7C${encodeURIComponent(appSecret)}`
+    );
+    if (!debugRes.ok) throw new Error(`debug_token status ${debugRes.status}`);
+    const debugJson = await debugRes.json();
+    debug = debugJson.data;
+    if (!debug || !debug.is_valid) throw new Error('Invalid Facebook token');
+    if (String(debug.app_id) !== String(appId)) throw new Error('Token issued for a different app');
+    if (debug.expires_at && debug.expires_at < Math.floor(Date.now() / 1000)) {
+      throw new Error('Token expired');
+    }
+  } catch (err) {
+    return jsonError(`Facebook token rejected: ${err.message}`, 401);
+  }
+
+  let profile;
+  try {
+    const meRes = await fetch(
+      `https://graph.facebook.com/v19.0/me?fields=id,name,email,picture.width(200)&access_token=${encodeURIComponent(accessToken)}`
+    );
+    if (!meRes.ok) throw new Error(`Graph /me status ${meRes.status}`);
+    profile = await meRes.json();
+  } catch (err) {
+    return jsonError(`Facebook profile lookup failed: ${err.message}`, 401);
+  }
+
+  const fbId = String(profile.id || '').trim();
+  const name = (profile.name || '').trim() || 'Friend';
+  const email = (profile.email || '').trim().toLowerCase();
+  const picture = profile.picture?.data?.url || null;
+  if (!fbId) return jsonError('Facebook did not return a user id', 400);
+
+  try {
+    let existing = await env.DB.prepare('SELECT id, email, name, avatar FROM users WHERE facebook_id = ?').bind(fbId).first();
+    if (existing) {
+      await ensurePersonalFamilyMembership(env, { sub: existing.id, name: existing.name });
+      return issueSession({ sub: existing.id, email: existing.email, name: existing.name, avatar: existing.avatar }, env, request);
+    }
+
+    if (email) {
+      const byEmail = await env.DB.prepare('SELECT id, email, name, avatar FROM users WHERE email = ?').bind(email).first();
+      if (byEmail) {
+        await env.DB.prepare(
+          `UPDATE users SET facebook_id = ?, avatar = COALESCE(avatar, ?),
+           auth_provider = CASE WHEN auth_provider LIKE '%facebook%' THEN auth_provider ELSE auth_provider || '+facebook' END
+           WHERE id = ?`
+        ).bind(fbId, picture, byEmail.id).run();
+        await ensurePersonalFamilyMembership(env, { sub: byEmail.id, name: byEmail.name });
+        return issueSession({ sub: byEmail.id, email: byEmail.email, name: byEmail.name, avatar: byEmail.avatar }, env, request);
+      }
+    }
+
+    try {
+      const dbSize = await env.DB.prepare(
+        "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+      ).first();
+      if ((dbSize?.size || 0) / (1024 * 1024) >= 2048) {
+        return jsonError('Registration is currently closed. The system is at capacity.', 503);
+      }
+    } catch { /* fail open */ }
+
+    const userId = generateUUID();
+    const fallbackEmail = email || `fb_${fbId}@facebook.local`;
+    await env.DB.prepare(
+      `INSERT INTO users (id, email, name, avatar, auth_provider, facebook_id)
+       VALUES (?, ?, ?, ?, 'facebook', ?)`
+    ).bind(userId, fallbackEmail, name, picture, fbId).run();
+    await ensurePersonalFamilyMembership(env, { sub: userId, name });
+    return issueSession({ sub: userId, email: fallbackEmail, name, avatar: picture }, env, request);
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+}
+
+// ── Email Magic Link ──────────────────────────────────────────────────────────
+
+const MAGIC_LINK_TTL_SECONDS = 15 * 60;
+
+async function handleMagicLinkRequest(body, env, request) {
+  const rawEmail = (body.email || '').trim().toLowerCase();
+  if (!rawEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    return jsonError('Please enter a valid email', 400);
+  }
+
+  if (!env.RESEND_API_KEY) {
+    return jsonError('Email login is not configured on this deployment', 503);
+  }
+
+  const rawToken = generateRawToken();
+  const tokenHash = await sha256Hex(rawToken);
+  const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_SECONDS * 1000).toISOString();
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO magic_link_tokens (token_hash, email, expires_at) VALUES (?, ?, ?)`
+    ).bind(tokenHash, rawEmail, expiresAt).run();
+  } catch (err) {
+    return jsonError(`Could not start magic link flow: ${err.message}`, 500);
+  }
+
+  const origin = new URL(request.url).origin;
+  const verifyUrl = `${origin}/?magic_token=${encodeURIComponent(rawToken)}&magic_email=${encodeURIComponent(rawEmail)}`;
+
+  const subject = 'Đăng nhập Family Expenses';
+  const html = renderMagicLinkEmail(verifyUrl, rawEmail);
+  const from = env.MAIL_FROM || 'Family Expenses <noreply@family-expenses.app>';
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to: rawEmail, subject, html }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      return jsonError(`Could not send email: ${res.status} ${errText}`, 502);
+    }
+  } catch (err) {
+    return jsonError(`Could not send email: ${err.message}`, 502);
+  }
+
+  return jsonResponse({ ok: true, ttl_seconds: MAGIC_LINK_TTL_SECONDS });
+}
+
+async function handleMagicLinkVerify(body, env, request) {
+  const token = (body.token || '').trim();
+  const email = (body.email || '').trim().toLowerCase();
+  if (!token || !email) return jsonError('Missing token or email', 400);
+
+  const tokenHash = await sha256Hex(token);
+
+  let row;
+  try {
+    row = await env.DB.prepare(
+      `SELECT token_hash, email, expires_at, used_at FROM magic_link_tokens WHERE token_hash = ? AND email = ?`
+    ).bind(tokenHash, email).first();
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  if (!row) return jsonError('Magic link is invalid or has been used', 401);
+  if (row.used_at) return jsonError('Magic link has already been used', 401);
+  if (new Date(row.expires_at).getTime() < Date.now()) return jsonError('Magic link has expired', 401);
+
+  try {
+    await env.DB.prepare(
+      `UPDATE magic_link_tokens SET used_at = datetime('now') WHERE token_hash = ?`
+    ).bind(tokenHash).run();
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+
+  // Upsert user
+  try {
+    let user = await env.DB.prepare('SELECT id, email, name, avatar FROM users WHERE email = ?').bind(email).first();
+    if (!user) {
+      try {
+        const dbSize = await env.DB.prepare(
+          "SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()"
+        ).first();
+        if ((dbSize?.size || 0) / (1024 * 1024) >= 2048) {
+          return jsonError('Registration is currently closed. The system is at capacity.', 503);
+        }
+      } catch { /* fail open */ }
+
+      const userId = generateUUID();
+      const fallbackName = nameFromEmail(email);
+      await env.DB.prepare(
+        `INSERT INTO users (id, email, name, avatar, auth_provider) VALUES (?, ?, ?, NULL, 'email')`
+      ).bind(userId, email, fallbackName).run();
+      user = { id: userId, email, name: fallbackName, avatar: null };
+    }
+    await ensurePersonalFamilyMembership(env, { sub: user.id, name: user.name });
+    return issueSession({ sub: user.id, email: user.email, name: user.name, avatar: user.avatar }, env, request);
+  } catch (err) {
+    return jsonError(`Database error: ${err.message}`, 500);
+  }
+}
+
+function generateRawToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function sha256Hex(input) {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function nameFromEmail(email) {
+  const local = email.split('@')[0] || 'Friend';
+  const cleaned = local.replace(/[._-]+/g, ' ').trim() || 'Friend';
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+function renderMagicLinkEmail(verifyUrl, email) {
+  const safeUrl = String(verifyUrl).replace(/"/g, '&quot;');
+  const safeEmail = String(email).replace(/</g, '&lt;');
+  return `<!doctype html><html><body style="margin:0;background:#F4EFE5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1E2A22;padding:32px 20px">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:22px;padding:28px 24px;box-shadow:0 10px 24px -18px rgba(0,0,0,0.18)">
+    <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;line-height:1.1;letter-spacing:-0.02em;margin:0 0 6px">Đăng nhập Family Expenses</div>
+    <p style="font-size:14px;color:#42514A;line-height:1.5;margin:0 0 22px">Bạn vừa yêu cầu link đăng nhập cho <b>${safeEmail}</b>. Nhấn nút bên dưới trong vòng 15 phút để vào app.</p>
+    <a href="${safeUrl}" style="display:inline-block;background:#3F6F4A;color:#FFFFFF;text-decoration:none;padding:14px 22px;border-radius:999px;font-weight:600;font-size:14px">Mở Family Expenses</a>
+    <p style="font-size:12px;color:#6F7D76;line-height:1.5;margin:22px 0 0">Nếu bạn không yêu cầu link này, có thể bỏ qua email — không có gì xảy ra trên tài khoản.</p>
+    <p style="font-size:11px;color:#98A49D;line-height:1.5;margin:18px 0 0;font-family:'JetBrains Mono',ui-monospace,monospace;word-break:break-all">${safeUrl}</p>
+  </div></body></html>`;
+}
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 // ── Email Login ───────────────────────────────────────────────────────────────

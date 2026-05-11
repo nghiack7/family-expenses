@@ -19,7 +19,10 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css" />
-  <script>window.GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com";</script>
+  <script>
+    window.GOOGLE_CLIENT_ID = "96712291758-care9g3k805ii70ndqd5dtfh07b613ua.apps.googleusercontent.com";
+    window.FACEBOOK_APP_ID = window.FACEBOOK_APP_ID || "";
+  </script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -56,7 +59,19 @@
 
           <div class="google-btn-wrapper">
             <div id="google-signin-btn"></div>
+            <button type="button" id="facebook-signin-btn" class="btn btn-facebook btn-full" style="display:none">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.1 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.77l-.44 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94"/>
+              </svg>
+              <span data-i18n="continue_with_facebook">Tiếp tục với Facebook</span>
+            </button>
           </div>
+          <script>
+            (function(){
+              var btn = document.getElementById('facebook-signin-btn');
+              if (btn && window.FACEBOOK_APP_ID) btn.style.display = '';
+            })();
+          </script>
 
           <div class="login-divider"><span data-i18n="or_continue_email">hoặc đăng nhập bằng email</span></div>
 
@@ -83,7 +98,20 @@
 
           <div class="login-card-actions">
             <button type="button" class="btn-link" id="toggle-auth-mode" data-i18n="no_account">Chưa có tài khoản? Đăng ký</button>
+            <button type="button" class="btn-link" id="magic-link-trigger" data-i18n="magic_link_trigger">Quên mật khẩu? Gửi link đăng nhập qua email</button>
           </div>
+
+          <form id="magic-link-form" class="magic-link-form" style="display:none">
+            <div class="form-group">
+              <label class="form-label" for="magic-link-email" data-i18n="magic_link_email_label">Email của bạn</label>
+              <input type="email" id="magic-link-email" data-i18n="magic_link_email_placeholder" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div id="magic-link-status" class="form-hint magic-link-status"></div>
+            <div class="magic-link-actions">
+              <button type="submit" class="btn btn-primary btn-full" id="magic-link-btn" data-i18n="magic_link_send">Gửi link đăng nhập</button>
+              <button type="button" class="btn-link" id="magic-link-cancel" data-i18n="magic_link_cancel">Hủy</button>
+            </div>
+          </form>
 
           <p class="login-footnote">
             <span data-i18n="currency_hint">Tiền tệ có thể cài đặt trong Cài đặt gia đình</span>
