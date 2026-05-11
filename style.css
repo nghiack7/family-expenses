@@ -2712,3 +2712,125 @@ body.keyboard-open .ai-fab {
   }
 }
 
+.topbar.topbar-greeting .greeting-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.topbar.topbar-greeting .topbar-title {
+  font-family: var(--serif);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.topbar.topbar-greeting .greeting-name {
+  color: var(--moss);
+  font-style: italic;
+}
+
+.topbar.topbar-greeting .greeting-comma {
+  color: var(--text);
+}
+
+.dashboard-nudge-wrap {
+  margin: 0 0 1rem;
+}
+
+.dashboard-nudge-wrap .h-nudge {
+  padding: 1rem 1.25rem;
+}
+
+.dashboard-nudge-wrap .h-nudge-icon .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.dashboard-nudge-wrap .h-nudge-body .h-eyebrow {
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-nudge-wrap .h-nudge-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+
+.weekly-digest-wrap {
+  margin: 0 0 1rem;
+}
+
+.digest-card .card-header {
+  margin-bottom: 0.5rem;
+}
+
+.digest-card .badge-mono {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.digest-card .digest-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.expense-meta .h-cat {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.65rem;
+  border-radius: 8px;
+}
+
+.lazy-option-card {
+  position: relative;
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.lazy-option-card[data-tone="moss"] {
+  background: linear-gradient(180deg, rgba(63, 111, 74, 0.06) 0%, var(--surface) 60%);
+  border-color: rgba(63, 111, 74, 0.22);
+}
+
+.lazy-option-card[data-tone="clay"] {
+  background: linear-gradient(180deg, rgba(197, 106, 61, 0.06) 0%, var(--surface) 60%);
+  border-color: rgba(197, 106, 61, 0.22);
+}
+
+.lazy-option-card[data-tone="sky"] {
+  background: linear-gradient(180deg, rgba(87, 132, 176, 0.06) 0%, var(--surface) 60%);
+  border-color: rgba(87, 132, 176, 0.22);
+}
+
+[data-theme="dark"] .lazy-option-card[data-tone="moss"] {
+  background: linear-gradient(180deg, rgba(148, 194, 160, 0.10) 0%, var(--surface) 60%);
+  border-color: rgba(148, 194, 160, 0.30);
+}
+
+[data-theme="dark"] .lazy-option-card[data-tone="clay"] {
+  background: linear-gradient(180deg, rgba(240, 157, 108, 0.10) 0%, var(--surface) 60%);
+  border-color: rgba(240, 157, 108, 0.30);
+}
+
+[data-theme="dark"] .lazy-option-card[data-tone="sky"] {
+  background: linear-gradient(180deg, rgba(141, 197, 244, 0.10) 0%, var(--surface) 60%);
+  border-color: rgba(141, 197, 244, 0.30);
+}
+
+@media (max-width: 720px) {
+  .topbar.topbar-greeting .topbar-title {
+    font-size: 1.65rem;
+  }
+}
+

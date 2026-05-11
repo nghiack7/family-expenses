@@ -140,10 +140,13 @@
         </nav>
 
         <main class="main app-main">
-          <header class="topbar">
-            <div>
-              <div class="eyebrow" data-i18n="topbar_eyebrow">Family Operating System</div>
-              <h1 class="topbar-title" data-i18n="topbar_title">Money with context, not clutter.</h1>
+          <header class="topbar topbar-greeting">
+            <div class="greeting-hero" id="topbar-greeting">
+              <div class="eyebrow h-eyebrow" id="topbar-greeting-eyebrow" data-i18n="topbar_eyebrow">Hôm nay</div>
+              <h1 class="topbar-title greeting-line">
+                <span id="topbar-greeting-prefix" data-i18n="greeting_morning">Chào buổi sáng</span><span class="greeting-comma">,</span>
+                <span class="greeting-name" id="topbar-greeting-name">—</span>
+              </h1>
             </div>
             <div class="topbar-actions">
               <button class="btn btn-secondary btn-sm" data-view="history" data-i18n="see_all">Xem tất cả</button>
@@ -174,6 +177,31 @@
                   </button>
                 </div>
               </div>
+            </section>
+
+            <section class="dashboard-nudge-wrap" id="dashboard-nudge-wrap" style="display:none">
+              <article class="h-nudge" id="dashboard-nudge">
+                <div class="h-nudge-icon" aria-hidden="true">
+                  <span class="material-symbols-outlined">tips_and_updates</span>
+                </div>
+                <div class="h-nudge-body">
+                  <div class="eyebrow h-eyebrow" data-i18n="nudge_kicker">Gợi ý cho bạn</div>
+                  <div class="h-nudge-text" id="dashboard-nudge-text"></div>
+                </div>
+              </article>
+            </section>
+
+            <section class="weekly-digest-wrap" id="weekly-digest-wrap" style="display:none">
+              <article class="card digest-card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-kicker" data-i18n="digest_kicker">Tóm tắt</div>
+                    <span class="card-title" id="weekly-digest-title" data-i18n="digest_title">3 dòng về tháng này</span>
+                  </div>
+                  <span class="badge-mono" id="weekly-digest-period"></span>
+                </div>
+                <div class="digest-list" id="weekly-digest-list"></div>
+              </article>
             </section>
 
             <section class="dashboard-onboarding" id="dashboard-onboarding" style="display:none">
@@ -371,7 +399,7 @@
 
             <section class="add-workspace">
               <div class="add-main-stack">
-                <article class="card voice-card voice-card-featured">
+                <article class="card voice-card voice-card-featured lazy-option-card" data-tone="moss">
                   <div class="card-header">
                     <div>
                       <div class="card-kicker" data-i18n="voice_batch_kicker">Voice Batch</div>
@@ -402,7 +430,7 @@
                   </div>
                 </article>
 
-                <article class="card ai-extract-card">
+                <article class="card ai-extract-card lazy-option-card" data-tone="clay">
                   <div class="card-header">
                     <div>
                       <div class="card-kicker" data-i18n="receipt_kicker">Receipt</div>
@@ -419,7 +447,7 @@
               </div>
 
               <div class="add-side-stack">
-                <article class="card form-card">
+                <article class="card form-card lazy-option-card" data-tone="sky">
                   <div class="card-header">
                     <div>
                       <div class="card-kicker" data-i18n="manual_entry_kicker">Manual Entry</div>

@@ -78,8 +78,37 @@ const translations = {
     nav_brand_suffix: 'Flow',
     lang_toggle_title: 'Chuyển ngôn ngữ',
     theme_toggle_title: 'Đổi giao diện',
-    topbar_eyebrow: 'Hệ điều hành tài chính gia đình',
-    topbar_title: 'Tiền có ngữ cảnh, không có rác giao diện.',
+    topbar_eyebrow: 'Hôm nay',
+    topbar_title: 'Chào nhà mình.',
+    greeting_morning: 'Chào buổi sáng',
+    greeting_afternoon: 'Chào buổi chiều',
+    greeting_evening: 'Chào buổi tối',
+    greeting_night: 'Khuya rồi',
+    greeting_friend: 'bạn',
+    nudge_kicker: 'Gợi ý cho bạn',
+    nudge_first_run: 'Thêm khoản chi đầu tiên là dashboard mở khoá ngay. Bạn có thể ghi tay hay nói một câu là xong.',
+    nudge_recurring_due: 'Có {count} bill lặp sắp tới hạn — duyệt qua 30 giây cho gọn nhé?',
+    nudge_budget_healthy: 'Tháng này nhà mình đang dưới ngân sách {percent}%. Cứ giữ nhịp này là đẹp.',
+    nudge_budget_warning: 'Đã dùng {percent}% ngân sách tháng — nhẹ tay lại một chút là ổn.',
+    nudge_budget_over: 'Tháng này hơi tay rồi: đã vượt ngân sách {percent}%. Để mình giúp cân lại tuần sau?',
+    nudge_voice_hint: 'Bận quá thì nói một câu: "đi chợ 200k cafe 50k" — mình tách thành từng khoản cho bạn rà soát.',
+    nudge_quick_again: 'Bữa trước bạn ghi "{label}" — gõ một chạm là xong, không cần điền lại.',
+    digest_kicker: 'Tóm tắt',
+    digest_title: '3 dòng về tháng này',
+    digest_line_total_under: 'Tháng này nhà mình đã chi {amount}, dưới mức kỳ trước {saved}.',
+    digest_line_total_over: 'Tháng này nhà mình đã chi {amount}, hơn kỳ trước {over}.',
+    digest_line_total_first: 'Tháng này nhà mình đã chi {amount}.',
+    digest_line_top_category: 'Khoản lớn nhất là {name}, chiếm {percent}% — phần lớn là do {reason}.',
+    digest_line_top_category_short: 'Khoản lớn nhất là {name}, chiếm {percent}%.',
+    digest_line_budget_left: 'Còn lại {amount} trong ngân sách tháng — đủ thoáng đến cuối kỳ.',
+    digest_line_budget_tight: 'Ngân sách tháng còn {amount} — cẩn thận một chút là an toàn.',
+    digest_line_budget_over: 'Đã vượt ngân sách {amount} — để mình giúp bạn cân lại tháng sau?',
+    digest_line_busy_day: 'Ngày tiêu mạnh nhất là {date}, chi {amount}.',
+    digest_reason_kids: 'cho bé nhà mình',
+    digest_reason_food: 'ăn uống ngoài và đi chợ',
+    digest_reason_bills: 'điện nước và hoá đơn cố định',
+    digest_reason_transport: 'xăng xe và đi lại',
+    digest_reason_generic: 'thói quen mua thường ngày',
     dashboard_eyebrow: 'Tổng quan',
     previous_period: 'Kỳ trước',
     next_period: 'Kỳ sau',
@@ -509,8 +538,37 @@ const translations = {
     nav_brand_suffix: 'Flow',
     lang_toggle_title: 'Switch language',
     theme_toggle_title: 'Toggle theme',
-    topbar_eyebrow: 'Family operating system',
-    topbar_title: 'Money with context, not clutter.',
+    topbar_eyebrow: 'Today',
+    topbar_title: 'Hi family.',
+    greeting_morning: 'Good morning',
+    greeting_afternoon: 'Good afternoon',
+    greeting_evening: 'Good evening',
+    greeting_night: 'Late night',
+    greeting_friend: 'friend',
+    nudge_kicker: 'A suggestion',
+    nudge_first_run: 'One expense unlocks the whole dashboard. Type it in or speak a single sentence.',
+    nudge_recurring_due: '{count} recurring bills are coming up — a 30-second review keeps you ahead.',
+    nudge_budget_healthy: "You're {percent}% under budget this month. Keep this pace and you're golden.",
+    nudge_budget_warning: 'You have used {percent}% of this month — ease off a touch and you stay on track.',
+    nudge_budget_over: 'A bit heavy this month: {percent}% over budget. Want help re-planning next month?',
+    nudge_voice_hint: 'Short on time? Say one line: "groceries 200k coffee 50k" — we split it into items for review.',
+    nudge_quick_again: 'You logged "{label}" recently — one tap re-uses it, no re-typing.',
+    digest_kicker: 'Recap',
+    digest_title: 'Three lines about this month',
+    digest_line_total_under: 'You spent {amount} this month, {saved} less than last period.',
+    digest_line_total_over: 'You spent {amount} this month, {over} more than last period.',
+    digest_line_total_first: 'You spent {amount} this month.',
+    digest_line_top_category: 'Largest slice: {name} at {percent}% — mostly {reason}.',
+    digest_line_top_category_short: 'Largest slice: {name} at {percent}%.',
+    digest_line_budget_left: '{amount} left in the monthly budget — plenty of room to the end of the period.',
+    digest_line_budget_tight: '{amount} left in the budget — easy on the brakes from here.',
+    digest_line_budget_over: 'Over budget by {amount} — want help planning next month?',
+    digest_line_busy_day: 'Biggest day was {date} at {amount}.',
+    digest_reason_kids: 'for the kid(s)',
+    digest_reason_food: 'eating out and groceries',
+    digest_reason_bills: 'utilities and fixed bills',
+    digest_reason_transport: 'fuel and rides',
+    digest_reason_generic: 'everyday spending',
     dashboard_eyebrow: 'Overview',
     previous_period: 'Previous period',
     next_period: 'Next period',
@@ -982,6 +1040,8 @@ function recurringCadenceLabel(cadence) {
 
 function updateWorkspaceCopy() {
   const personal = isPersonalWorkspace();
+
+  renderDashboardGreeting();
 
   setNodeText('dashboard-hero-title', personal ? t('dashboard_hero_personal_title') : t('dashboard_hero_family_title'));
   setNodeText('dashboard-hero-body', personal ? t('dashboard_hero_personal_body') : t('dashboard_hero_family_body'));
@@ -2123,6 +2183,8 @@ async function loadDashboard() {
     }
 
     renderDashboardOnboarding();
+    renderDashboardNudge();
+    renderWeeklyDigest(state.stats, range.mode);
     renderBudgetOverview();
     renderCashflowForecast();
 
@@ -2141,6 +2203,183 @@ async function loadDashboard() {
       toast(t('failed_load_dashboard', err.message), 'error');
     }
   }
+}
+
+// ── Greeting / nudge / weekly digest ───────────────────────────────────────
+function firstNameOf(person) {
+  const raw = String(person?.name || person?.full_name || person?.email || '').trim();
+  if (!raw) return '';
+  const noEmailAt = raw.includes('@') ? raw.split('@')[0] : raw;
+  const parts = noEmailAt.split(/[\s_.-]+/).filter(Boolean);
+  if (parts.length === 0) return '';
+  const last = parts[parts.length - 1];
+  return last.charAt(0).toUpperCase() + last.slice(1);
+}
+
+function greetingPrefixForHour(hour) {
+  if (hour >= 5 && hour < 12) return t('greeting_morning');
+  if (hour >= 12 && hour < 18) return t('greeting_afternoon');
+  if (hour >= 18 && hour < 22) return t('greeting_evening');
+  return t('greeting_night');
+}
+
+function relativeDateEyebrow() {
+  const now = new Date();
+  const locale = state.lang === 'en' ? 'en-US' : 'vi-VN';
+  try {
+    return now.toLocaleDateString(locale, { weekday: 'long', day: '2-digit', month: 'long' });
+  } catch (_e) {
+    return now.toDateString();
+  }
+}
+
+function renderDashboardGreeting() {
+  const eyebrowEl = document.getElementById('topbar-greeting-eyebrow');
+  const prefixEl = document.getElementById('topbar-greeting-prefix');
+  const nameEl = document.getElementById('topbar-greeting-name');
+  if (!eyebrowEl || !prefixEl || !nameEl) return;
+
+  const hour = new Date().getHours();
+  const name = firstNameOf(state.user) || t('greeting_friend');
+  eyebrowEl.textContent = relativeDateEyebrow();
+  prefixEl.textContent = greetingPrefixForHour(hour);
+  nameEl.textContent = name;
+}
+
+function fillTemplate(template, vars) {
+  return String(template).replace(/\{(\w+)\}/g, (_, key) => (vars[key] !== undefined ? vars[key] : ''));
+}
+
+function renderDashboardNudge() {
+  const wrap = document.getElementById('dashboard-nudge-wrap');
+  const textEl = document.getElementById('dashboard-nudge-text');
+  if (!wrap || !textEl) return;
+
+  const stats = state.stats;
+  const settings = getBudgetSettings();
+  const totalSpent = Number(stats?.total || 0);
+  const totalCount = Number(stats?.count || 0);
+  const monthlyBudget = Number(settings.monthly_total || 0);
+
+  let message = '';
+
+  if (!stats || totalCount === 0) {
+    message = t('nudge_first_run');
+  } else if (monthlyBudget > 0) {
+    const pct = Math.round((totalSpent / monthlyBudget) * 100);
+    if (pct >= 100) {
+      message = fillTemplate(t('nudge_budget_over'), { percent: Math.max(0, pct - 100) });
+    } else if (pct >= 85) {
+      message = fillTemplate(t('nudge_budget_warning'), { percent: pct });
+    } else {
+      message = fillTemplate(t('nudge_budget_healthy'), { percent: Math.max(0, 100 - pct) });
+    }
+  } else if (totalCount >= 1 && totalCount < 5) {
+    message = t('nudge_voice_hint');
+  } else {
+    message = '';
+  }
+
+  if (!message) {
+    wrap.style.display = 'none';
+    return;
+  }
+  textEl.textContent = message;
+  wrap.style.display = '';
+}
+
+function categoryReasonKeyFromName(name) {
+  const lower = String(name || '').toLowerCase();
+  if (/(child|kid|baby|con\b|sữa|tã|trẻ)/i.test(lower)) return 'digest_reason_kids';
+  if (/(food|drink|ăn|cafe|coffee|grocer|cơm|chợ|nhà hàng|restaurant)/i.test(lower)) return 'digest_reason_food';
+  if (/(bill|điện|nước|wifi|internet|rent|nhà|phone|hoá đơn|hóa đơn|utilities)/i.test(lower)) return 'digest_reason_bills';
+  if (/(transport|grab|taxi|xăng|xe|bus|đi lại|fuel|ride)/i.test(lower)) return 'digest_reason_transport';
+  return 'digest_reason_generic';
+}
+
+function renderWeeklyDigest(s, viewMode) {
+  const wrap = document.getElementById('weekly-digest-wrap');
+  const listEl = document.getElementById('weekly-digest-list');
+  const periodEl = document.getElementById('weekly-digest-period');
+  if (!wrap || !listEl) return;
+
+  const totalSpent = Number(s?.total || 0);
+  const totalCount = Number(s?.count || 0);
+
+  if (!s || totalCount === 0 || viewMode !== 'month') {
+    wrap.style.display = 'none';
+    return;
+  }
+
+  const lines = [];
+
+  const prevTotal = Number(s.prev_total || 0);
+  if (prevTotal > 0 && totalSpent <= prevTotal) {
+    lines.push(fillTemplate(t('digest_line_total_under'), {
+      amount: formatMoney(totalSpent),
+      saved: formatMoney(prevTotal - totalSpent),
+    }));
+  } else if (prevTotal > 0 && totalSpent > prevTotal) {
+    lines.push(fillTemplate(t('digest_line_total_over'), {
+      amount: formatMoney(totalSpent),
+      over: formatMoney(totalSpent - prevTotal),
+    }));
+  } else {
+    lines.push(fillTemplate(t('digest_line_total_first'), { amount: formatMoney(totalSpent) }));
+  }
+
+  const cats = Array.isArray(s.by_category) ? [...s.by_category] : [];
+  cats.sort((a, b) => Number(b.total || 0) - Number(a.total || 0));
+  if (cats.length > 0 && totalSpent > 0) {
+    const top = cats[0];
+    const pct = Math.round((Number(top.total || 0) / totalSpent) * 100);
+    const reasonKey = categoryReasonKeyFromName(top.name);
+    const reasonText = t(reasonKey);
+    const tpl = pct >= 25 ? 'digest_line_top_category' : 'digest_line_top_category_short';
+    lines.push(fillTemplate(t(tpl), { name: top.name, percent: pct, reason: reasonText }));
+  }
+
+  const settings = getBudgetSettings();
+  const monthlyBudget = Number(settings.monthly_total || 0);
+  if (monthlyBudget > 0) {
+    const remaining = monthlyBudget - totalSpent;
+    if (remaining < 0) {
+      lines.push(fillTemplate(t('digest_line_budget_over'), { amount: formatMoney(Math.abs(remaining)) }));
+    } else if (remaining / monthlyBudget < 0.15) {
+      lines.push(fillTemplate(t('digest_line_budget_tight'), { amount: formatMoney(remaining) }));
+    } else {
+      lines.push(fillTemplate(t('digest_line_budget_left'), { amount: formatMoney(remaining) }));
+    }
+  } else if (Array.isArray(s.daily) && s.daily.length > 0) {
+    const top = [...s.daily].sort((a, b) => Number(b.total || 0) - Number(a.total || 0))[0];
+    if (top && top.total > 0) {
+      lines.push(fillTemplate(t('digest_line_busy_day'), {
+        date: formatDate(top.date),
+        amount: formatMoney(top.total),
+      }));
+    }
+  }
+
+  const final = lines.slice(0, 3);
+  listEl.innerHTML = final.map((line, i) => `
+    <div class="digest-line">
+      <div class="digest-num">${i + 1}</div>
+      <div class="digest-text">${escHtml(line)}</div>
+    </div>`).join('');
+  if (periodEl && state.currentMonth) {
+    periodEl.textContent = String(state.currentMonth.month).padStart(2, '0') + '/' + state.currentMonth.year;
+  }
+  wrap.style.display = '';
+}
+
+function categoryToneFromName(name) {
+  const lower = String(name || '').toLowerCase();
+  if (/(child|kid|baby|con\b|sữa|tã|trẻ|cho con)/i.test(lower)) return 'kid';
+  if (/(food|drink|ăn|cafe|coffee|grocer|cơm|chợ|nhà hàng|restaurant|phở|bún)/i.test(lower)) return 'food';
+  if (/(bill|điện|nước|wifi|internet|rent|nhà|phone|hoá đơn|hóa đơn|utilities)/i.test(lower)) return 'bill';
+  if (/(transport|grab|taxi|xăng|xe\b|bus|đi lại|fuel|ride)/i.test(lower)) return 'tx';
+  if (/(entertain|movie|phim|game|chơi|karaoke|giải trí|fun)/i.test(lower)) return 'fun';
+  return 'home';
 }
 
 function renderStats(s, viewMode, monthsWithSpend) {
@@ -2283,13 +2522,15 @@ function renderExpenseList(container, expenses) {
     return;
   }
 
-  container.innerHTML = expenses.map(e => `
+  container.innerHTML = expenses.map(e => {
+    const tone = categoryToneFromName(e.category_name);
+    return `
     <div class="expense-item" data-expense-id="${escHtml(e.id)}">
       <div class="expense-icon">${escHtml(e.category_icon || '📦')}</div>
       <div class="expense-info">
         <div class="expense-desc">${escHtml(e.description || e.category_name)}</div>
         <div class="expense-meta">
-          <span>${escHtml(e.category_name)}</span>
+          <span class="h-cat ${tone}">${escHtml(e.category_name)}</span>
           <span>•</span>
           <span>${escHtml(e.user_name)}</span>
         </div>
@@ -2302,8 +2543,8 @@ function renderExpenseList(container, expenses) {
           <button class="expense-delete" data-id="${escHtml(e.id)}" title="${t('delete')}">🗑</button>
         </div>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
 
   // Edit buttons
   container.querySelectorAll('.expense-edit').forEach(btn => {
