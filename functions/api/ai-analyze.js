@@ -157,7 +157,9 @@ export async function onRequestPost(context) {
 
     let prompt = buildAnalysisPrompt({ stats, monthLabel, currency, income, savings, question });
     if (creds.usingFallback) prompt = FINANCE_GUARD_PREAMBLE + prompt;
-    const url = providerConfig.buildUrl(creds.model, creds.apiKey);
+    const url = creds.baseUrl
+      ? creds.baseUrl.replace(/\/$/, '') + (creds.provider === 'gemini' ? `/${creds.model}:generateContent?key=${creds.apiKey}` : '')
+      : providerConfig.buildUrl(creds.model, creds.apiKey);
     const reqBody = providerConfig.buildBody(prompt, creds.model);
     const headers = {
       'Content-Type': 'application/json',

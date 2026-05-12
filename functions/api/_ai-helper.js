@@ -25,6 +25,7 @@ export function resolveAICredentials(body, env) {
     provider: env.FALLBACK_AI_PROVIDER || DEFAULT_FALLBACK_PROVIDER,
     model: env.FALLBACK_AI_MODEL || DEFAULT_FALLBACK_MODEL,
     apiKey,
+    baseUrl: env.FALLBACK_AI_BASE_URL || '',
     usingFallback: true,
   };
 }

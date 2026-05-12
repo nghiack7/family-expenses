@@ -172,6 +172,9 @@ export async function onRequestPost(context) {
     if (!req) {
       return Response.json({ error: `Unknown provider: ${creds.provider}` }, { status: 400 });
     }
+    if (creds.baseUrl) {
+      req.url = creds.baseUrl.replace(/\/$/, '') + (creds.provider === 'gemini' ? `/${creds.model}:generateContent?key=${creds.apiKey}` : '');
+    }
 
     const aiRes = await fetch(req.url, {
       method: 'POST',
