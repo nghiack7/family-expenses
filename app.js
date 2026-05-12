@@ -121,6 +121,9 @@ const translations = {
     magic_link_sending: 'Đang gửi link...',
     magic_link_sent: 'Đã gửi link vào hộp thư của bạn. Mở email rồi bấm vào link là vào app, không cần mật khẩu.',
     magic_link_failed: 'Không gửi được link: {0}',
+    api_key_optional: '(không bắt buộc — bỏ trống để dùng AI miễn phí)',
+    ai_fallback_hint_active: 'Đang dùng AI miễn phí của Family Expenses. Còn {chat} câu phân tích + {ocr} lượt quét hóa đơn hôm nay. Thêm API key riêng để dùng không giới hạn.',
+    ai_fallback_exhausted: 'Hết lượt AI miễn phí hôm nay. Thêm API key riêng trong Cài đặt gia đình để dùng không giới hạn.',
     dashboard_eyebrow: 'Tổng quan',
     previous_period: 'Kỳ trước',
     next_period: 'Kỳ sau',
@@ -593,6 +596,9 @@ const translations = {
     magic_link_sending: 'Sending the link...',
     magic_link_sent: 'Link sent to your inbox. Open the email and tap the link to sign in — no password needed.',
     magic_link_failed: 'Could not send link: {0}',
+    api_key_optional: '(optional — leave blank to use the free AI)',
+    ai_fallback_hint_active: 'Using the free Family Expenses AI. {chat} chat calls + {ocr} receipt scans left today. Add your own API key for unlimited use.',
+    ai_fallback_exhausted: 'Free AI quota used up for today. Add your own API key in Family settings to keep going.',
     dashboard_eyebrow: 'Overview',
     previous_period: 'Previous period',
     next_period: 'Next period',
@@ -3571,6 +3577,7 @@ async function initAISettingsUI() {
   if (saved.model) modelSel.value = saved.model;
   if (saved.income) document.getElementById('ai-income').value = saved.income;
   if (saved.savings) document.getElementById('ai-savings').value = saved.savings;
+  refreshAIFallbackHint();
 }
 
 async function handleSaveAISettings() {
@@ -3581,17 +3588,47 @@ async function handleSaveAISettings() {
     income: document.getElementById('ai-income').value || '',
     savings: document.getElementById('ai-savings').value || '',
   };
-  const local = getAISettings();
-  const hasExistingKey = !!(local.apiKeys?.[settings.provider]);
-  if (!settings.apiKey && !hasExistingKey) { toast(t('api_key_required'), 'error'); return; }
   try {
     await saveAISettingsToServer(settings);
     toast(t('ai_settings_saved'), 'success');
   } catch {
     toast(t('ai_settings_saved'), 'success'); // saved locally as fallback
   }
+  refreshAIFallbackHint();
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
+}
+
+async function refreshAIFallbackHint() {
+  const hint = document.getElementById('ai-fallback-hint');
+  if (!hint) return;
+  const local = getAISettings();
+  const hasOwnKey = !!(local.apiKeys?.[local.provider] || local.apiKey);
+  if (hasOwnKey) {
+    hint.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await fetch('/api/ai-analyze', { credentials: 'same-origin' });
+    if (!res.ok) {
+      hint.style.display = 'none';
+      return;
+    }
+    const data = await res.json();
+    if (!data.fallbackEnabled) {
+      hint.style.display = 'none';
+      return;
+    }
+    const u = data.usage || { count_analyze: 0, count_extract: 0, limits: { analyze: 20, extract: 10 } };
+    const remainAnalyze = Math.max(0, (u.limits?.analyze ?? 20) - (u.count_analyze || 0));
+    const remainExtract = Math.max(0, (u.limits?.extract ?? 10) - (u.count_extract || 0));
+    hint.textContent = (t('ai_fallback_hint_active') || 'Đang dùng AI miễn phí của Family Expenses. Còn {chat} câu phân tích + {ocr} lượt quét hóa đơn hôm nay. Thêm API key riêng để dùng không giới hạn.')
+      .replace('{chat}', remainAnalyze)
+      .replace('{ocr}', remainExtract);
+    hint.style.display = '';
+  } catch {
+    hint.style.display = 'none';
+  }
 }
 
 function checkAIConfigured() {

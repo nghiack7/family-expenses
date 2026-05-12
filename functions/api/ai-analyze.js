@@ -1,8 +1,17 @@
 /**
  * AI Financial Analysis — Cloudflare Function
- * Proxies requests to Gemini / OpenAI / Claude APIs
- * API key is sent per-request from client, never stored server-side
+ * Proxies requests to Gemini / OpenAI / Claude APIs.
+ * Uses caller's API key when provided, otherwise falls back to the
+ * server-side house key (rate-limited per user, scope-locked to
+ * household finance via a guard preamble).
  */
+
+import {
+  resolveAICredentials,
+  checkAndIncrementFallback,
+  getFallbackUsageToday,
+  FINANCE_GUARD_PREAMBLE,
+} from './_ai-helper.js';
 
 const PROVIDERS = {
   gemini: {
@@ -110,27 +119,49 @@ Respond ONLY with valid JSON (no markdown, no code fences). Use this exact struc
 }
 
 export async function onRequestPost(context) {
-  const { request } = context;
+  const { request, env } = context;
+  const userId = context.data?.user?.sub || null;
 
   try {
     const body = await request.json();
-    const { provider, model, apiKey, stats, monthLabel, currency, income, savings, question } = body;
+    const { stats, monthLabel, currency, income, savings, question } = body;
 
-    if (!provider || !model || !apiKey) {
-      return Response.json({ error: 'Missing provider, model, or apiKey' }, { status: 400 });
+    const creds = resolveAICredentials(body, env);
+    if (!creds) {
+      return Response.json(
+        { error: 'AI is not configured. Add your own API key in Family settings, or contact the admin to enable the free fallback.' },
+        { status: 503 }
+      );
     }
 
-    const providerConfig = PROVIDERS[provider];
+    if (typeof question === 'string' && question.length > 2000) {
+      return Response.json({ error: 'Question too long (max 2000 chars).' }, { status: 400 });
+    }
+
+    let usage = null;
+    if (creds.usingFallback) {
+      try {
+        usage = await checkAndIncrementFallback(env, userId, 'analyze');
+      } catch (err) {
+        return Response.json(
+          { error: err.message, exhausted: !!err.exhausted, limit: err.limit },
+          { status: err.status || 500 }
+        );
+      }
+    }
+
+    const providerConfig = PROVIDERS[creds.provider];
     if (!providerConfig) {
-      return Response.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
+      return Response.json({ error: `Unknown provider: ${creds.provider}` }, { status: 400 });
     }
 
-    const prompt = buildAnalysisPrompt({ stats, monthLabel, currency, income, savings, question });
-    const url = providerConfig.buildUrl(model, apiKey);
-    const reqBody = providerConfig.buildBody(prompt, model);
+    let prompt = buildAnalysisPrompt({ stats, monthLabel, currency, income, savings, question });
+    if (creds.usingFallback) prompt = FINANCE_GUARD_PREAMBLE + prompt;
+    const url = providerConfig.buildUrl(creds.model, creds.apiKey);
+    const reqBody = providerConfig.buildBody(prompt, creds.model);
     const headers = {
       'Content-Type': 'application/json',
-      ...(providerConfig.buildHeaders ? providerConfig.buildHeaders(apiKey) : {}),
+      ...(providerConfig.buildHeaders ? providerConfig.buildHeaders(creds.apiKey) : {}),
     };
 
     const aiRes = await fetch(url, {
@@ -162,8 +193,20 @@ export async function onRequestPost(context) {
       );
     }
 
-    return Response.json({ analysis });
+    return Response.json({
+      analysis,
+      usage,
+      usingFallback: creds.usingFallback,
+    });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function onRequestGet(context) {
+  const userId = context.data?.user?.sub || null;
+  if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
+  const usage = await getFallbackUsageToday(context.env, userId);
+  const fallbackEnabled = !!context.env.FALLBACK_AI_API_KEY;
+  return Response.json({ usage, fallbackEnabled });
 }

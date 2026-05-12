@@ -5,6 +5,7 @@
  */
 
 import { ensurePersonalFamilyMembership } from './_family-utils.js';
+import { resolveAICredentials, checkAndIncrementFallback } from './_ai-helper.js';
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB
 
@@ -108,17 +109,32 @@ export async function onRequestPost(context) {
 
   try {
     const formData = await request.formData();
-    const provider = formData.get('provider');
-    const model = formData.get('model');
-    const apiKey = formData.get('apiKey');
+    const provider = formData.get('provider') || '';
+    const model = formData.get('model') || '';
+    const apiKey = formData.get('apiKey') || '';
     const currency = formData.get('currency') || 'VND';
     const file = formData.get('file');
 
-    if (!provider || !model || !apiKey) {
-      return Response.json({ error: 'Missing provider, model, or apiKey' }, { status: 400 });
+    const creds = resolveAICredentials({ provider, model, apiKey }, env);
+    if (!creds) {
+      return Response.json(
+        { error: 'AI is not configured. Add your own API key in Family settings, or contact the admin to enable the free fallback.' },
+        { status: 503 }
+      );
     }
     if (!file) {
       return Response.json({ error: 'No file uploaded' }, { status: 400 });
+    }
+
+    if (creds.usingFallback) {
+      try {
+        await checkAndIncrementFallback(env, user?.sub, 'extract');
+      } catch (err) {
+        return Response.json(
+          { error: err.message, exhausted: !!err.exhausted, limit: err.limit },
+          { status: err.status || 500 }
+        );
+      }
     }
 
     // Get user's family categories
@@ -152,9 +168,9 @@ export async function onRequestPost(context) {
       return Response.json({ error: 'Unsupported file type. Please upload an image (JPG, PNG).' }, { status: 400 });
     }
 
-    const req = buildProviderRequest(provider, model, apiKey, prompt, imageBase64, imageMimeType);
+    const req = buildProviderRequest(creds.provider, creds.model, creds.apiKey, prompt, imageBase64, imageMimeType);
     if (!req) {
-      return Response.json({ error: `Unknown provider: ${provider}` }, { status: 400 });
+      return Response.json({ error: `Unknown provider: ${creds.provider}` }, { status: 400 });
     }
 
     const aiRes = await fetch(req.url, {
@@ -189,6 +205,7 @@ export async function onRequestPost(context) {
       expenses: result.expenses || [],
       raw_text: result.raw_text || '',
       categories: categories.results,
+      usingFallback: creds.usingFallback,
     });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });

@@ -794,9 +794,10 @@
                       <select id="ai-model"></select>
                     </div>
                     <div class="form-group">
-                      <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key</label>
-                      <input type="password" id="ai-api-key" data-i18n="api_key_placeholder" placeholder="Dán API key của bạn vào đây" autocomplete="off" />
+                      <label class="form-label" for="ai-api-key" data-i18n="api_key">API Key <span class="subtle-inline" data-i18n="api_key_optional">(không bắt buộc — bỏ trống để dùng AI miễn phí)</span></label>
+                      <input type="password" id="ai-api-key" data-i18n="api_key_placeholder" placeholder="Dán API key của bạn vào đây, hoặc bỏ trống" autocomplete="off" />
                       <div class="form-hint" data-i18n="api_key_hint">Được mã hóa và lưu trữ an toàn. Mỗi nhà cung cấp lưu 1 key riêng.</div>
+                      <div class="form-hint h-nudge ai-fallback-hint" id="ai-fallback-hint" style="display:none"></div>
                     </div>
                     <div class="form-row">
                       <div class="form-group">
