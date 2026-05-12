@@ -3500,6 +3500,20 @@ function saveAISettingsLocal(settings) {
   localStorage.setItem('ai_settings', JSON.stringify(settings));
 }
 
+function getSelectedAIProvider(settings = getAISettings()) {
+  return settings.provider || 'gemini';
+}
+
+function getSelectedAIModel(settings = getAISettings()) {
+  const provider = getSelectedAIProvider(settings);
+  return settings.model || AI_MODELS[provider]?.[0] || '';
+}
+
+function getSelectedAIKey(settings = getAISettings()) {
+  const provider = getSelectedAIProvider(settings);
+  return settings.apiKeys?.[provider] || settings.apiKey || '';
+}
+
 async function loadAISettingsFromServer() {
   try {
     const res = await api('/api/family', {
@@ -3732,12 +3746,9 @@ function initHistoryFiltersUI() {
 
 async function runAIAnalysis(customQuestion) {
   const settings = getAISettings();
-  const apiKey = settings.apiKeys?.[settings.provider] || settings.apiKey;
-  if (!apiKey || !settings.provider || !settings.model) {
-    toast(t('configure_ai_first'), 'error');
-    navigate('family');
-    return;
-  }
+  const provider = getSelectedAIProvider(settings);
+  const model = getSelectedAIModel(settings);
+  const apiKey = getSelectedAIKey(settings);
 
   if (!state.stats || state.stats.count === 0) {
     toast(t('no_data_analyze'), 'error');
@@ -3758,8 +3769,8 @@ async function runAIAnalysis(customQuestion) {
     const res = await api('/api/ai-analyze', {
       method: 'POST',
       body: JSON.stringify({
-        provider: settings.provider,
-        model: settings.model,
+        provider,
+        model,
         apiKey: apiKey,
         stats: state.stats,
         monthLabel: ml,
@@ -3838,11 +3849,9 @@ function renderAIInsights(analysis) {
 
 async function handleAIExtract(file) {
   const settings = getAISettings();
-  const apiKey = settings.apiKeys?.[settings.provider] || settings.apiKey;
-  if (!apiKey || !settings.provider || !settings.model) {
-    toast(t('ai_extract_no_ai'), 'error');
-    return;
-  }
+  const provider = getSelectedAIProvider(settings);
+  const model = getSelectedAIModel(settings);
+  const apiKey = getSelectedAIKey(settings);
 
   const btn = document.getElementById('ai-extract-btn');
   const preview = document.getElementById('ai-extract-preview');
@@ -3852,8 +3861,8 @@ async function handleAIExtract(file) {
 
   try {
     const formData = new FormData();
-    formData.append('provider', settings.provider);
-    formData.append('model', settings.model);
+    formData.append('provider', provider);
+    formData.append('model', model);
     formData.append('apiKey', apiKey);
     formData.append('currency', state.currency || 'VND');
     formData.append('file', file);

@@ -1400,6 +1400,11 @@ button:focus-visible {
   line-height: 1.55;
 }
 
+.member-email {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .expense-meta {
   display: flex;
   flex-wrap: wrap;
@@ -2073,6 +2078,11 @@ body.keyboard-open .ai-fab {
   .expense-item,
   .member-item {
     grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .member-item .role-badge {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .budget-category-setting {
@@ -2884,4 +2894,3 @@ body.keyboard-open .ai-fab {
   gap: 0.35rem;
   margin-top: 0.5rem;
 }
-

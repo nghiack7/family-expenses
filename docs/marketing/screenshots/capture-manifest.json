@@ -1,0 +1,32 @@
+{
+  "source": "https://finance-expenses.pages.dev",
+  "captured_at": "2026-05-12T04:15:16.000Z",
+  "demo_email": "family.demo.bodemo+58141639@example.com",
+  "household": "Nhà Demo 3 người",
+  "demo_members": [
+    "Bố Demo",
+    "Mẹ Linh",
+    "Bé Bông"
+  ],
+  "verified": {
+    "ai_fallback": true,
+    "production_url": "https://finance-expenses.pages.dev",
+    "facebook_login_required": false
+  },
+  "files": [
+    "01-login-demo-email.png",
+    "02-dashboard-family-hook.png",
+    "03-weekly-digest.png",
+    "04-family-spending-by-person.png",
+    "05-family-members-settings.png",
+    "06-voice-batch-entry.png",
+    "07-ai-receipt-extract.png",
+    "08-cashflow-forecast.png",
+    "09-recurring-radar.png",
+    "10-ai-advisor-family-question.png",
+    "11-history-member-timeline.png",
+    "12-dark-english-dashboard.png",
+    "thumbnail-facebook-forecast.png"
+  ],
+  "note": "Demo uses email/password accounts for a 3-member household. Facebook login is intentionally excluded because no Facebook app is configured."
+}
